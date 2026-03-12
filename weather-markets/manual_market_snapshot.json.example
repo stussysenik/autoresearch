@@ -1,0 +1,94 @@
+{
+  "captured_at": "2026-03-12T00:00:00Z",
+  "city": "nyc",
+  "city_display": "New York City",
+  "event_slug": "manual-nyc-high-temp-example",
+  "market_date": "2026-03-13",
+  "market_type": "daily_high_temperature_partition",
+  "resolution_source": "Manual example snapshot mirroring common NYC high temperature ranges",
+  "source_url": "manual://example",
+  "venue": "kalshi",
+  "bins": [
+    {
+      "label": "<=35F",
+      "lower_temp_f": null,
+      "upper_temp_f": 35.0,
+      "inclusive_lower": false,
+      "inclusive_upper": true,
+      "representative_temp_f": 33.0,
+      "question": "Will the highest temperature in New York City be 35F or below?"
+    },
+    {
+      "label": "36-37F",
+      "lower_temp_f": 36.0,
+      "upper_temp_f": 37.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 36.5,
+      "question": "Will the highest temperature in New York City be between 36-37F?"
+    },
+    {
+      "label": "38-39F",
+      "lower_temp_f": 38.0,
+      "upper_temp_f": 39.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 38.5,
+      "question": "Will the highest temperature in New York City be between 38-39F?"
+    },
+    {
+      "label": "40-41F",
+      "lower_temp_f": 40.0,
+      "upper_temp_f": 41.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 40.5,
+      "question": "Will the highest temperature in New York City be between 40-41F?"
+    },
+    {
+      "label": "42-43F",
+      "lower_temp_f": 42.0,
+      "upper_temp_f": 43.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 42.5,
+      "question": "Will the highest temperature in New York City be between 42-43F?"
+    },
+    {
+      "label": "44-45F",
+      "lower_temp_f": 44.0,
+      "upper_temp_f": 45.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 44.5,
+      "question": "Will the highest temperature in New York City be between 44-45F?"
+    },
+    {
+      "label": "46-47F",
+      "lower_temp_f": 46.0,
+      "upper_temp_f": 47.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 46.5,
+      "question": "Will the highest temperature in New York City be between 46-47F?"
+    },
+    {
+      "label": "48-49F",
+      "lower_temp_f": 48.0,
+      "upper_temp_f": 49.0,
+      "inclusive_lower": true,
+      "inclusive_upper": true,
+      "representative_temp_f": 48.5,
+      "question": "Will the highest temperature in New York City be between 48-49F?"
+    },
+    {
+      "label": ">=50F",
+      "lower_temp_f": 50.0,
+      "upper_temp_f": null,
+      "inclusive_lower": true,
+      "inclusive_upper": false,
+      "representative_temp_f": 52.0,
+      "question": "Will the highest temperature in New York City be 50F or higher?"
+    }
+  ]
+}

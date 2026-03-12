@@ -21,3 +21,10 @@ dev/
 
 # Results file
 results.tsv
+
+# Weather market research artifacts
+weather-markets/artifacts/
+weather-markets/data/
+weather-markets/results.tsv
+weather-markets/summary.txt
+weather-markets/market_snapshot.json
