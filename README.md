@@ -1,3 +1,26 @@
+# 🌳 Fork & Branch Strategy
+
+**This is a fork!** Here's how it works:
+
+```
+upstream (karpathy/autoresearch) → origin (stussysenik/autoresearch) → your local copy
+  ↑                                    ↑                                  ↑
+  Karpathy's original                  YOUR fork (this repo)              Your computer
+  (pull updates from here)             (push your work here)              (work here)
+```
+
+### Which Branches to Work On
+
+**`main` branch** = Karpathy's base + Your experiments framework
+- ✅ **Work directly on `main`** for stable framework improvements
+- ✅ **Commit and push to `main`** - this is YOUR branch, not frozen!
+- ✅ Contains: Original LLM training code + experiments/ directory
+
+**Feature branches** = Testing new experiments or features
+- ✅ **Create branches** when testing: `git checkout -b experiment/new-test`
+- ✅ **Merge to `main`** when done: `git merge experiment/new-test`
+- ✅ Use for: new experiments, trying ideas, keeping main stable while exploring
+
 # autoresearch
 
 ![teaser](progress.png)
@@ -35,29 +58,6 @@ bun run fetch && bun run run && bun run analyze
 **📖 [Full framework docs →](./experiments/README.md)**
 
 ---
-
-## 🌳 Fork & Branch Strategy
-
-**This is a fork!** Here's how it works:
-
-```
-upstream (karpathy/autoresearch) → origin (stussysenik/autoresearch) → your local copy
-  ↑                                    ↑                                  ↑
-  Karpathy's original                  YOUR fork (this repo)              Your computer
-  (pull updates from here)             (push your work here)              (work here)
-```
-
-### Which Branches to Work On
-
-**`main` branch** = Karpathy's base + Your experiments framework
-- ✅ **Work directly on `main`** for stable framework improvements
-- ✅ **Commit and push to `main`** - this is YOUR branch, not frozen!
-- ✅ Contains: Original LLM training code + experiments/ directory
-
-**Feature branches** = Testing new experiments or features
-- ✅ **Create branches** when testing: `git checkout -b experiment/new-test`
-- ✅ **Merge to `main`** when done: `git merge experiment/new-test`
-- ✅ Use for: new experiments, trying ideas, keeping main stable while exploring
 
 ### Daily Workflow
 
