@@ -38,14 +38,79 @@ bun run fetch && bun run run && bun run analyze
 
 ## 🌳 Fork & Branch Strategy
 
-**This is a fork!** Here's how it works:
+### What is a Fork?
+
+**A fork is YOUR personal copy of someone else's repository.**
+
+Think of it like this:
+- **Karpathy's repo** = The original book he's writing
+- **Your fork** = Your own copy where you can write notes, add chapters, change things
+- **Git keeps them connected** so you can pull his updates while keeping your additions
 
 ```
-upstream (karpathy/autoresearch) → origin (stussysenik/autoresearch) → your local copy
-  ↑                                    ↑                                  ↑
-  Karpathy's original                  YOUR fork (this repo)              Your computer
-  (pull updates from here)             (push your work here)              (work here)
+┌─────────────────────────────────┐
+│ karpathy/autoresearch          │ ← Original (you don't own)
+│ upstream                        │
+└─────────────────────────────────┘
+          │
+          │ Fork = Copy to your GitHub account
+          ↓
+┌─────────────────────────────────┐
+│ stussysenik/autoresearch       │ ← YOUR copy (you own this!)
+│ origin                          │   You can do ANYTHING here
+│                                 │
+│  ├── main                      │ ← Your working branch
+│  ├── feat/new-thing            │ ← Your feature
+│  └── experiment/test           │ ← Your experiment
+└─────────────────────────────────┘
+          │
+          │ Clone = Download to computer
+          ↓
+┌─────────────────────────────────┐
+│ Your Computer                   │
+│ /Desktop/autoresearch-playground│
+└─────────────────────────────────┘
 ```
+
+**Key insight:** Your fork is independent! Changes you make don't affect Karpathy's original (unless you submit a Pull Request to him).
+
+---
+
+### How Fork Syncing Works
+
+**IMPORTANT:** Syncing is **per-branch**, not whole repo!
+
+```
+When you sync:
+  git checkout main              ← Switch to the branch you want to update
+  git fetch upstream             ← Download Karpathy's latest changes
+  git merge upstream/master      ← Merge his changes into YOUR branch
+
+Result:
+  ✅ Only 'main' gets updated
+  ✅ Your other branches are UNTOUCHED
+  ✅ Your additions (experiments/, weather-markets/) are KEPT
+  ✅ His updates are ADDED to yours
+```
+
+**What happens during sync:**
+
+| Your Files | Karpathy's Files | After Sync |
+|------------|------------------|------------|
+| `experiments/` (only you have) | Doesn't exist | ✅ KEPT (no conflict possible) |
+| `weather-markets/` (only you have) | Doesn't exist | ✅ KEPT (no conflict possible) |
+| `package.json` (only you have) | Doesn't exist | ✅ KEPT (no conflict possible) |
+| `README.md` (you both changed different parts) | Different lines | ✅ AUTO-MERGED (Git combines both) |
+| `train.py` (you didn't touch) | Updated by him | ✅ AUTO-UPDATED (you get his changes) |
+
+**Conflicts only happen if:**
+- You BOTH changed the EXACT SAME LINES in the same file
+- Git will pause and ask you to choose which version to keep
+- This is rare and easy to fix!
+
+**Your additions are safe!** Files that only exist in your fork can't conflict.
+
+---
 
 ### Which Branches to Work On
 
@@ -53,11 +118,23 @@ upstream (karpathy/autoresearch) → origin (stussysenik/autoresearch) → your 
 - ✅ **Work directly on `main`** for stable framework improvements
 - ✅ **Commit and push to `main`** - this is YOUR branch, not frozen!
 - ✅ Contains: Original LLM training code + experiments/ directory
+- ✅ **Sync from upstream** periodically (monthly or when Karpathy releases new features)
 
 **Feature branches** = Testing new experiments or features
 - ✅ **Create branches** when testing: `git checkout -b experiment/new-test`
 - ✅ **Merge to `main`** when done: `git merge experiment/new-test`
 - ✅ Use for: new experiments, trying ideas, keeping main stable while exploring
+- ✅ **Never need to sync** - they're your work, not connected to upstream
+
+**Your branch structure** (example):
+```
+main                     ← Sync this from upstream/master
+├── feat/inference-api   ← Your feature (never synced)
+├── experiment/prompts   ← Your test (never synced)
+└── wip/ideas           ← Your drafts (never synced)
+```
+
+---
 
 ### Daily Workflow
 
@@ -76,16 +153,63 @@ git merge experiment/prompt-testing
 git push origin main
 ```
 
-### Getting Karpathy's Updates
+---
+
+### Getting Karpathy's Updates (Syncing)
 
 ```bash
 # Periodically (when Karpathy releases new LLM features)
-git fetch upstream
-git merge upstream/master   # Merge his updates into YOUR main
-git push origin main        # Update your fork
+git checkout main              # Switch to main (only this branch will sync!)
+git fetch upstream             # Download his updates
+git merge upstream/master      # Merge his changes into your main
+git push origin main           # Update your fork on GitHub
+
+# Your other branches are NOT affected by this sync!
 ```
 
-**Your `main` = Karpathy's code + Your additions** - This is normal for a fork! 🎯
+**What gets synced:**
+- ✅ Only the branch you're on (`main`)
+- ✅ Karpathy's new LLM improvements
+- ✅ Your additions stay intact (experiments/, weather-markets/)
+
+**What doesn't get synced:**
+- ❌ Your other branches (feat/x, experiment/y)
+- ❌ Your files that don't exist in his repo
+
+---
+
+### 🎯 Golden Rules
+
+**1. Your fork = YOUR playground**
+   - Do whatever you want with branches
+   - Create, delete, rename freely
+   - No rules, no restrictions!
+
+**2. Only `main` syncs with upstream**
+   - Your other branches never need to sync
+   - They're your work, independent of Karpathy's
+
+**3. Sync = per-branch, not whole repo**
+   - `git merge upstream/master` only affects current branch
+   - Other branches remain unchanged
+   - You control what syncs and when
+
+**4. Your additions are safe during sync**
+   - Files only in your fork (experiments/, weather-markets/) can't conflict
+   - They're automatically kept during merge
+   - You only resolve conflicts if you both changed same lines
+
+**5. Sync is optional and periodic**
+   - Don't sync every day - only when Karpathy releases updates
+   - Monthly or as-needed is fine
+   - Your fork works independently!
+
+**TL;DR:**
+- ✅ Work on `main` or create your own branches - your choice!
+- ✅ Only sync `main` when you want Karpathy's new features
+- ✅ Sync only affects the current branch, not all branches
+- ✅ Your additions (experiments/, weather-markets/) are always safe
+- ✅ Your fork is independent - do whatever you want! 🎯
 
 ---
 
