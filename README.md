@@ -36,6 +36,59 @@ bun run fetch && bun run run && bun run analyze
 
 ---
 
+## 🌳 Fork & Branch Strategy
+
+**This is a fork!** Here's how it works:
+
+```
+upstream (karpathy/autoresearch) → origin (stussysenik/autoresearch) → your local copy
+  ↑                                    ↑                                  ↑
+  Karpathy's original                  YOUR fork (this repo)              Your computer
+  (pull updates from here)             (push your work here)              (work here)
+```
+
+### Which Branches to Work On
+
+**`main` branch** = Karpathy's base + Your experiments framework
+- ✅ **Work directly on `main`** for stable framework improvements
+- ✅ **Commit and push to `main`** - this is YOUR branch, not frozen!
+- ✅ Contains: Original LLM training code + experiments/ directory
+
+**Feature branches** = Testing new experiments or features
+- ✅ **Create branches** when testing: `git checkout -b experiment/new-test`
+- ✅ **Merge to `main`** when done: `git merge experiment/new-test`
+- ✅ Use for: new experiments, trying ideas, keeping main stable while exploring
+
+### Daily Workflow
+
+```bash
+# Working on main (simple, recommended for stable work)
+git checkout main
+git add .
+git commit -m "feat: improve experiments framework"
+git push origin main
+
+# OR: Using feature branches (cleaner for experiments)
+git checkout -b experiment/prompt-testing
+# ... work work work ...
+git checkout main
+git merge experiment/prompt-testing
+git push origin main
+```
+
+### Getting Karpathy's Updates
+
+```bash
+# Periodically (when Karpathy releases new LLM features)
+git fetch upstream
+git merge upstream/master   # Merge his updates into YOUR main
+git push origin main        # Update your fork
+```
+
+**Your `main` = Karpathy's code + Your additions** - This is normal for a fork! 🎯
+
+---
+
 ## Original Karpathy Autoresearch
 
 The idea: give an AI agent a small but real LLM training setup and let it experiment autonomously overnight. It modifies the code, trains for 5 minutes, checks if the result improved, keeps or discards, and repeats. You wake up in the morning to a log of experiments and (hopefully) a better model. The training code here is a simplified single-GPU implementation of [nanochat](https://github.com/karpathy/nanochat). The core idea is that you're not touching any of the Python files like you normally would as a researcher. Instead, you are programming the `program.md` Markdown files that provide context to the AI agents and set up your autonomous research org. The default `program.md` in this repo is intentionally kept as a bare bones baseline, though it's obvious how one would iterate on it over time to find the "research org code" that achieves the fastest research progress, how you'd add more agents to the mix, etc. A bit more context on this project is here in this [tweet](https://x.com/karpathy/status/2029701092347630069).
