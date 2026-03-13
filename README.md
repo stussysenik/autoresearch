@@ -8,7 +8,14 @@ The idea: give an AI agent a small but real LLM training setup and let it experi
 
 ## Local Fork Note
 
-This checkout also carries a parallel `weather-markets/` subproject for overnight prediction-market research. The first target is **NYC next-day high-temperature bin markets** using a **forecast-to-resolution translation** workflow, with Polymarket as the primary live snapshot source and a Kalshi-compatible manual snapshot path. The subproject lives alongside the original autoresearch code so the upstream LLM experiment remains recognizable.
+This checkout carries **two experimental frameworks**:
+
+1. **`weather-markets/`** — Overnight prediction-market research (NYC temperature bin markets)
+2. **`experiments/`** — **Universal autoresearch framework for systematic experiments** 🔬
+
+The `experiments/` framework is a **Karpathy-inspired pattern** for running ANY systematic experiment (prompts, algorithms, parameters) with Claude Code. See **[experiments/README.md](./experiments/README.md)** for the complete framework guide with mermaid diagrams, timing controls, and integration workflows.
+
+Both subprojects live alongside the original autoresearch code so the upstream LLM experiment remains recognizable.
 
 ## How it works
 

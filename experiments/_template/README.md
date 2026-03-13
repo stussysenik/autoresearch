@@ -1,0 +1,243 @@
+# Experiment Template
+
+This is a self-contained autoresearch experiment template. Copy this directory and customize it for your specific experiment.
+
+## Quick Start
+
+```bash
+# 1. Copy this template
+cp -r experiments/_template experiments/your-experiment-name
+cd experiments/your-experiment-name
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# 3. Install dependencies
+bun install
+
+# 4. Run experiment
+bun run fetch    # Fetch data
+bun run run      # Run experiment
+bun run analyze  # Analyze results
+```
+
+## Project Structure
+
+```
+.
+├── src/
+│   ├── fetch_data.ts         # Data collection from Supabase
+│   ├── variants.ts           # Experiment variant definitions
+│   ├── run_experiment.ts     # Experiment orchestrator
+│   └── analyze_results.ts    # Results analysis
+├── data/                     # Generated data (gitignored)
+│   ├── input.json            # Fetched test data
+│   └── results.json          # Experiment results
+├── package.json              # Dependencies and scripts
+├── .env.example              # Environment variables template
+├── .gitignore                # Git ignore rules
+├── README.md                 # This file
+└── ANALYSIS.md               # Generated analysis report
+```
+
+## Customization
+
+### 1. Define Your Objective
+
+**What are you testing?**
+- [ ] Prompt variations
+- [ ] Parameter tuning (temperature, max tokens, etc.)
+- [ ] Algorithm comparison
+- [ ] Feature evaluation
+- [ ] Other: _______________
+
+**What is your hypothesis?**
+Write your expected outcome here.
+
+### 2. Customize Data Collection
+
+Edit `src/fetch_data.ts`:
+- Update table name and columns
+- Add filters (date range, type, etc.)
+- Adjust sample size
+- Change data source (API, CSV, etc.)
+
+```typescript
+// Example: Fetch specific card types
+const { data } = await supabase
+  .from('cards')
+  .select('id, title, content, tags')
+  .eq('type', 'text')
+  .limit(30)
+```
+
+### 3. Define Variants
+
+Edit `src/variants.ts`:
+- Add your prompt variations
+- Define parameters to test
+- Include descriptions
+
+```typescript
+export const variants = [
+  {
+    name: 'baseline',
+    description: 'Current production prompt',
+    prompt: 'Your prompt template here...',
+  },
+  {
+    name: 'improved',
+    description: 'Improved version',
+    prompt: 'Better prompt template...',
+  },
+]
+```
+
+### 4. Customize Analysis
+
+Edit `src/analyze_results.ts`:
+- Define metrics for your experiment
+- Add statistical comparisons
+- Customize output format
+
+```typescript
+// Example: Add custom metric
+function calculateAccuracy(results) {
+  const correct = results.filter(r => r.output.correct).length
+  return (correct / results.length) * 100
+}
+```
+
+## Workflow
+
+### Phase 1: Data Collection
+
+```bash
+bun run fetch
+```
+
+**What it does:**
+- Connects to Supabase (or your data source)
+- Fetches sample data based on your query
+- Saves to `data/input.json`
+
+**Verify:**
+- Check `data/input.json` was created
+- Inspect sample data for quality
+- Confirm diversity across categories
+
+### Phase 2: Experimentation
+
+```bash
+bun run run
+```
+
+**What it does:**
+- Loads input data
+- For each variant:
+  - Processes each data item
+  - Generates output (manual or automated)
+- Saves to `data/results.json`
+
+**Manual Processing:**
+If using Claude Code for LLM calls:
+1. Script prints filled prompt
+2. Copy prompt to Claude Code
+3. Get response
+4. Paste into results
+5. Continue
+
+### Phase 3: Analysis
+
+```bash
+bun run analyze
+```
+
+**What it does:**
+- Loads results from `data/results.json`
+- Calculates metrics per variant
+- Generates `ANALYSIS.md` report
+
+**Review:**
+- Read `ANALYSIS.md`
+- Manually inspect sample outputs
+- Identify best-performing variant
+
+## Security
+
+**Required Environment Variables:**
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_KEY` - Service role key (backend only!)
+
+**Important:**
+- ✅ `.env` is gitignored (never commit it)
+- ✅ Use service role keys only for backend experiments
+- ✅ Rotate keys after completing experiments
+- ❌ Never hardcode credentials in source files
+
+## Integration
+
+If your experiment produces a winner:
+
+1. **Document findings** in `ANALYSIS.md`
+2. **Create integration guide** (optional `INTEGRATION.md`):
+   - Which files to modify
+   - What changes to make
+   - How to test integration
+3. **Apply to production**:
+   - Update relevant files
+   - Add tests
+   - Monitor metrics
+
+## Tips
+
+**Data Collection:**
+- Start with 20-30 items
+- Ensure diversity (different types, platforms, etc.)
+- Filter out invalid/null data
+
+**Variant Design:**
+- Test 3-4 variants (not too many)
+- Change one thing at a time
+- Include clear descriptions
+
+**Analysis:**
+- Use multiple metrics
+- Manually review sample outputs
+- Document unexpected findings
+
+**Documentation:**
+- Write as you go
+- Include examples
+- Explain reasoning
+
+## Troubleshooting
+
+**"No data fetched"**
+- Check your Supabase query filters
+- Verify table/column names
+- Test query in Supabase dashboard
+
+**"Invalid JSON"**
+- Use `jq` to validate: `cat data/results.json | jq`
+- Check for trailing commas
+- Ensure proper escaping
+
+**"No clear winner"**
+- Increase sample size
+- Add more metrics
+- Consider qualitative review
+
+## Next Steps
+
+After completing the experiment:
+- [ ] Review `ANALYSIS.md`
+- [ ] Identify winning variant
+- [ ] Document integration path
+- [ ] Apply to production (if applicable)
+- [ ] Archive or delete experiment data
+
+---
+
+**For more information:** See `/experiments/CREATING_EXPERIMENTS.md`
