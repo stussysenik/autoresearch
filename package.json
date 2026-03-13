@@ -1,0 +1,50 @@
+{
+  "name": "autoresearch-playground",
+  "version": "1.0.0",
+  "description": "Karpathy-inspired autoresearch for LLM training + universal experiment framework",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint experiments/ --ext .ts,.js",
+    "format": "prettier --write 'experiments/**/*.{ts,js,md,json}'",
+    "format:check": "prettier --check 'experiments/**/*.{ts,js,md,json}'",
+    "lint:python": "ruff check . && black --check .",
+    "format:python": "black . && ruff check --fix .",
+    "semantic-release": "semantic-release"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stussysenik/autoresearch.git"
+  },
+  "keywords": [
+    "autoresearch",
+    "experiments",
+    "llm",
+    "machine-learning",
+    "prompt-engineering"
+  ],
+  "author": "senik <senik456@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "semantic-release": "^22.0.0",
+    "typescript": "^5.0.0"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/git",
+      "@semantic-release/github"
+    ]
+  }
+}
