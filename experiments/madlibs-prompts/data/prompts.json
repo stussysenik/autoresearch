@@ -1,0 +1,20 @@
+[
+  {
+    "id": "M01",
+    "type": "Flowchart",
+    "expectedSyntax": "flowchart TD",
+    "prompt": "Plan a deployment pipeline that shows the CI/CD flow from commit to production."
+  },
+  {
+    "id": "M03",
+    "type": "Sequence",
+    "expectedSyntax": "sequenceDiagram",
+    "prompt": "Plan the interaction between the auth API and the database when a user logs in."
+  },
+  {
+    "id": "M05",
+    "type": "State",
+    "expectedSyntax": "stateDiagram-v2",
+    "prompt": "Plan the lifecycle of a support ticket, showing every state transition from open to resolved."
+  }
+]

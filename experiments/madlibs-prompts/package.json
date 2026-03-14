@@ -1,0 +1,14 @@
+{
+  "name": "madlibs-prompts",
+  "version": "1.0.0",
+  "description": "Mermaid Mad-Libs — derive test prompts from the M01-M08 dispatch registry and score diagram output",
+  "type": "module",
+  "scripts": {
+    "derive": "bun run src/derive.ts",
+    "score": "bun run src/score.ts",
+    "generate": "bun run src/generate.ts"
+  },
+  "dependencies": {
+    "md-to-pdf": "^5.2.4"
+  }
+}

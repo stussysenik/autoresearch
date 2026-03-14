@@ -1,3 +1,7 @@
+# Node
+node_modules/
+bun.lockb
+
 # Python-generated files
 __pycache__/
 *.py[oc]
