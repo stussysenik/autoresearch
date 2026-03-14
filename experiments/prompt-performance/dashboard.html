@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Performance Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  h1 { color: #f0f6fc; font-size: 28px; margin-bottom: 8px; }
+  .subtitle { color: #8b949e; font-size: 14px; margin-bottom: 24px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #58a6ff;
+  }
+  .stat-value.grade { color: #3fb950; font-size: 32px; }
+  .stat-label {
+    font-size: 12px;
+    color: #8b949e;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    body { padding: 12px; }
+    h1 { font-size: 22px; }
+  }
+  .chart-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .chart-card.tall { grid-row: span 2; }
+  .chart-card h2 {
+    font-size: 15px;
+    color: #f0f6fc;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .chart-container {
+    position: relative;
+    width: 100%;
+  }
+  footer {
+    text-align: center;
+    color: #484f58;
+    font-size: 12px;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #21262d;
+  }
+</style>
+</head>
+<body>
+<h1>Prompt Performance Dashboard</h1>
+<p class="subtitle">
+  3,444 prompts &middot;
+  61 projects &middot;
+  2025-10-01 &rarr; 2026-03-14
+</p>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">3,444</div>
+    <div class="stat-label">Total Prompts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value grade">C-</div>
+    <div class="stat-label">Overall Grade</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">42.7</div>
+    <div class="stat-label">Avg Score</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">42.8</div>
+    <div class="stat-label">Median</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">55.2</div>
+    <div class="stat-label">P90</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">32</div>
+    <div class="stat-label">P10</div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <!-- 1. Grade Distribution -->
+  <div class="chart-card">
+    <h2>Grade Distribution</h2>
+    <div class="chart-container"><canvas id="gradeChart"></canvas></div>
+  </div>
+
+  <!-- 2. Score Histogram -->
+  <div class="chart-card">
+    <h2>Score Distribution</h2>
+    <div class="chart-container"><canvas id="histogramChart"></canvas></div>
+  </div>
+
+  <!-- 3. Dimension Radar -->
+  <div class="chart-card">
+    <h2>Dimension Profile vs Benchmark</h2>
+    <div class="chart-container"><canvas id="radarChart"></canvas></div>
+  </div>
+
+  <!-- 4. Benchmark Comparison -->
+  <div class="chart-card">
+    <h2>Benchmark Gap Analysis</h2>
+    <div class="chart-container"><canvas id="benchmarkChart"></canvas></div>
+  </div>
+
+  <!-- 5. Monthly Trend -->
+  <div class="chart-card">
+    <h2>Monthly Trend</h2>
+    <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <!-- 6. Hourly Performance -->
+  <div class="chart-card">
+    <h2>Performance by Hour</h2>
+    <div class="chart-container"><canvas id="hourlyChart"></canvas></div>
+  </div>
+
+  <!-- 7. Top Projects -->
+  <div class="chart-card tall">
+    <h2>Top Projects (min 5 prompts)</h2>
+    <div class="chart-container" style="height:100%"><canvas id="projectChart"></canvas></div>
+  </div>
+
+  <!-- 8. Anti-patterns -->
+  <div class="chart-card tall">
+    <h2>Anti-pattern Frequency</h2>
+    <div class="chart-container" style="height:100%"><canvas id="antiPatternChart"></canvas></div>
+  </div>
+
+  <!-- 9. Prompt Type Mix -->
+  <div class="chart-card">
+    <h2>Prompt Type Mix</h2>
+    <div class="chart-container"><canvas id="promptTypeChart"></canvas></div>
+  </div>
+
+  <!-- 10. Day of Week -->
+  <div class="chart-card">
+    <h2>Performance by Day of Week</h2>
+    <div class="chart-container"><canvas id="dayOfWeekChart"></canvas></div>
+  </div>
+</div>
+
+<footer>
+  Generated 2026-03-14 &middot; Heuristic analysis &mdash; no LLM calls
+</footer>
+
+<script>
+// ─── Data (pre-aggregated) ──────────────────────────────────────────────────
+
+const grades = {"labels":["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"],"counts":[7,53,65,100,132,339,371,511,380,401,452,362,271]};
+const histogram = {"labels":["0-9","10-19","20-29","30-39","40-49","50-59","60-69","70-79","80-89","90-100"],"counts":[29,122,120,1071,1406,471,136,84,5,0]};
+const dimensions = {"labels":["Specificity","Action Density","Context Loading","Iteration","Compound Eff.","Tool Leverage","Outcome Signal"],"yours":[43.4,38.9,40.6,57,39.6,70,61.9],"benchmark":[85,78,80,75,72,82,90]};
+const monthly = {"labels":["2025-10","2025-11","2026-01","2026-02","2026-03"],"scores":[41.5,41.5,43.3,43.6,44.2],"counts":[1488,67,707,523,659]};
+const hourly = {"labels":["00:00","01:00","02:00","03:00","04:00","05:00","06:00","07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00","23:00"],"scores":[44.6,46,42.9,48.3,42.3,47,0,0,0,36.3,40.8,42.6,42.7,44,43.9,42.1,44.8,42.7,40.7,40.2,41.1,41.5,42.5,43.3],"counts":[168,67,82,15,10,1,0,0,0,16,67,176,256,287,253,295,258,230,172,221,208,205,236,221]};
+const projects = {"labels":["math_reader","strava-art-work-planner","dance-hit-audio-signature-matlab-playground","autoresearch-playground","portfolio-forever","convex-playground","fulala-menu-print","portfolio_2026","clean-writer","symphony-setup","breakdex-flutter","mymind-clone","mermaid-cli-claude-code-plan","fulala-live-menu","mengxuanzou.com"],"scores":[53.7,50.1,49.1,48.4,47,46.6,46.4,45.9,45.1,44.9,44.7,44.3,44.2,44.1,44.1],"counts":[13,23,6,36,9,17,11,6,223,27,300,63,13,129,8]};
+const antiPatterns = {"labels":["terse-implicit","meta-overload","multi-project-thrash","boilerplate-paste","kitchen-sink","vague-opener","no-new-info","frustration-signal","context-amnesia","still-not-working"],"counts":[209,203,151,143,125,72,40,15,13,9],"percentages":[6.1,5.9,4.4,4.2,3.6,2.1,1.2,0.4,0.4,0.3]};
+const promptTypes = {"labels":["other","implement/build","fix/debug","review/analyze","run/test","update/modify"],"counts":[2824,328,161,54,39,38],"scores":[40.5,56.3,53.5,43.2,44.8,41]};
+const dayOfWeek = {"labels":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],"scores":[41.4,42.4,43.9,42.9,43.8,42.4,42.4],"counts":[408,399,367,535,463,579,693]};
+
+// ─── Theme ──────────────────────────────────────────────────────────────────
+
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+const gradeColors = {
+  'A+': '#2ea043', 'A': '#3fb950', 'A-': '#56d364',
+  'B+': '#1f6feb', 'B': '#388bfd', 'B-': '#58a6ff',
+  'C+': '#d29922', 'C': '#e3b341', 'C-': '#f0c84d',
+  'D+': '#da3633', 'D': '#f85149', 'D-': '#ff7b72',
+  'F': '#484f58'
+};
+
+const accent = '#58a6ff';
+const accentAlt = '#3fb950';
+const chartBg = 'rgba(88, 166, 255, 0.15)';
+const chartBorder = 'rgba(88, 166, 255, 0.8)';
+
+// ─── 1. Grade Doughnut ──────────────────────────────────────────────────────
+
+new Chart(document.getElementById('gradeChart'), {
+  type: 'doughnut',
+  data: {
+    labels: grades.labels,
+    datasets: [{
+      data: grades.counts,
+      backgroundColor: grades.labels.map(g => gradeColors[g] || '#484f58'),
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = ((ctx.parsed / total) * 100).toFixed(1);
+            return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─── 2. Score Histogram ─────────────────────────────────────────────────────
+
+new Chart(document.getElementById('histogramChart'), {
+  type: 'bar',
+  data: {
+    labels: histogram.labels,
+    datasets: [{
+      label: 'Prompts',
+      data: histogram.counts,
+      backgroundColor: chartBg,
+      borderColor: chartBorder,
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#21262d' } }
+    }
+  }
+});
+
+// ─── 3. Dimension Radar ─────────────────────────────────────────────────────
+
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: dimensions.labels,
+    datasets: [
+      {
+        label: 'Your Average',
+        data: dimensions.yours,
+        backgroundColor: 'rgba(88, 166, 255, 0.2)',
+        borderColor: accent,
+        borderWidth: 2,
+        pointBackgroundColor: accent,
+        pointRadius: 4
+      },
+      {
+        label: 'Top 0.01%',
+        data: dimensions.benchmark,
+        backgroundColor: 'rgba(63, 185, 80, 0.1)',
+        borderColor: accentAlt,
+        borderWidth: 2,
+        borderDash: [5, 5],
+        pointBackgroundColor: accentAlt,
+        pointRadius: 3
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      r: {
+        beginAtZero: true,
+        max: 100,
+        ticks: { stepSize: 20, backdropColor: 'transparent' },
+        grid: { color: '#21262d' },
+        angleLines: { color: '#21262d' },
+        pointLabels: { font: { size: 11 } }
+      }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } }
+    }
+  }
+});
+
+// ─── 4. Benchmark Grouped Bar ───────────────────────────────────────────────
+
+new Chart(document.getElementById('benchmarkChart'), {
+  type: 'bar',
+  data: {
+    labels: dimensions.labels,
+    datasets: [
+      {
+        label: 'Your Average',
+        data: dimensions.yours,
+        backgroundColor: 'rgba(88, 166, 255, 0.6)',
+        borderColor: accent,
+        borderWidth: 1,
+        borderRadius: 4
+      },
+      {
+        label: 'Top 0.01%',
+        data: dimensions.benchmark,
+        backgroundColor: 'rgba(63, 185, 80, 0.3)',
+        borderColor: accentAlt,
+        borderWidth: 1,
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => {
+            if (ctx.datasetIndex === 0) {
+              const gap = dimensions.benchmark[ctx.dataIndex] - ctx.parsed.y;
+              return gap > 0 ? `Gap: ${gap.toFixed(1)} pts` : 'At or above benchmark';
+            }
+            return '';
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─── 5. Monthly Trend ───────────────────────────────────────────────────────
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'line',
+  data: {
+    labels: monthly.labels,
+    datasets: [{
+      label: 'Avg Composite',
+      data: monthly.scores,
+      borderColor: accent,
+      backgroundColor: chartBg,
+      borderWidth: 2,
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointBackgroundColor: accent
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#21262d' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => `Prompts: ${monthly.counts[ctx.dataIndex]}`
+        }
+      }
+    }
+  }
+});
+
+// ─── 6. Hourly Performance ──────────────────────────────────────────────────
+
+new Chart(document.getElementById('hourlyChart'), {
+  type: 'bar',
+  data: {
+    labels: hourly.labels,
+    datasets: [{
+      label: 'Avg Score',
+      data: hourly.scores,
+      backgroundColor: hourly.scores.map(s =>
+        s === 0 ? 'transparent' :
+        s >= 55 ? 'rgba(63, 185, 80, 0.5)' :
+        s >= 45 ? 'rgba(88, 166, 255, 0.5)' :
+        'rgba(210, 153, 34, 0.5)'
+      ),
+      borderColor: hourly.scores.map(s =>
+        s === 0 ? 'transparent' :
+        s >= 55 ? '#3fb950' :
+        s >= 45 ? accent :
+        '#d29922'
+      ),
+      borderWidth: 1,
+      borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } },
+      y: { beginAtZero: true, grid: { color: '#21262d' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => `Prompts: ${hourly.counts[ctx.dataIndex]}`
+        }
+      }
+    }
+  }
+});
+
+// ─── 7. Top Projects ────────────────────────────────────────────────────────
+
+new Chart(document.getElementById('projectChart'), {
+  type: 'bar',
+  data: {
+    labels: projects.labels,
+    datasets: [{
+      label: 'Avg Score',
+      data: projects.scores,
+      backgroundColor: projects.scores.map(s =>
+        s >= 55 ? 'rgba(63, 185, 80, 0.5)' :
+        s >= 45 ? 'rgba(88, 166, 255, 0.5)' :
+        'rgba(210, 153, 34, 0.5)'
+      ),
+      borderColor: projects.scores.map(s =>
+        s >= 55 ? '#3fb950' :
+        s >= 45 ? accent :
+        '#d29922'
+      ),
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { beginAtZero: true, max: 80, grid: { color: '#21262d' } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => `Prompts: ${projects.counts[ctx.dataIndex]}`
+        }
+      }
+    }
+  }
+});
+
+// ─── 8. Anti-patterns ───────────────────────────────────────────────────────
+
+new Chart(document.getElementById('antiPatternChart'), {
+  type: 'bar',
+  data: {
+    labels: antiPatterns.labels,
+    datasets: [{
+      label: 'Occurrences',
+      data: antiPatterns.counts,
+      backgroundColor: 'rgba(248, 81, 73, 0.4)',
+      borderColor: '#f85149',
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#21262d' } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => `${antiPatterns.percentages[ctx.dataIndex]}% of prompts`
+        }
+      }
+    }
+  }
+});
+
+// ─── 9. Prompt Type Pie ─────────────────────────────────────────────────────
+
+const typeColors = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff', '#484f58'];
+new Chart(document.getElementById('promptTypeChart'), {
+  type: 'pie',
+  data: {
+    labels: promptTypes.labels,
+    datasets: [{
+      data: promptTypes.counts,
+      backgroundColor: typeColors.slice(0, promptTypes.labels.length),
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'right', labels: { padding: 10, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = ((ctx.parsed / total) * 100).toFixed(1);
+            const avgScore = promptTypes.scores[ctx.dataIndex];
+            return ` ${ctx.label}: ${ctx.parsed} (${pct}%) — avg ${avgScore}`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─── 10. Day of Week ────────────────────────────────────────────────────────
+
+new Chart(document.getElementById('dayOfWeekChart'), {
+  type: 'bar',
+  data: {
+    labels: dayOfWeek.labels,
+    datasets: [{
+      label: 'Avg Score',
+      data: dayOfWeek.scores,
+      backgroundColor: dayOfWeek.scores.map(s =>
+        s === 0 ? 'transparent' :
+        s >= 55 ? 'rgba(63, 185, 80, 0.5)' :
+        s >= 45 ? 'rgba(88, 166, 255, 0.5)' :
+        'rgba(210, 153, 34, 0.5)'
+      ),
+      borderColor: dayOfWeek.scores.map(s =>
+        s === 0 ? 'transparent' :
+        s >= 55 ? '#3fb950' :
+        s >= 45 ? accent :
+        '#d29922'
+      ),
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#21262d' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => `Prompts: ${dayOfWeek.counts[ctx.dataIndex]}`
+        }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

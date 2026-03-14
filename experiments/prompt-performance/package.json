@@ -1,0 +1,14 @@
+{
+  "name": "prompt-performance",
+  "version": "1.0.0",
+  "description": "Prompt performance analyzer — scores every substantive Claude Code prompt across 10 dimensions",
+  "scripts": {
+    "fetch": "bun run src/fetch_data.ts",
+    "score": "bun run src/scoring.ts",
+    "analyze": "bun run src/analyze_results.ts",
+    "visualize": "bun run src/visualize.ts",
+    "keywords": "bun run src/keyword_analysis.ts",
+    "all": "bun run fetch && bun run score && bun run analyze"
+  },
+  "type": "module"
+}
