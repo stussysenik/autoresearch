@@ -1,0 +1,57 @@
+[
+  {
+    "id": "card-001",
+    "type": "article",
+    "title": "Building Event-Driven Systems with Kafka",
+    "content": "Apache Kafka has become the backbone of modern event-driven architectures. In this guide, we explore patterns for building reliable microservices using Kafka as the central message broker. Topics covered include consumer groups, exactly-once semantics, and schema evolution with Avro.",
+    "url": "https://medium.com/tech/kafka-event-driven",
+    "image_url": null,
+    "tags": ["kafka", "microservices", "dark-mode"],
+    "metadata": {"platform": "medium"},
+    "created_at": "2026-01-15T10:30:00Z"
+  },
+  {
+    "id": "card-002",
+    "type": "social",
+    "title": "Andrej Karpathy on LLM training",
+    "content": "Thread: The most underrated aspect of LLM training is data quality. You can throw 10x more compute at bad data and still lose to a smaller model trained on curated data. This is why synthetic data generation is so important.",
+    "url": "https://x.com/karpathy/status/123456",
+    "image_url": null,
+    "tags": ["ai", "machine-learning"],
+    "metadata": {"platform": "twitter"},
+    "created_at": "2026-02-01T14:00:00Z"
+  },
+  {
+    "id": "card-003",
+    "type": "image",
+    "title": "Brutalist Architecture in Tokyo",
+    "content": "A striking photograph of the National Museum of Western Art designed by Le Corbusier. The raw concrete surfaces and geometric forms exemplify the brutalist movement.",
+    "url": "https://instagram.com/p/abc123",
+    "image_url": "https://example.com/brutalist.jpg",
+    "tags": ["architecture", "brutalist"],
+    "metadata": {"platform": "instagram"},
+    "created_at": "2026-02-10T09:00:00Z"
+  },
+  {
+    "id": "card-004",
+    "type": "video",
+    "title": "Breaking Down the Ollie Technique",
+    "content": "A step-by-step tutorial on how to perform a clean ollie. Covers foot placement, timing, and common mistakes beginners make.",
+    "url": "https://youtube.com/watch?v=xyz789",
+    "image_url": null,
+    "tags": ["skateboarding", "tutorial"],
+    "metadata": {"platform": "youtube"},
+    "created_at": "2026-02-15T16:00:00Z"
+  },
+  {
+    "id": "card-005",
+    "type": "article",
+    "title": "The Mathematics of Origami",
+    "content": "How computational geometry and origami intersect. Explores Huzita-Hatori axioms and their applications in engineering, from solar panel deployment to medical stent design.",
+    "url": "https://example.com/origami-math",
+    "image_url": null,
+    "tags": ["mathematics", "origami"],
+    "metadata": {"platform": "unknown"},
+    "created_at": "2026-03-01T12:00:00Z"
+  }
+]

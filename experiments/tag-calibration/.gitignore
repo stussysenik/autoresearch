@@ -1,0 +1,25 @@
+# Data (generated, potentially large)
+data/
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Storybook
+storybook/node_modules/
+storybook/storybook-static/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

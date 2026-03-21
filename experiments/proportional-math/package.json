@@ -1,0 +1,16 @@
+{
+  "name": "proportional-math",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Validate geometric ratio scales for UI spacing/sizing across 6 mathematical ratios",
+  "scripts": {
+    "fetch": "bun run src/fetch_data.ts",
+    "run": "bun run src/run_experiment.ts",
+    "analyze": "bun run src/analyze_results.ts",
+    "experiment": "bun run fetch && bun run run && bun run analyze"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.3.0"
+  }
+}

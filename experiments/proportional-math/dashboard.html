@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proportional Math — Ratio Comparison</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-2: #1a1a1e;
+    --border: #2a2a30;
+    --text: #e4e4e7;
+    --dim: #71717a;
+    --gold: #d4a017;
+    --gold-glow: #f5c842;
+    --cyan: #22d3ee;
+    --green: #4ade80;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 48px 24px; }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  header::before {
+    content: 'φ √2 π';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 100px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.04;
+    letter-spacing: 8px;
+    pointer-events: none;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--gold);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .subtitle { color: var(--dim); font-size: 13px; font-weight: 300; }
+
+  .formula-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin: 24px 0 48px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .formula-item {
+    text-align: center;
+  }
+
+  .formula-item .f { font-size: 16px; color: var(--gold); }
+  .formula-item .desc { font-size: 10px; color: var(--dim); margin-top: 4px; letter-spacing: 1px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+  .variant-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .variant-card:hover { border-color: var(--dim); }
+
+  .variant-card.winner {
+    border-color: var(--gold);
+    box-shadow: 0 0 40px -10px rgba(212, 160, 23, 0.25);
+    grid-column: 1 / -1;
+  }
+
+  .variant-card.winner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-glow), var(--gold));
+  }
+
+  .variant-card { position: relative; }
+
+  .variant-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .rank { font-size: 11px; color: var(--dim); }
+
+  .variant-header h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .badge {
+    padding: 2px 8px;
+    background: var(--gold);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .ratio-value { font-size: 12px; color: var(--cyan); }
+  .origin { font-size: 11px; color: var(--dim); margin-bottom: 16px; }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .metric-item {
+    background: var(--surface-2);
+    padding: 8px;
+    text-align: center;
+  }
+
+  .metric-label {
+    display: block;
+    font-size: 8px;
+    color: var(--dim);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+
+  .metric-val {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .metric-val.highlight { color: var(--gold); }
+
+  .scale-viz { margin-bottom: 12px; }
+
+  .scale-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 80px;
+  }
+
+  .bar {
+    flex: 1;
+    background: var(--cyan);
+    opacity: 0.6;
+    border-radius: 1px 1px 0 0;
+    min-width: 4px;
+    transition: opacity 0.2s;
+  }
+
+  .bar:hover { opacity: 1; }
+
+  .winner .bar { background: var(--gold); }
+
+  .derived-row {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--dim);
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .derived-row strong { color: var(--text); }
+
+  .preview-link {
+    display: block;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--cyan);
+    text-decoration: none;
+  }
+
+  .preview-link:hover { text-decoration: underline; }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--dim);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="tag">EXPERIMENT</div>
+    <h1>Proportional Math — Ratio Comparison</h1>
+    <p class="subtitle">6 geometric ratios × 14 scale steps × 4 components</p>
+  </header>
+
+  <div class="formula-bar">
+    <div class="formula-item"><div class="f">step(n) = x · y<sup>n</sup></div><div class="desc">GEOMETRIC SCALE</div></div>
+    <div class="formula-item"><div class="f">√y / y²</div><div class="desc">VERTICAL PAD</div></div>
+    <div class="formula-item"><div class="f">x / y</div><div class="desc">HORIZONTAL PAD</div></div>
+    <div class="formula-item"><div class="f">x · √y</div><div class="desc">BORDER RADIUS</div></div>
+  </div>
+
+  <div class="grid">
+    
+    <div class="variant-card winner">
+      <div class="variant-header">
+        <span class="rank">#1</span>
+        <h3>minor_third<span class="badge">BEST</span></h3>
+        <span class="ratio-value">y = 1.2000</span>
+      </div>
+      <div class="origin">Musical minor third (6:5)</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">14</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">20.0%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">76%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">92.7%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.482em"></div><div class="bar" style="height:4px" title="s-n3: 0.579em"></div><div class="bar" style="height:8.200424883636261px" title="s-n2: 0.694em"></div><div class="bar" style="height:13.277237702882395px" title="s-n1: 0.833em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:24.48980348748728px" title="s-1: 1.200em"></div><div class="bar" style="height:30.584685609271013px" title="s-2: 1.440em"></div><div class="bar" style="height:36.97294175550948px" title="s-3: 1.728em"></div><div class="bar" style="height:43.6281911251198px" title="s-4: 2.074em"></div><div class="bar" style="height:50.523631081793134px" title="s-5: 2.488em"></div><div class="bar" style="height:57.63291116517094px" title="s-6: 2.986em"></div><div class="bar" style="height:64.9308133634462px" title="s-7: 3.583em"></div><div class="bar" style="height:72.39373630128817px" title="s-8: 4.300em"></div><div class="bar" style="height:80px" title="s-9: 5.160em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.761</strong></span>
+        <span>h-pad: <strong>0.833</strong></span>
+        <span>radius: <strong>1.095</strong></span>
+      </div>
+
+      <a href="data/results/minor_third.html" class="preview-link">Open preview →</a>
+    </div>
+
+    <div class="variant-card ">
+      <div class="variant-header">
+        <span class="rank">#2</span>
+        <h3>major_third</h3>
+        <span class="ratio-value">y = 1.2500</span>
+      </div>
+      <div class="origin">Musical major third (5:4)</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">14</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">25.0%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">71%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">87.9%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.410em"></div><div class="bar" style="height:4px" title="s-n3: 0.512em"></div><div class="bar" style="height:6.047277715079279px" title="s-n2: 0.640em"></div><div class="bar" style="height:12.108758374787685px" title="s-n1: 0.800em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:25.827649861462312px" title="s-1: 1.250em"></div><div class="bar" style="height:33.410641212683196px" title="s-2: 1.563em"></div><div class="bar" style="height:41.415504497749716px" title="s-3: 1.953em"></div><div class="bar" style="height:49.79333411984126px" title="s-4: 2.441em"></div><div class="bar" style="height:58.49560611997318px" title="s-5: 3.052em"></div><div class="bar" style="height:67.47616218150591px" title="s-6: 3.815em"></div><div class="bar" style="height:76.6925402576268px" title="s-7: 4.768em"></div><div class="bar" style="height:86.10671604614063px" title="s-8: 5.960em"></div><div class="bar" style="height:95.68537196835965px" title="s-9: 7.451em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.716</strong></span>
+        <span>h-pad: <strong>0.800</strong></span>
+        <span>radius: <strong>1.118</strong></span>
+      </div>
+
+      <a href="data/results/major_third.html" class="preview-link">Open preview →</a>
+    </div>
+
+    <div class="variant-card ">
+      <div class="variant-header">
+        <span class="rank">#3</span>
+        <h3>perfect_fourth</h3>
+        <span class="ratio-value">y = 1.3333</span>
+      </div>
+      <div class="origin">Musical perfect fourth (4:3)</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">14</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">33.3%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">66%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">80.2%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.316em"></div><div class="bar" style="height:4px" title="s-n3: 0.422em"></div><div class="bar" style="height:4px" title="s-n2: 0.563em"></div><div class="bar" style="height:10.298625657880326px" title="s-n1: 0.750em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:27.974663404093842px" title="s-1: 1.333em"></div><div class="bar" style="height:37.99272608119813px" title="s-2: 1.778em"></div><div class="bar" style="height:48.665057976914035px" title="s-3: 2.370em"></div><div class="bar" style="height:59.88735338487278px" title="s-4: 3.160em"></div><div class="bar" style="height:71.56101999547252px" title="s-5: 4.214em"></div><div class="bar" style="height:83.59792319211988px" title="s-6: 5.619em"></div><div class="bar" style="height:95.9225329175996px" title="s-7: 7.492em"></div><div class="bar" style="height:108.47216963216445px" title="s-8: 9.989em"></div><div class="bar" style="height:121.1960786168776px" title="s-9: 13.318em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.650</strong></span>
+        <span>h-pad: <strong>0.750</strong></span>
+        <span>radius: <strong>1.155</strong></span>
+      </div>
+
+      <a href="data/results/perfect_fourth.html" class="preview-link">Open preview →</a>
+    </div>
+
+    <div class="variant-card ">
+      <div class="variant-header">
+        <span class="rank">#4</span>
+        <h3>sqrt2</h3>
+        <span class="ratio-value">y = 1.4142</span>
+      </div>
+      <div class="origin">Square root of 2</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">13</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">41.4%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">61%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">70.2%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.250em"></div><div class="bar" style="height:4px" title="s-n3: 0.354em"></div><div class="bar" style="height:4px" title="s-n2: 0.500em"></div><div class="bar" style="height:8.687113240058851px" title="s-n1: 0.707em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:29.96711448547993px" title="s-1: 1.414em"></div><div class="bar" style="height:42.28907887223447px" title="s-2: 2.000em"></div><div class="bar" style="height:55.49833644337716px" title="s-3: 2.828em"></div><div class="bar" style="height:69.41688423729764px" title="s-4: 4.000em"></div><div class="bar" style="height:83.88515580000632px" title="s-5: 5.657em"></div><div class="bar" style="height:98.7693355740759px" title="s-6: 8.000em"></div><div class="bar" style="height:113.96247107969855px" title="s-7: 11.314em"></div><div class="bar" style="height:129.38200085574564px" title="s-8: 16.000em"></div><div class="bar" style="height:144.96577015899751px" title="s-9: 22.627em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.595</strong></span>
+        <span>h-pad: <strong>0.707</strong></span>
+        <span>radius: <strong>1.189</strong></span>
+      </div>
+
+      <a href="data/results/sqrt2.html" class="preview-link">Open preview →</a>
+    </div>
+
+    <div class="variant-card ">
+      <div class="variant-header">
+        <span class="rank">#5</span>
+        <h3>perfect_fifth</h3>
+        <span class="ratio-value">y = 1.5000</span>
+      </div>
+      <div class="origin">Musical perfect fifth (3:2)</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">13</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">50.0%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">58%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">62.9%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.198em"></div><div class="bar" style="height:4px" title="s-n3: 0.296em"></div><div class="bar" style="height:4px" title="s-n2: 0.444em"></div><div class="bar" style="height:7.114434349990564px" title="s-n1: 0.667em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:31.990453214354137px" title="s-1: 1.500em"></div><div class="bar" style="height:46.687878915565584px" title="s-2: 2.250em"></div><div class="bar" style="height:62.51562563909481px" title="s-3: 3.375em"></div><div class="bar" style="height:79.199834494543px" title="s-4: 5.063em"></div><div class="bar" style="height:96.50906438391253px" title="s-5: 7.594em"></div><div class="bar" style="height:114.2619858352459px" title="s-6: 11.391em"></div><div class="bar" style="height:132.32372207646694px" title="s-7: 17.086em"></div><div class="bar" style="height:150.59745234985px" title="s-8: 25.629em"></div><div class="bar" style="height:169.01533535674548px" title="s-9: 38.443em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.544</strong></span>
+        <span>h-pad: <strong>0.667</strong></span>
+        <span>radius: <strong>1.225</strong></span>
+      </div>
+
+      <a href="data/results/perfect_fifth.html" class="preview-link">Open preview →</a>
+    </div>
+
+    <div class="variant-card ">
+      <div class="variant-header">
+        <span class="rank">#6</span>
+        <h3>phi</h3>
+        <span class="ratio-value">y = 1.6180</span>
+      </div>
+      <div class="origin">Golden ratio</div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <span class="metric-label">DENSITY</span>
+          <span class="metric-val">11</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">MAX GAP</span>
+          <span class="metric-val">61.8%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">ALIGNMENT</span>
+          <span class="metric-val">53%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">COMPOSITE</span>
+          <span class="metric-val highlight">47.4%</span>
+        </div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-bars">
+          <div class="bar" style="height:4px" title="s-n4: 0.146em"></div><div class="bar" style="height:4px" title="s-n3: 0.236em"></div><div class="bar" style="height:4px" title="s-n2: 0.382em"></div><div class="bar" style="height:5.149312828940165px" title="s-n1: 0.618em"></div><div class="bar" style="height:18.713215511471745px" title="s-0: 1.000em"></div><div class="bar" style="height:34.63688715797771px" title="s-1: 1.618em"></div><div class="bar" style="height:52.48471013772105px" title="s-2: 2.618em"></div><div class="bar" style="height:71.77665320127201px" title="s-3: 4.236em"></div><div class="bar" style="height:92.0860928669068px" title="s-4: 6.854em"></div><div class="bar" style="height:113.08080782583335px" title="s-5: 11.090em"></div><div class="bar" style="height:134.52308470587076px" title="s-6: 17.944em"></div><div class="bar" style="height:156.2518165533472px" title="s-7: 29.034em"></div><div class="bar" style="height:178.16151824833412px" title="s-8: 46.979em"></div><div class="bar" style="height:200.1846091305326px" title="s-9: 76.013em"></div>
+        </div>
+      </div>
+
+      <div class="derived-row">
+        <span>v-pad: <strong>0.486</strong></span>
+        <span>h-pad: <strong>0.618</strong></span>
+        <span>radius: <strong>1.272</strong></span>
+      </div>
+
+      <a href="data/results/phi.html" class="preview-link">Open preview →</a>
+    </div>
+  </div>
+
+  <footer>
+    Proportional Math Experiment — ratio.css — Generated 2026-03-21
+  </footer>
+</div>
+</body>
+</html>

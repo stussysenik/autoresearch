@@ -20,6 +20,13 @@ queue/
 CLAUDE.md
 AGENTS.md
 
+# Claude Code / Superpowers (local session data)
+.claude/
+.superpowers/
+
+# OS artifacts
+.DS_Store
+
 # Experimental code/artifacts
 dev/
 

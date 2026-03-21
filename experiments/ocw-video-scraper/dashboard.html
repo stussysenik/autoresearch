@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCW Scraper Benchmark</title>
+<style>
+
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-2: #1a1a1e;
+    --border: #2a2a30;
+    --text: #e4e4e7;
+    --text-dim: #71717a;
+    --mit-red: #a31f34;
+    --mit-red-glow: #ff2d4f;
+    --accent: #22d3ee;
+    --green: #4ade80;
+    --amber: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  /* Navigation */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    transition: color 0.2s, border-color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+
+  nav a:hover { color: var(--text); }
+  nav a.active {
+    color: var(--mit-red-glow);
+    border-bottom-color: var(--mit-red);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  header::before {
+    content: 'MIT OCW';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 120px;
+    font-weight: 700;
+    color: var(--mit-red);
+    opacity: 0.04;
+    letter-spacing: -4px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--mit-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  footer a {
+    color: var(--mit-red);
+    text-decoration: none;
+  }
+
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--text-dim); }
+
+  .card.winner {
+    border-color: var(--mit-red);
+    box-shadow: 0 0 40px -10px rgba(163, 31, 52, 0.3);
+  }
+
+  .card.winner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--mit-red), var(--mit-red-glow), var(--mit-red));
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .rank { font-size: 11px; color: var(--text-dim); font-weight: 300; }
+
+  .card-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: var(--mit-red);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    vertical-align: middle;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .metric { margin-bottom: 16px; }
+
+  .metric .label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .metric .value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+
+  .metric .value small {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  .bar-track {
+    height: 4px;
+    background: var(--surface-2);
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .bar.time { background: linear-gradient(90deg, var(--accent), var(--amber)); }
+  .bar.throughput { background: linear-gradient(90deg, var(--green), var(--accent)); }
+  .winner .bar.time { background: linear-gradient(90deg, var(--mit-red), var(--mit-red-glow)); }
+  .winner .bar.throughput { background: linear-gradient(90deg, var(--mit-red), var(--mit-red-glow)); }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mini .label {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .mini .value { font-size: 16px; font-weight: 500; }
+  .mini .value small { font-size: 11px; color: var(--text-dim); }
+  .mini .value.error { color: var(--mit-red-glow); }
+
+  .swift-callout {
+    margin-top: 32px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+  }
+
+  .swift-callout h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+
+  .swift-callout p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .swift-callout code {
+    color: var(--text);
+    background: var(--surface-2);
+    padding: 1px 6px;
+  }
+</style>
+</head>
+<body>
+<nav>
+    <a href="dashboard.html" class="active">Benchmark</a>
+    <a href="reels.html" class="">Reels Feed</a>
+    <a href="courses.html" class="">Courses</a>
+  </nav>
+<div class="container">
+  <header>
+    <div class="tag">EXPERIMENT</div>
+    <h1>OCW Video Scraper Benchmark</h1>
+    <p class="subtitle">4 strategies. 13410 total requests. 680 videos discovered.</p>
+  </header>
+
+  <div class="cards">
+    
+      <div class="card winner">
+        <div class="card-header">
+          <span class="rank">#1</span>
+          <h3>parallel-32<span class="badge">FASTEST</span></h3>
+        </div>
+        <div class="metrics">
+          <div class="metric">
+            <span class="label">WALL CLOCK</span>
+            <span class="value">31.1<small>s</small></span>
+            <div class="bar-track"><div class="bar time" style="width: 100%"></div></div>
+          </div>
+          <div class="metric">
+            <span class="label">THROUGHPUT</span>
+            <span class="value">21.86<small>v/s</small></span>
+            <div class="bar-track"><div class="bar throughput" style="width: 100%"></div></div>
+          </div>
+          <div class="metric-row">
+            <div class="mini">
+              <span class="label">VIDEOS</span>
+              <span class="value">680</span>
+            </div>
+            <div class="mini">
+              <span class="label">REQUESTS</span>
+              <span class="value">13410</span>
+            </div>
+            <div class="mini">
+              <span class="label">DATA</span>
+              <span class="value">915351<small>KB</small></span>
+            </div>
+            <div class="mini">
+              <span class="label">ERRORS</span>
+              <span class="value error">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div class="swift-callout">
+    <h4>Swift Implementation Ready</h4>
+    <p>
+      The winning <code>parallel-32</code> strategy has been ported to
+      <code>swift/OCWScraper.swift</code> using <code>URLSession</code> +
+      <code>async/await</code> + <code>TaskGroup</code>. Drop it into the
+      mit-ocw-reels Xcode project to scrape the full catalog on-device.
+    </p>
+  </div>
+
+  <footer>
+    OCW Video Scraper Experiment &mdash; Generated 2026-03-21
+  </footer>
+</div>
+</body>
+</html>

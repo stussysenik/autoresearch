@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCW Course Catalog</title>
+<style>
+
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-2: #1a1a1e;
+    --border: #2a2a30;
+    --text: #e4e4e7;
+    --text-dim: #71717a;
+    --mit-red: #a31f34;
+    --mit-red-glow: #ff2d4f;
+    --accent: #22d3ee;
+    --green: #4ade80;
+    --amber: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  /* Navigation */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    transition: color 0.2s, border-color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+
+  nav a:hover { color: var(--text); }
+  nav a.active {
+    color: var(--mit-red-glow);
+    border-bottom-color: var(--mit-red);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  header::before {
+    content: 'MIT OCW';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 120px;
+    font-weight: 700;
+    color: var(--mit-red);
+    opacity: 0.04;
+    letter-spacing: -4px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--mit-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  footer a {
+    color: var(--mit-red);
+    text-decoration: none;
+  }
+
+
+  .container { max-width: 1100px; }
+
+  .stats {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat .num {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+
+  .stat .num.highlight { color: var(--mit-red-glow); }
+
+  .stat .lbl {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .controls input,
+  .controls select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .controls input {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .controls input:focus,
+  .controls select:focus {
+    outline: none;
+    border-color: var(--mit-red);
+  }
+
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  .controls input[type="checkbox"] {
+    min-width: auto;
+    flex: none;
+    accent-color: var(--mit-red);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th:hover { color: var(--text); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface); }
+
+  td {
+    padding: 10px 12px;
+    vertical-align: middle;
+  }
+
+  .col-number {
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .col-name a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .col-name a:hover {
+    color: var(--mit-red-glow);
+    text-decoration: underline;
+  }
+
+  .col-sem {
+    color: var(--text-dim);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .col-videos { text-align: center; }
+
+  .video-badge {
+    display: inline-block;
+    background: var(--mit-red);
+    color: white;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .no-videos {
+    color: var(--border);
+    font-size: 14px;
+  }
+
+  .results-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+<nav>
+    <a href="dashboard.html" class="">Benchmark</a>
+    <a href="reels.html" class="">Reels Feed</a>
+    <a href="courses.html" class="active">Courses</a>
+  </nav>
+<div class="container">
+  <header>
+    <div class="tag">CATALOG</div>
+    <h1>MIT OCW Courses</h1>
+    <p class="subtitle">Consolidated view of all indexed courses</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num">2,569</div>
+      <div class="lbl">TOTAL IN INDEX</div>
+    </div>
+    <div class="stat">
+      <div class="num">200</div>
+      <div class="lbl">SAMPLED</div>
+    </div>
+    <div class="stat">
+      <div class="num highlight">41</div>
+      <div class="lbl">WITH VIDEOS</div>
+    </div>
+    <div class="stat">
+      <div class="num highlight">680</div>
+      <div class="lbl">TOTAL VIDEOS</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search courses..." oninput="filterCourses()">
+    <select id="deptFilter" onchange="filterCourses()">
+      <option value="">All Departments</option>
+      <option value="1">1</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="2">2</option>
+        <option value="20">20</option>
+        <option value="21A">21A</option>
+        <option value="21G">21G</option>
+        <option value="21H">21H</option>
+        <option value="21L">21L</option>
+        <option value="21M">21M</option>
+        <option value="21W">21W</option>
+        <option value="22">22</option>
+        <option value="24">24</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="CC">CC</option>
+        <option value="CMS">CMS</option>
+        <option value="EC">EC</option>
+        <option value="ES">ES</option>
+        <option value="ESD">ESD</option>
+        <option value="HST">HST</option>
+        <option value="MAS">MAS</option>
+        <option value="OCW">OCW</option>
+        <option value="PE">PE</option>
+        <option value="RES">RES</option>
+    </select>
+    <label>
+      <input type="checkbox" id="videoOnly" onchange="filterCourses()">
+      Videos only
+    </label>
+  </div>
+
+  <div class="results-count" id="resultsCount">200 courses</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>COURSE</th>
+        <th>NAME</th>
+        <th>SEMESTER</th>
+        <th>VIDEOS</th>
+      </tr>
+    </thead>
+    <tbody id="courseTableBody">
+      
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18.01sc single variable calculus">
+          <td class="col-number">18.01SC</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/" target="_blank" rel="noopener">Single Variable Calculus</a>
+          </td>
+          <td class="col-sem">Fall 2010</td>
+          <td class="col-videos"><span class="video-badge">122</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.041sc probabilistic systems analysis and applied probability">
+          <td class="col-number">6.041SC</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-041sc-probabilistic-systems-analysis-and-applied-probability-fall-2013/" target="_blank" rel="noopener">Probabilistic Systems Analysis And Applied Probability</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="video-badge">76</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18.03sc differential equations">
+          <td class="col-number">18.03SC</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/" target="_blank" rel="noopener">Differential Equations</a>
+          </td>
+          <td class="col-sem">Fall 2011</td>
+          <td class="col-videos"><span class="video-badge">72</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.006 introduction to algorithms">
+          <td class="col-number">6.006</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/" target="_blank" rel="noopener">Introduction To Algorithms</a>
+          </td>
+          <td class="col-sem">Fall 2011</td>
+          <td class="col-videos"><span class="video-badge">47</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="5" data-has-video="1" data-search="5.07sc biological chemistry i">
+          <td class="col-number">5.07SC</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/5-07sc-biological-chemistry-i-fall-2013/" target="_blank" rel="noopener">Biological Chemistry I</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="video-badge">44</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.849 geometric folding algorithms linkages origami polyhedra">
+          <td class="col-number">6.849</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-849-geometric-folding-algorithms-linkages-origami-polyhedra-fall-2012/" target="_blank" rel="noopener">Geometric Folding Algorithms Linkages Origami Polyhedra</a>
+          </td>
+          <td class="col-sem">Fall 2012</td>
+          <td class="col-videos"><span class="video-badge">39</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="1" data-search="9.14 brain structure and its origins">
+          <td class="col-number">9.14</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-14-brain-structure-and-its-origins-spring-2014/" target="_blank" rel="noopener">Brain Structure And Its Origins</a>
+          </td>
+          <td class="col-sem">Spring 2014</td>
+          <td class="col-videos"><span class="video-badge">35</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="1" data-search="16.01 unified engineering i ii iii iv fall 2005">
+          <td class="col-number">16.01</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-01-unified-engineering-i-ii-iii-iv-fall-2005-spring-2006/" target="_blank" rel="noopener">Unified Engineering I Ii Iii Iv Fall 2005</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="video-badge">32</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="1" data-search="2.627 fundamentals of photovoltaics">
+          <td class="col-number">2.627</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-627-fundamentals-of-photovoltaics-fall-2013/" target="_blank" rel="noopener">Fundamentals Of Photovoltaics</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="video-badge">27</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.100l introduction to cs and programming using python">
+          <td class="col-number">6.100L</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-100l-introduction-to-cs-and-programming-using-python-fall-2022/" target="_blank" rel="noopener">Introduction To Cs And Programming Using Python</a>
+          </td>
+          <td class="col-sem">Fall 2022</td>
+          <td class="col-videos"><span class="video-badge">27</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.262 discrete stochastic processes">
+          <td class="col-number">6.262</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-262-discrete-stochastic-processes-spring-2011/" target="_blank" rel="noopener">Discrete Stochastic Processes</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="video-badge">25</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="MAS" data-has-video="1" data-search="mas s62 cryptocurrency engineering and design">
+          <td class="col-number">MAS</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/mas-s62-cryptocurrency-engineering-and-design-spring-2018/" target="_blank" rel="noopener">S62 Cryptocurrency Engineering And Design</a>
+          </td>
+          <td class="col-sem">Spring 2018</td>
+          <td class="col-videos"><span class="video-badge">20</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18.125 measure and integration">
+          <td class="col-number">18.125</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-125-measure-and-integration-fall-2003/" target="_blank" rel="noopener">Measure And Integration</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="video-badge">15</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="7" data-has-video="1" data-search="7.05 general biochemistry">
+          <td class="col-number">7.05</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/7-05-general-biochemistry-spring-2020/" target="_blank" rel="noopener">General Biochemistry</a>
+          </td>
+          <td class="col-sem">Spring 2020</td>
+          <td class="col-videos"><span class="video-badge">15</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18 s997 introduction to matlab programming">
+          <td class="col-number">18</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-s997-introduction-to-matlab-programming-fall-2011/" target="_blank" rel="noopener">S997 Introduction To Matlab Programming</a>
+          </td>
+          <td class="col-sem">Fall 2011</td>
+          <td class="col-videos"><span class="video-badge">12</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18 s190 introduction to metric spaces january">
+          <td class="col-number">18</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-s190-introduction-to-metric-spaces-january-iap-2023/" target="_blank" rel="noopener">S190 Introduction To Metric Spaces January</a>
+          </td>
+          <td class="col-sem">Iap 2023</td>
+          <td class="col-videos"><span class="video-badge">12</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="1" data-search="4.125 architecture studio building in landscapes">
+          <td class="col-number">4.125</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-125-architecture-studio-building-in-landscapes-fall-2002/" target="_blank" rel="noopener">Architecture Studio Building In Landscapes</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="video-badge">12</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="1" data-search="11.382 water diplomacy">
+          <td class="col-number">11.382</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-382-water-diplomacy-spring-2021/" target="_blank" rel="noopener">Water Diplomacy</a>
+          </td>
+          <td class="col-sem">Spring 2021</td>
+          <td class="col-videos"><span class="video-badge">6</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="1" data-search="17.951 special graduate topic in political science political behavior">
+          <td class="col-number">17.951</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-951-special-graduate-topic-in-political-science-political-behavior-fall-2005/" target="_blank" rel="noopener">Special Graduate Topic In Political Science Political Behavior</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="video-badge">6</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="1" data-search="21l.432 understanding television">
+          <td class="col-number">21L.432</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-432-understanding-television-spring-2003/" target="_blank" rel="noopener">Understanding Television</a>
+          </td>
+          <td class="col-sem">Spring 2003</td>
+          <td class="col-videos"><span class="video-badge">6</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21M" data-has-video="1" data-search="21m.542 interdisciplinary approaches to musical time january">
+          <td class="col-number">21M.542</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21m-542-interdisciplinary-approaches-to-musical-time-january-iap-2010/" target="_blank" rel="noopener">Interdisciplinary Approaches To Musical Time January</a>
+          </td>
+          <td class="col-sem">Iap 2010</td>
+          <td class="col-videos"><span class="video-badge">5</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="1" data-search="24.08j philosophical issues in brain science">
+          <td class="col-number">24.08J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-08j-philosophical-issues-in-brain-science-spring-2009/" target="_blank" rel="noopener">Philosophical Issues In Brain Science</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="video-badge">5</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.071j introduction to electronics signals and measurement">
+          <td class="col-number">6.071J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-071j-introduction-to-electronics-signals-and-measurement-spring-2006/" target="_blank" rel="noopener">Introduction To Electronics Signals And Measurement</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="video-badge">5</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="5" data-has-video="1" data-search="5.74 introductory quantum mechanics ii">
+          <td class="col-number">5.74</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/5-74-introductory-quantum-mechanics-ii-spring-2009/" target="_blank" rel="noopener">Introductory Quantum Mechanics Ii</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="video-badge">4</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="1" data-search="11.016j the once and future city">
+          <td class="col-number">11.016J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-016j-the-once-and-future-city-spring-2015/" target="_blank" rel="noopener">The Once And Future City</a>
+          </td>
+          <td class="col-sem">Spring 2015</td>
+          <td class="col-videos"><span class="video-badge">3</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18.996 topics in theoretical computer science internet research problems">
+          <td class="col-number">18.996</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-996-topics-in-theoretical-computer-science-internet-research-problems-spring-2002/" target="_blank" rel="noopener">Topics In Theoretical Computer Science Internet Research Problems</a>
+          </td>
+          <td class="col-sem">Spring 2002</td>
+          <td class="col-videos"><span class="video-badge">2</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="1" data-search="21h.931 seminar in historical methods">
+          <td class="col-number">21H.931</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-931-seminar-in-historical-methods-spring-2004/" target="_blank" rel="noopener">Seminar In Historical Methods</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="video-badge">2</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.827 multithreaded parallelism languages and compilers">
+          <td class="col-number">6.827</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-827-multithreaded-parallelism-languages-and-compilers-fall-2002/" target="_blank" rel="noopener">Multithreaded Parallelism Languages And Compilers</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="video-badge">2</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="ESD" data-has-video="1" data-search="esd.86 models data and inference for socio technical systems">
+          <td class="col-number">ESD.86</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/esd-86-models-data-and-inference-for-socio-technical-systems-spring-2007/" target="_blank" rel="noopener">Models Data And Inference For Socio Technical Systems</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="video-badge">2</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="1" data-has-video="1" data-search="1.151 probability and statistics in engineering">
+          <td class="col-number">1.151</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/1-151-probability-and-statistics-in-engineering-spring-2005/" target="_blank" rel="noopener">Probability And Statistics In Engineering</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="1" data-has-video="1" data-search="1.46 strategic management in the design and construction value chain">
+          <td class="col-number">1.46</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/1-46-strategic-management-in-the-design-and-construction-value-chain-fall-2003/" target="_blank" rel="noopener">Strategic Management In The Design And Construction Value Chain</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="1" data-search="12.110 sedimentary geology">
+          <td class="col-number">12.110</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-110-sedimentary-geology-spring-2007/" target="_blank" rel="noopener">Sedimentary Geology</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="1" data-search="12.740 paleoceanography">
+          <td class="col-number">12.740</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-740-paleoceanography-spring-2008/" target="_blank" rel="noopener">Paleoceanography</a>
+          </td>
+          <td class="col-sem">Spring 2008</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="1" data-search="15.835 entrepreneurial marketing">
+          <td class="col-number">15.835</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-835-entrepreneurial-marketing-spring-2002/" target="_blank" rel="noopener">Entrepreneurial Marketing</a>
+          </td>
+          <td class="col-sem">Spring 2002</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="1" data-search="16.423j aerospace biomedical and life support engineering">
+          <td class="col-number">16.423J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-423j-aerospace-biomedical-and-life-support-engineering-spring-2006/" target="_blank" rel="noopener">Aerospace Biomedical And Life Support Engineering</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="1" data-search="18.330 introduction to numerical analysis">
+          <td class="col-number">18.330</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-330-introduction-to-numerical-analysis-spring-2004/" target="_blank" rel="noopener">Introduction To Numerical Analysis</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21A" data-has-video="1" data-search="21a s01 reparations for slavery and colonization contemporary movements for justice">
+          <td class="col-number">21A</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21a-s01-reparations-for-slavery-and-colonization-contemporary-movements-for-justice-fall-2021/" target="_blank" rel="noopener">S01 Reparations For Slavery And Colonization Contemporary Movements For Justice</a>
+          </td>
+          <td class="col-sem">Fall 2021</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="1" data-search="21l.004 reading poetry social poetics">
+          <td class="col-number">21L.004</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-004-reading-poetry-social-poetics-spring-2023/" target="_blank" rel="noopener">Reading Poetry Social Poetics</a>
+          </td>
+          <td class="col-sem">Spring 2023</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="1" data-search="6.374 analysis and design of digital integrated circuits">
+          <td class="col-number">6.374</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-374-analysis-and-design-of-digital-integrated-circuits-fall-2003/" target="_blank" rel="noopener">Analysis And Design Of Digital Integrated Circuits</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="1" data-search="9.57j language acquisition">
+          <td class="col-number">9.57J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-57j-language-acquisition-fall-2001/" target="_blank" rel="noopener">Language Acquisition</a>
+          </td>
+          <td class="col-sem">Fall 2001</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="RES" data-has-video="1" data-search="res.15.005 healthcare finance 15 482x">
+          <td class="col-number">RES.15.005</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/res-15-005-healthcare-finance-15-482x-spring-2019/" target="_blank" rel="noopener">Healthcare Finance 15 482x</a>
+          </td>
+          <td class="col-sem">Spring 2019</td>
+          <td class="col-videos"><span class="video-badge">1</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="1" data-has-video="0" data-search="1.224j carrier systems">
+          <td class="col-number">1.224J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/1-224j-carrier-systems-fall-2003/" target="_blank" rel="noopener">Carrier Systems</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="1" data-has-video="0" data-search="1.252j urban transportation planning">
+          <td class="col-number">1.252J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/1-252j-urban-transportation-planning-fall-2016/" target="_blank" rel="noopener">Urban Transportation Planning</a>
+          </td>
+          <td class="col-sem">Fall 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="10" data-has-video="0" data-search="10.01 ethics for engineers artificial intelligence">
+          <td class="col-number">10.01</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/10-01-ethics-for-engineers-artificial-intelligence-spring-2020/" target="_blank" rel="noopener">Ethics For Engineers Artificial Intelligence</a>
+          </td>
+          <td class="col-sem">Spring 2020</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="10" data-has-video="0" data-search="10.34 numerical methods applied to chemical engineering">
+          <td class="col-number">10.34</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/10-34-numerical-methods-applied-to-chemical-engineering-fall-2005/" target="_blank" rel="noopener">Numerical Methods Applied To Chemical Engineering</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="10" data-has-video="0" data-search="10.492.1 integrated chemical engineering topics i process control by design">
+          <td class="col-number">10.492.1</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/10-492-1-integrated-chemical-engineering-topics-i-process-control-by-design-fall-2004/" target="_blank" rel="noopener">Integrated Chemical Engineering Topics I Process Control By Design</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="10" data-has-video="0" data-search="10.626 electrochemical energy systems">
+          <td class="col-number">10.626</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/10-626-electrochemical-energy-systems-spring-2014/" target="_blank" rel="noopener">Electrochemical Energy Systems</a>
+          </td>
+          <td class="col-sem">Spring 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11 s942 wanderings in psychogeography exploring landscapes of history biography memory culture nature poetry surreality fantasy and madness">
+          <td class="col-number">11</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-s942-wanderings-in-psychogeography-exploring-landscapes-of-history-biography-memory-culture-nature-poetry-surreality-fantasy-and-madness-fall-2020/" target="_blank" rel="noopener">S942 Wanderings In Psychogeography Exploring Landscapes Of History Biography Memory Culture Nature Poetry Surreality Fantasy And Madness</a>
+          </td>
+          <td class="col-sem">Fall 2020</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.125 introduction to education understanding and evaluating education">
+          <td class="col-number">11.125</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-125-introduction-to-education-understanding-and-evaluating-education-spring-2009/" target="_blank" rel="noopener">Introduction To Education Understanding And Evaluating Education</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.201 gateway planning action">
+          <td class="col-number">11.201</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-201-gateway-planning-action-fall-2005/" target="_blank" rel="noopener">Gateway Planning Action</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.233 research design for policy analysis and planning">
+          <td class="col-number">11.233</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-233-research-design-for-policy-analysis-and-planning-fall-2007/" target="_blank" rel="noopener">Research Design For Policy Analysis And Planning</a>
+          </td>
+          <td class="col-sem">Fall 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.310j media technology and city design and development">
+          <td class="col-number">11.310J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-310j-media-technology-and-city-design-and-development-fall-2002/" target="_blank" rel="noopener">Media Technology And City Design And Development</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.360 community growth and land use planning">
+          <td class="col-number">11.360</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-360-community-growth-and-land-use-planning-fall-2005/" target="_blank" rel="noopener">Community Growth And Land Use Planning</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.434j advanced topics in real estate finance">
+          <td class="col-number">11.434J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-434j-advanced-topics-in-real-estate-finance-spring-2007/" target="_blank" rel="noopener">Advanced Topics In Real Estate Finance</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.481j analyzing and accounting for regional economic growth">
+          <td class="col-number">11.481J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-481j-analyzing-and-accounting-for-regional-economic-growth-spring-2009/" target="_blank" rel="noopener">Analyzing And Accounting For Regional Economic Growth</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.941 urban climate adaptation">
+          <td class="col-number">11.941</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-941-urban-climate-adaptation-spring-2011/" target="_blank" rel="noopener">Urban Climate Adaptation</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.947 imaging the city the place of media in city design and development">
+          <td class="col-number">11.947</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-947-imaging-the-city-the-place-of-media-in-city-design-and-development-fall-1998/" target="_blank" rel="noopener">Imaging The City The Place Of Media In City Design And Development</a>
+          </td>
+          <td class="col-sem">Fall 1998</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="11" data-has-video="0" data-search="11.953 comparative land use and transportation planning">
+          <td class="col-number">11.953</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/11-953-comparative-land-use-and-transportation-planning-spring-2006/" target="_blank" rel="noopener">Comparative Land Use And Transportation Planning</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="0" data-search="12.007 geobiology">
+          <td class="col-number">12.007</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-007-geobiology-spring-2013/" target="_blank" rel="noopener">Geobiology</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="0" data-search="12.091 basics of analysis with antineutrinos from heat producing elements k u th in the earth january">
+          <td class="col-number">12.091</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-091-basics-of-analysis-with-antineutrinos-from-heat-producing-elements-k-u-th-in-the-earth-january-iap-2010/" target="_blank" rel="noopener">Basics Of Analysis With Antineutrinos From Heat Producing Elements K U Th In The Earth January</a>
+          </td>
+          <td class="col-sem">Iap 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="0" data-search="12.479 trace element geochemistry">
+          <td class="col-number">12.479</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-479-trace-element-geochemistry-spring-2013/" target="_blank" rel="noopener">Trace Element Geochemistry</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="0" data-search="12.803 quasi balanced circulations in oceans and atmospheres">
+          <td class="col-number">12.803</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-803-quasi-balanced-circulations-in-oceans-and-atmospheres-fall-2009/" target="_blank" rel="noopener">Quasi Balanced Circulations In Oceans And Atmospheres</a>
+          </td>
+          <td class="col-sem">Fall 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="12" data-has-video="0" data-search="12.950 atmospheric and oceanic modeling">
+          <td class="col-number">12.950</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/12-950-atmospheric-and-oceanic-modeling-spring-2004/" target="_blank" rel="noopener">Atmospheric And Oceanic Modeling</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="14" data-has-video="0" data-search="14.05 intermediate macroeconomics">
+          <td class="col-number">14.05</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/14-05-intermediate-macroeconomics-spring-2013/" target="_blank" rel="noopener">Intermediate Macroeconomics</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="14" data-has-video="0" data-search="14.147 topics in game theory">
+          <td class="col-number">14.147</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/14-147-topics-in-game-theory-fall-2009/" target="_blank" rel="noopener">Topics In Game Theory</a>
+          </td>
+          <td class="col-sem">Fall 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="14" data-has-video="0" data-search="14.384 time series analysis">
+          <td class="col-number">14.384</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/14-384-time-series-analysis-fall-2013/" target="_blank" rel="noopener">Time Series Analysis</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="14" data-has-video="0" data-search="14.462 advanced macroeconomics ii">
+          <td class="col-number">14.462</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/14-462-advanced-macroeconomics-ii-spring-2004/" target="_blank" rel="noopener">Advanced Macroeconomics Ii</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.014 applied macro and international economics ii">
+          <td class="col-number">15.014</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-014-applied-macro-and-international-economics-ii-spring-2016/" target="_blank" rel="noopener">Applied Macro And International Economics Ii</a>
+          </td>
+          <td class="col-sem">Spring 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.063 communicating with data">
+          <td class="col-number">15.063</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-063-communicating-with-data-summer-2003/" target="_blank" rel="noopener">Communicating With Data</a>
+          </td>
+          <td class="col-sem">Summer 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.097 prediction machine learning and statistics">
+          <td class="col-number">15.097</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-097-prediction-machine-learning-and-statistics-spring-2012/" target="_blank" rel="noopener">Prediction Machine Learning And Statistics</a>
+          </td>
+          <td class="col-sem">Spring 2012</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.269b literature ethics and authority">
+          <td class="col-number">15.269B</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-269b-literature-ethics-and-authority-fall-2002/" target="_blank" rel="noopener">Literature Ethics And Authority</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.316 building and leading effective teams">
+          <td class="col-number">15.316</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-316-building-and-leading-effective-teams-summer-2005/" target="_blank" rel="noopener">Building And Leading Effective Teams</a>
+          </td>
+          <td class="col-sem">Summer 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.352 managing innovation emerging trends">
+          <td class="col-number">15.352</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-352-managing-innovation-emerging-trends-spring-2005/" target="_blank" rel="noopener">Managing Innovation Emerging Trends</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.395 entrepreneurship without borders">
+          <td class="col-number">15.395</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-395-entrepreneurship-without-borders-fall-2016/" target="_blank" rel="noopener">Entrepreneurship Without Borders</a>
+          </td>
+          <td class="col-sem">Fall 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.515 financial accounting">
+          <td class="col-number">15.515</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-515-financial-accounting-fall-2003/" target="_blank" rel="noopener">Financial Accounting</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.598 it and business transformation">
+          <td class="col-number">15.598</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-598-it-and-business-transformation-spring-2003/" target="_blank" rel="noopener">It And Business Transformation</a>
+          </td>
+          <td class="col-sem">Spring 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.676 work employment and industrial relations theory">
+          <td class="col-number">15.676</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-676-work-employment-and-industrial-relations-theory-spring-2008/" target="_blank" rel="noopener">Work Employment And Industrial Relations Theory</a>
+          </td>
+          <td class="col-sem">Spring 2008</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.772j d lab supply chains">
+          <td class="col-number">15.772J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-772j-d-lab-supply-chains-fall-2014/" target="_blank" rel="noopener">D Lab Supply Chains</a>
+          </td>
+          <td class="col-sem">Fall 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.963 organizations as enacted systems learning knowing and change">
+          <td class="col-number">15.963</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-963-organizations-as-enacted-systems-learning-knowing-and-change-fall-2002/" target="_blank" rel="noopener">Organizations As Enacted Systems Learning Knowing And Change</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="15" data-has-video="0" data-search="15.990 architecture and communication in organizations">
+          <td class="col-number">15.990</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/15-990-architecture-and-communication-in-organizations-fall-2003/" target="_blank" rel="noopener">Architecture And Communication In Organizations</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="0" data-search="16 a47 the engineer of 2020">
+          <td class="col-number">16</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-a47-the-engineer-of-2020-fall-2009/" target="_blank" rel="noopener">A47 The Engineer Of 2020</a>
+          </td>
+          <td class="col-sem">Fall 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="0" data-search="16.30 feedback control systems">
+          <td class="col-number">16.30</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-30-feedback-control-systems-fall-2010/" target="_blank" rel="noopener">Feedback Control Systems</a>
+          </td>
+          <td class="col-sem">Fall 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="0" data-search="16.63j system safety">
+          <td class="col-number">16.63J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-63j-system-safety-spring-2016/" target="_blank" rel="noopener">System Safety</a>
+          </td>
+          <td class="col-sem">Spring 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="16" data-has-video="0" data-search="16.851 satellite engineering">
+          <td class="col-number">16.851</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/16-851-satellite-engineering-fall-2003/" target="_blank" rel="noopener">Satellite Engineering</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.251 congress and the american political system i">
+          <td class="col-number">17.251</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-251-congress-and-the-american-political-system-i-fall-2016/" target="_blank" rel="noopener">Congress And The American Political System I</a>
+          </td>
+          <td class="col-sem">Fall 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.408 chinese foreign policy">
+          <td class="col-number">17.408</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-408-chinese-foreign-policy-fall-2013/" target="_blank" rel="noopener">Chinese Foreign Policy</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.473 the politics of nuclear proliferation nuclear history strategy and statecraft">
+          <td class="col-number">17.473</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-473-the-politics-of-nuclear-proliferation-nuclear-history-strategy-and-statecraft-fall-2015/" target="_blank" rel="noopener">The Politics Of Nuclear Proliferation Nuclear History Strategy And Statecraft</a>
+          </td>
+          <td class="col-sem">Fall 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.506 ethnic politics">
+          <td class="col-number">17.506</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-506-ethnic-politics-fall-2024/" target="_blank" rel="noopener">Ethnic Politics</a>
+          </td>
+          <td class="col-sem">Fall 2024</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.524 nationalism">
+          <td class="col-number">17.524</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-524-nationalism-fall-2004/" target="_blank" rel="noopener">Nationalism</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="17" data-has-video="0" data-search="17.588 field seminar in comparative politics">
+          <td class="col-number">17.588</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/17-588-field-seminar-in-comparative-politics-fall-2013/" target="_blank" rel="noopener">Field Seminar In Comparative Politics</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.098 street fighting mathematics january">
+          <td class="col-number">18.098</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-098-street-fighting-mathematics-january-iap-2008/" target="_blank" rel="noopener">Street Fighting Mathematics January</a>
+          </td>
+          <td class="col-sem">Iap 2008</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.238 geometry and quantum field theory">
+          <td class="col-number">18.238</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-238-geometry-and-quantum-field-theory-spring-2023/" target="_blank" rel="noopener">Geometry And Quantum Field Theory</a>
+          </td>
+          <td class="col-sem">Spring 2023</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.305 advanced analytic methods in science and engineering">
+          <td class="col-number">18.305</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-305-advanced-analytic-methods-in-science-and-engineering-fall-2004/" target="_blank" rel="noopener">Advanced Analytic Methods In Science And Engineering</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.385j nonlinear dynamics and chaos">
+          <td class="col-number">18.385J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-385j-nonlinear-dynamics-and-chaos-fall-2014/" target="_blank" rel="noopener">Nonlinear Dynamics And Chaos</a>
+          </td>
+          <td class="col-sem">Fall 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.443 statistics for applications">
+          <td class="col-number">18.443</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-443-statistics-for-applications-spring-2015/" target="_blank" rel="noopener">Statistics For Applications</a>
+          </td>
+          <td class="col-sem">Spring 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.702 algebra ii">
+          <td class="col-number">18.702</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-702-algebra-ii-spring-2011/" target="_blank" rel="noopener">Algebra Ii</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.755 introduction to lie groups">
+          <td class="col-number">18.755</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-755-introduction-to-lie-groups-fall-2004/" target="_blank" rel="noopener">Introduction To Lie Groups</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="18" data-has-video="0" data-search="18.905 algebraic topology i">
+          <td class="col-number">18.905</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/18-905-algebraic-topology-i-fall-2016/" target="_blank" rel="noopener">Algebraic Topology I</a>
+          </td>
+          <td class="col-sem">Fall 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.003j dynamics and control i">
+          <td class="col-number">2.003J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-003j-dynamics-and-control-i-spring-2007/" target="_blank" rel="noopener">Dynamics And Control I</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.062j wave propagation">
+          <td class="col-number">2.062J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-062j-wave-propagation-spring-2017/" target="_blank" rel="noopener">Wave Propagation</a>
+          </td>
+          <td class="col-sem">Spring 2017</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.094 finite element analysis of solids and fluids ii">
+          <td class="col-number">2.094</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-094-finite-element-analysis-of-solids-and-fluids-ii-spring-2011/" target="_blank" rel="noopener">Finite Element Analysis Of Solids And Fluids Ii</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.22 design principles for ocean vehicles 13 42">
+          <td class="col-number">2.22</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-22-design-principles-for-ocean-vehicles-13-42-spring-2005/" target="_blank" rel="noopener">Design Principles For Ocean Vehicles 13 42</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.25 advanced fluid mechanics">
+          <td class="col-number">2.25</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-25-advanced-fluid-mechanics-fall-2013/" target="_blank" rel="noopener">Advanced Fluid Mechanics</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.29 numerical fluid mechanics">
+          <td class="col-number">2.29</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-29-numerical-fluid-mechanics-spring-2015/" target="_blank" rel="noopener">Numerical Fluid Mechanics</a>
+          </td>
+          <td class="col-sem">Spring 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.75 precision machine design">
+          <td class="col-number">2.75</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/" target="_blank" rel="noopener">Precision Machine Design</a>
+          </td>
+          <td class="col-sem">Fall 2001</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.782j design of medical devices and implants">
+          <td class="col-number">2.782J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-782j-design-of-medical-devices-and-implants-spring-2025/" target="_blank" rel="noopener">Design Of Medical Devices And Implants</a>
+          </td>
+          <td class="col-sem">Spring 2025</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="2" data-has-video="0" data-search="2.971.2nd summer introduction to design january">
+          <td class="col-number">2.971.2ND</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/2-971-2nd-summer-introduction-to-design-january-iap-2003/" target="_blank" rel="noopener">Summer Introduction To Design January</a>
+          </td>
+          <td class="col-sem">Iap 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="20" data-has-video="0" data-search="20.102 macroepidemiology be 102">
+          <td class="col-number">20.102</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/20-102-macroepidemiology-be-102-spring-2005/" target="_blank" rel="noopener">Macroepidemiology Be 102</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="20" data-has-video="0" data-search="20.201 mechanisms of drug actions">
+          <td class="col-number">20.201</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/20-201-mechanisms-of-drug-actions-fall-2013/" target="_blank" rel="noopener">Mechanisms Of Drug Actions</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="20" data-has-video="0" data-search="20.416j topics in biophysics and physical biology">
+          <td class="col-number">20.416J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/20-416j-topics-in-biophysics-and-physical-biology-fall-2014/" target="_blank" rel="noopener">Topics In Biophysics And Physical Biology</a>
+          </td>
+          <td class="col-sem">Fall 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21A" data-has-video="0" data-search="21a.104 memory culture forgetting">
+          <td class="col-number">21A.104</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21a-104-memory-culture-forgetting-spring-2016/" target="_blank" rel="noopener">Memory Culture Forgetting</a>
+          </td>
+          <td class="col-sem">Spring 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21A" data-has-video="0" data-search="21a.218j identity and difference">
+          <td class="col-number">21A.218J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21a-218j-identity-and-difference-spring-2010/" target="_blank" rel="noopener">Identity And Difference</a>
+          </td>
+          <td class="col-sem">Spring 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21A" data-has-video="0" data-search="21a.342 environmental struggles">
+          <td class="col-number">21A.342</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21a-342-environmental-struggles-fall-2004/" target="_blank" rel="noopener">Environmental Struggles</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21A" data-has-video="0" data-search="21a.500j technology and culture">
+          <td class="col-number">21A.500J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21a-500j-technology-and-culture-spring-2014/" target="_blank" rel="noopener">Technology And Culture</a>
+          </td>
+          <td class="col-sem">Spring 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.017 germany and its european context">
+          <td class="col-number">21G.017</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-017-germany-and-its-european-context-fall-2002/" target="_blank" rel="noopener">Germany And Its European Context</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.040 a passage to india introduction to modern indian culture and society">
+          <td class="col-number">21G.040</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-040-a-passage-to-india-introduction-to-modern-indian-culture-and-society-spring-2012/" target="_blank" rel="noopener">A Passage To India Introduction To Modern Indian Culture And Society</a>
+          </td>
+          <td class="col-sem">Spring 2012</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.067j cultural performances of asia">
+          <td class="col-number">21G.067J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-067j-cultural-performances-of-asia-fall-2005/" target="_blank" rel="noopener">Cultural Performances Of Asia</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.110 chinese iv streamlined">
+          <td class="col-number">21G.110</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-110-chinese-iv-streamlined-spring-2004/" target="_blank" rel="noopener">Chinese Iv Streamlined</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.312 basic themes in french literature and culture">
+          <td class="col-number">21G.312</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-312-basic-themes-in-french-literature-and-culture-spring-2011/" target="_blank" rel="noopener">Basic Themes In French Literature And Culture</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.405 germany today intensive study of german language and culture january">
+          <td class="col-number">21G.405</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-405-germany-today-intensive-study-of-german-language-and-culture-january-iap-2011/" target="_blank" rel="noopener">Germany Today Intensive Study Of German Language And Culture January</a>
+          </td>
+          <td class="col-sem">Iap 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.704 spanish iv">
+          <td class="col-number">21G.704</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-704-spanish-iv-spring-2005/" target="_blank" rel="noopener">Spanish Iv</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21G" data-has-video="0" data-search="21g.820 portuguese advanced conversation and composition">
+          <td class="col-number">21G.820</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21g-820-portuguese-advanced-conversation-and-composition-fall-2014/" target="_blank" rel="noopener">Portuguese Advanced Conversation And Composition</a>
+          </td>
+          <td class="col-sem">Fall 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="0" data-search="21h.112 the american revolution">
+          <td class="col-number">21H.112</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-112-the-american-revolution-spring-2006/" target="_blank" rel="noopener">The American Revolution</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="0" data-search="21h.209 america in depression and war">
+          <td class="col-number">21H.209</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-209-america-in-depression-and-war-spring-2012/" target="_blank" rel="noopener">America In Depression And War</a>
+          </td>
+          <td class="col-sem">Spring 2012</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="0" data-search="21h.301 the ancient world greece">
+          <td class="col-number">21H.301</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-301-the-ancient-world-greece-fall-2004/" target="_blank" rel="noopener">The Ancient World Greece</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="0" data-search="21h.381j women and war in the 20th century">
+          <td class="col-number">21H.381J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-381j-women-and-war-in-the-20th-century-fall-2015/" target="_blank" rel="noopener">Women And War In The 20th Century</a>
+          </td>
+          <td class="col-sem">Fall 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21H" data-has-video="0" data-search="21h.522 japan in the age of the samurai history and film">
+          <td class="col-number">21H.522</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21h-522-japan-in-the-age-of-the-samurai-history-and-film-fall-2006/" target="_blank" rel="noopener">Japan In The Age Of The Samurai History And Film</a>
+          </td>
+          <td class="col-sem">Fall 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.002.2 foundations of western culture ii renaissance to modernity">
+          <td class="col-number">21L.002.2</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-002-2-foundations-of-western-culture-ii-renaissance-to-modernity-spring-2003/" target="_blank" rel="noopener">Foundations Of Western Culture Ii Renaissance To Modernity</a>
+          </td>
+          <td class="col-sem">Spring 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.012 forms of western narrative">
+          <td class="col-number">21L.012</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-012-forms-of-western-narrative-spring-2004/" target="_blank" rel="noopener">Forms Of Western Narrative</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.315 prizewinners nobelistas">
+          <td class="col-number">21L.315</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-315-prizewinners-nobelistas-spring-2014/" target="_blank" rel="noopener">Prizewinners Nobelistas</a>
+          </td>
+          <td class="col-sem">Spring 2014</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.460 medieval literature medieval women writers">
+          <td class="col-number">21L.460</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-460-medieval-literature-medieval-women-writers-spring-2004/" target="_blank" rel="noopener">Medieval Literature Medieval Women Writers</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.488 contemporary literature british novels now">
+          <td class="col-number">21L.488</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-488-contemporary-literature-british-novels-now-spring-2007/" target="_blank" rel="noopener">Contemporary Literature British Novels Now</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.701 literary interpretation literature and photography the image">
+          <td class="col-number">21L.701</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-701-literary-interpretation-literature-and-photography-the-image-fall-2005/" target="_blank" rel="noopener">Literary Interpretation Literature And Photography The Image</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.704 studies in poetry from the sonneteers to the metaphysicals">
+          <td class="col-number">21L.704</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-704-studies-in-poetry-from-the-sonneteers-to-the-metaphysicals-spring-2006/" target="_blank" rel="noopener">Studies In Poetry From The Sonneteers To The Metaphysicals</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21L" data-has-video="0" data-search="21l.707 reading cookbooks from the forme of cury to the smitten kitchen">
+          <td class="col-number">21L.707</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21l-707-reading-cookbooks-from-the-forme-of-cury-to-the-smitten-kitchen-spring-2017/" target="_blank" rel="noopener">Reading Cookbooks From The Forme Of Cury To The Smitten Kitchen</a>
+          </td>
+          <td class="col-sem">Spring 2017</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21M" data-has-video="0" data-search="21m.030 introduction to world music">
+          <td class="col-number">21M.030</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21m-030-introduction-to-world-music-spring-2013/" target="_blank" rel="noopener">Introduction To World Music</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21M" data-has-video="0" data-search="21m.271 symphony and concerto">
+          <td class="col-number">21M.271</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21m-271-symphony-and-concerto-spring-2007/" target="_blank" rel="noopener">Symphony And Concerto</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21M" data-has-video="0" data-search="21m.350 musical analysis">
+          <td class="col-number">21M.350</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21m-350-musical-analysis-spring-2008/" target="_blank" rel="noopener">Musical Analysis</a>
+          </td>
+          <td class="col-sem">Spring 2008</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21M" data-has-video="0" data-search="21m.734 design for the theater scenery">
+          <td class="col-number">21M.734</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21m-734-design-for-the-theater-scenery-spring-2005/" target="_blank" rel="noopener">Design For The Theater Scenery</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21W" data-has-video="0" data-search="21w.021 writing and experience mit inside live">
+          <td class="col-number">21W.021</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21w-021-writing-and-experience-mit-inside-live-fall-2013/" target="_blank" rel="noopener">Writing And Experience Mit Inside Live</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21W" data-has-video="0" data-search="21w.747.2 rhetoric rhetoric of science">
+          <td class="col-number">21W.747.2</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21w-747-2-rhetoric-rhetoric-of-science-spring-2006/" target="_blank" rel="noopener">Rhetoric Rhetoric Of Science</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="21W" data-has-video="0" data-search="21w.777 science writing in contemporary society">
+          <td class="col-number">21W.777</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/21w-777-science-writing-in-contemporary-society-spring-2017/" target="_blank" rel="noopener">Science Writing In Contemporary Society</a>
+          </td>
+          <td class="col-sem">Spring 2017</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="22" data-has-video="0" data-search="22.06 engineering of nuclear systems">
+          <td class="col-number">22.06</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/22-06-engineering-of-nuclear-systems-fall-2010/" target="_blank" rel="noopener">Engineering Of Nuclear Systems</a>
+          </td>
+          <td class="col-sem">Fall 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="0" data-search="24.231 ethics">
+          <td class="col-number">24.231</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-231-ethics-fall-2009/" target="_blank" rel="noopener">Ethics</a>
+          </td>
+          <td class="col-sem">Fall 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="0" data-search="24.901 language and its structure i phonology">
+          <td class="col-number">24.901</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-901-language-and-its-structure-i-phonology-fall-2010/" target="_blank" rel="noopener">Language And Its Structure I Phonology</a>
+          </td>
+          <td class="col-sem">Fall 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="0" data-search="24.904 language acquisition">
+          <td class="col-number">24.904</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-904-language-acquisition-spring-2022/" target="_blank" rel="noopener">Language Acquisition</a>
+          </td>
+          <td class="col-sem">Spring 2022</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="0" data-search="24.917 conlangs how to construct a language">
+          <td class="col-number">24.917</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-917-conlangs-how-to-construct-a-language-fall-2018/" target="_blank" rel="noopener">Conlangs How To Construct A Language</a>
+          </td>
+          <td class="col-sem">Fall 2018</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="24" data-has-video="0" data-search="24.962 advanced phonology">
+          <td class="col-number">24.962</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/24-962-advanced-phonology-spring-2005/" target="_blank" rel="noopener">Advanced Phonology</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="3" data-has-video="0" data-search="3 a27 case studies in forensic metallurgy">
+          <td class="col-number">3</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/3-a27-case-studies-in-forensic-metallurgy-fall-2007/" target="_blank" rel="noopener">A27 Case Studies In Forensic Metallurgy</a>
+          </td>
+          <td class="col-sem">Fall 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="3" data-has-video="0" data-search="3.003 principles of engineering practice">
+          <td class="col-number">3.003</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/3-003-principles-of-engineering-practice-spring-2010/" target="_blank" rel="noopener">Principles Of Engineering Practice</a>
+          </td>
+          <td class="col-sem">Spring 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="3" data-has-video="0" data-search="3.044 materials processing">
+          <td class="col-number">3.044</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/3-044-materials-processing-spring-2013/" target="_blank" rel="noopener">Materials Processing</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="3" data-has-video="0" data-search="3.11 mechanics of materials">
+          <td class="col-number">3.11</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/3-11-mechanics-of-materials-fall-1999/" target="_blank" rel="noopener">Mechanics Of Materials</a>
+          </td>
+          <td class="col-sem">Fall 1999</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="3" data-has-video="0" data-search="3.37 welding and joining processes">
+          <td class="col-number">3.37</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/3-37-welding-and-joining-processes-fall-2002/" target="_blank" rel="noopener">Welding And Joining Processes</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.184 architectural design workshop collage method and form">
+          <td class="col-number">4.184</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-184-architectural-design-workshop-collage-method-and-form-spring-2004/" target="_blank" rel="noopener">Architectural Design Workshop Collage Method And Form</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.296 furniture making">
+          <td class="col-number">4.296</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-296-furniture-making-spring-2005/" target="_blank" rel="noopener">Furniture Making</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.366 advanced projects in the visual arts personal narrative">
+          <td class="col-number">4.366</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-366-advanced-projects-in-the-visual-arts-personal-narrative-spring-2004/" target="_blank" rel="noopener">Advanced Projects In The Visual Arts Personal Narrative</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.463 building technologies iii building structural systems ii">
+          <td class="col-number">4.463</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-463-building-technologies-iii-building-structural-systems-ii-fall-2002/" target="_blank" rel="noopener">Building Technologies Iii Building Structural Systems Ii</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.601 introduction to art history">
+          <td class="col-number">4.601</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-601-introduction-to-art-history-fall-2018/" target="_blank" rel="noopener">Introduction To Art History</a>
+          </td>
+          <td class="col-sem">Fall 2018</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="4" data-has-video="0" data-search="4.661 theory and method in the study of architecture and art">
+          <td class="col-number">4.661</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/4-661-theory-and-method-in-the-study-of-architecture-and-art-fall-2015/" target="_blank" rel="noopener">Theory And Method In The Study Of Architecture And Art</a>
+          </td>
+          <td class="col-sem">Fall 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="5" data-has-video="0" data-search="5.36 biochemistry laboratory">
+          <td class="col-number">5.36</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/5-36-biochemistry-laboratory-spring-2009/" target="_blank" rel="noopener">Biochemistry Laboratory</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.013 electromagnetics and applications">
+          <td class="col-number">6.013</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-013-electromagnetics-and-applications-spring-2009/" target="_blank" rel="noopener">Electromagnetics And Applications</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.186 mobile autonomous systems laboratory january">
+          <td class="col-number">6.186</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-186-mobile-autonomous-systems-laboratory-january-iap-2005/" target="_blank" rel="noopener">Mobile Autonomous Systems Laboratory January</a>
+          </td>
+          <td class="col-sem">Iap 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.453 quantum optical communication">
+          <td class="col-number">6.453</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-453-quantum-optical-communication-fall-2016/" target="_blank" rel="noopener">Quantum Optical Communication</a>
+          </td>
+          <td class="col-sem">Fall 2016</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.685 electric machines">
+          <td class="col-number">6.685</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-685-electric-machines-fall-2013/" target="_blank" rel="noopener">Electric Machines</a>
+          </td>
+          <td class="col-sem">Fall 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.781j submicrometer and nanometer technology">
+          <td class="col-number">6.781J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-781j-submicrometer-and-nanometer-technology-spring-2006/" target="_blank" rel="noopener">Submicrometer And Nanometer Technology</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.871 knowledge based applications systems">
+          <td class="col-number">6.871</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-871-knowledge-based-applications-systems-spring-2005/" target="_blank" rel="noopener">Knowledge Based Applications Systems</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.895 theory of parallel systems sma 5509">
+          <td class="col-number">6.895</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-895-theory-of-parallel-systems-sma-5509-fall-2003/" target="_blank" rel="noopener">Theory Of Parallel Systems Sma 5509</a>
+          </td>
+          <td class="col-sem">Fall 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="6" data-has-video="0" data-search="6.974 fundamentals of photonics quantum electronics">
+          <td class="col-number">6.974</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/6-974-fundamentals-of-photonics-quantum-electronics-spring-2006/" target="_blank" rel="noopener">Fundamentals Of Photonics Quantum Electronics</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="7" data-has-video="0" data-search="7.003 applied molecular biology lab">
+          <td class="col-number">7.003</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/7-003-applied-molecular-biology-lab-spring-2022/" target="_blank" rel="noopener">Applied Molecular Biology Lab</a>
+          </td>
+          <td class="col-sem">Spring 2022</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="7" data-has-video="0" data-search="7.89j topics in computational and systems biology">
+          <td class="col-number">7.89J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/7-89j-topics-in-computational-and-systems-biology-fall-2010/" target="_blank" rel="noopener">Topics In Computational And Systems Biology</a>
+          </td>
+          <td class="col-sem">Fall 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.02t electricity and magnetism">
+          <td class="col-number">8.02T</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-02t-electricity-and-magnetism-spring-2005/" target="_blank" rel="noopener">Electricity And Magnetism</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.08 statistical physics ii">
+          <td class="col-number">8.08</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-08-statistical-physics-ii-spring-2005/" target="_blank" rel="noopener">Statistical Physics Ii</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.311 electromagnetic theory">
+          <td class="col-number">8.311</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-311-electromagnetic-theory-spring-2004/" target="_blank" rel="noopener">Electromagnetic Theory</a>
+          </td>
+          <td class="col-sem">Spring 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.511 theory of solids i">
+          <td class="col-number">8.511</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-511-theory-of-solids-i-fall-2004/" target="_blank" rel="noopener">Theory Of Solids I</a>
+          </td>
+          <td class="col-sem">Fall 2004</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.513 modern quantum many body physics for condensed matter systems">
+          <td class="col-number">8.513</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-513-modern-quantum-many-body-physics-for-condensed-matter-systems-fall-2021/" target="_blank" rel="noopener">Modern Quantum Many Body Physics For Condensed Matter Systems</a>
+          </td>
+          <td class="col-sem">Fall 2021</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="8" data-has-video="0" data-search="8.851 strong interactions effective field theories of qcd">
+          <td class="col-number">8.851</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/8-851-strong-interactions-effective-field-theories-of-qcd-spring-2006/" target="_blank" rel="noopener">Strong Interactions Effective Field Theories Of Qcd</a>
+          </td>
+          <td class="col-sem">Spring 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="0" data-search="9.01 introduction to neuroscience">
+          <td class="col-number">9.01</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-01-introduction-to-neuroscience-fall-2007/" target="_blank" rel="noopener">Introduction To Neuroscience</a>
+          </td>
+          <td class="col-sem">Fall 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="0" data-search="9.458 parkinsons disease workshop">
+          <td class="col-number">9.458</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-458-parkinsons-disease-workshop-summer-2006/" target="_blank" rel="noopener">Parkinsons Disease Workshop</a>
+          </td>
+          <td class="col-sem">Summer 2006</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="0" data-search="9.70 social psychology">
+          <td class="col-number">9.70</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-70-social-psychology-spring-2013/" target="_blank" rel="noopener">Social Psychology</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="9" data-has-video="0" data-search="9.916 the neural basis of visual object recognition in monkeys and humans">
+          <td class="col-number">9.916</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/9-916-the-neural-basis-of-visual-object-recognition-in-monkeys-and-humans-spring-2005/" target="_blank" rel="noopener">The Neural Basis Of Visual Object Recognition In Monkeys And Humans</a>
+          </td>
+          <td class="col-sem">Spring 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="CC" data-has-video="0" data-search="cc.111 modern conceptions of freedom">
+          <td class="col-number">CC.111</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/cc-111-modern-conceptions-of-freedom-spring-2013/" target="_blank" rel="noopener">Modern Conceptions Of Freedom</a>
+          </td>
+          <td class="col-sem">Spring 2013</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="CMS" data-has-video="0" data-search="cms.608 game design">
+          <td class="col-number">CMS.608</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/cms-608-game-design-spring-2008/" target="_blank" rel="noopener">Game Design</a>
+          </td>
+          <td class="col-sem">Spring 2008</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="CMS" data-has-video="0" data-search="cms.951 workshop ii qualitative social science methods for media studies">
+          <td class="col-number">CMS.951</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/cms-951-workshop-ii-qualitative-social-science-methods-for-media-studies-spring-2015/" target="_blank" rel="noopener">Workshop Ii Qualitative Social Science Methods For Media Studies</a>
+          </td>
+          <td class="col-sem">Spring 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="EC" data-has-video="0" data-search="ec s11 engineering capacity in community based healthcare">
+          <td class="col-number">EC</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/ec-s11-engineering-capacity-in-community-based-healthcare-fall-2005/" target="_blank" rel="noopener">S11 Engineering Capacity In Community Based Healthcare</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="EC" data-has-video="0" data-search="ec.716 d lab waste">
+          <td class="col-number">EC.716</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/ec-716-d-lab-waste-fall-2015/" target="_blank" rel="noopener">D Lab Waste</a>
+          </td>
+          <td class="col-sem">Fall 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="ES" data-has-video="0" data-search="es.258 goedel escher bach">
+          <td class="col-number">ES.258</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/es-258-goedel-escher-bach-spring-2007/" target="_blank" rel="noopener">Goedel Escher Bach</a>
+          </td>
+          <td class="col-sem">Spring 2007</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="ES" data-has-video="0" data-search="es.333 producing educational videos">
+          <td class="col-number">ES.333</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/es-333-producing-educational-videos-spring-2015/" target="_blank" rel="noopener">Producing Educational Videos</a>
+          </td>
+          <td class="col-sem">Spring 2015</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="ESD" data-has-video="0" data-search="esd.33 systems engineering">
+          <td class="col-number">ESD.33</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/esd-33-systems-engineering-summer-2010/" target="_blank" rel="noopener">Systems Engineering</a>
+          </td>
+          <td class="col-sem">Summer 2010</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="HST" data-has-video="0" data-search="hst.071 human reproductive biology">
+          <td class="col-number">HST.071</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/hst-071-human-reproductive-biology-fall-2005/" target="_blank" rel="noopener">Human Reproductive Biology</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="HST" data-has-video="0" data-search="hst.525j tumor pathophysiology and transport phenomena">
+          <td class="col-number">HST.525J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/hst-525j-tumor-pathophysiology-and-transport-phenomena-fall-2005/" target="_blank" rel="noopener">Tumor Pathophysiology And Transport Phenomena</a>
+          </td>
+          <td class="col-sem">Fall 2005</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="HST" data-has-video="0" data-search="hst.725 music perception and cognition">
+          <td class="col-number">HST.725</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/hst-725-music-perception-and-cognition-spring-2009/" target="_blank" rel="noopener">Music Perception And Cognition</a>
+          </td>
+          <td class="col-sem">Spring 2009</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="HST" data-has-video="0" data-search="hst.951j medical decision support">
+          <td class="col-number">HST.951J</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/hst-951j-medical-decision-support-spring-2003/" target="_blank" rel="noopener">Medical Decision Support</a>
+          </td>
+          <td class="col-sem">Spring 2003</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="HST" data-has-video="0" data-search="hst.953 clinical data learning visualization and deployments">
+          <td class="col-number">HST.953</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/hst-953-clinical-data-learning-visualization-and-deployments-fall-2024/" target="_blank" rel="noopener">Clinical Data Learning Visualization And Deployments</a>
+          </td>
+          <td class="col-sem">Fall 2024</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="MAS" data-has-video="0" data-search="mas.111 introduction to doing research in media arts and sciences">
+          <td class="col-number">MAS.111</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/mas-111-introduction-to-doing-research-in-media-arts-and-sciences-spring-2011/" target="_blank" rel="noopener">Introduction To Doing Research In Media Arts And Sciences</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="MAS" data-has-video="0" data-search="mas.836 sensor technologies for interactive environments">
+          <td class="col-number">MAS.836</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/mas-836-sensor-technologies-for-interactive-environments-spring-2011/" target="_blank" rel="noopener">Sensor Technologies For Interactive Environments</a>
+          </td>
+          <td class="col-sem">Spring 2011</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="MAS" data-has-video="0" data-search="mas.962 special topics in media technology computational semantics">
+          <td class="col-number">MAS.962</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/mas-962-special-topics-in-media-technology-computational-semantics-fall-2002/" target="_blank" rel="noopener">Special Topics In Media Technology Computational Semantics</a>
+          </td>
+          <td class="col-sem">Fall 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="OCW" data-has-video="0" data-search="ocw.ci test course">
+          <td class="col-number">OCW.CI</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/ocw-ci-test-course/" target="_blank" rel="noopener">Test Course</a>
+          </td>
+          <td class="col-sem"></td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="PE" data-has-video="0" data-search="pe.910 physical intelligence january">
+          <td class="col-number">PE.910</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/pe-910-physical-intelligence-january-iap-2002/" target="_blank" rel="noopener">Physical Intelligence January</a>
+          </td>
+          <td class="col-sem">Iap 2002</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="RES" data-has-video="0" data-search="res.9.006 afni training bootcamp">
+          <td class="col-number">RES.9.006</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/res-9-006-afni-training-bootcamp-spring-2018/" target="_blank" rel="noopener">Afni Training Bootcamp</a>
+          </td>
+          <td class="col-sem">Spring 2018</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+
+        <tr class="course-row" data-dept="RES" data-has-video="0" data-search="res.tll.009 iit joint entrance exam preparation">
+          <td class="col-number">RES.TLL.009</td>
+          <td class="col-name">
+            <a href="https://ocw.mit.edu/courses/res-tll-009-iit-joint-entrance-exam-preparation-fall-2022/" target="_blank" rel="noopener">Iit Joint Entrance Exam Preparation</a>
+          </td>
+          <td class="col-sem">Fall 2022</td>
+          <td class="col-videos"><span class="no-videos">—</span></td>
+        </tr>
+    </tbody>
+  </table>
+
+  <footer>
+    OCW Video Scraper Experiment &mdash; Generated 2026-03-21
+  </footer>
+</div>
+<script>
+function filterCourses() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const dept = document.getElementById('deptFilter').value;
+  const videoOnly = document.getElementById('videoOnly').checked;
+  const rows = document.querySelectorAll('.course-row');
+  let visible = 0;
+  rows.forEach(row => {
+    const matchSearch = !query || row.dataset.search.includes(query);
+    const matchDept = !dept || row.dataset.dept === dept;
+    const matchVideo = !videoOnly || row.dataset.hasVideo === '1';
+    const show = matchSearch && matchDept && matchVideo;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('resultsCount').textContent = visible + ' course' + (visible !== 1 ? 's' : '');
+}
+</script>
+</body>
+</html>

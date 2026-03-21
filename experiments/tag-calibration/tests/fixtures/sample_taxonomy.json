@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "description": "Discovered taxonomy for personal knowledge library",
+  "categories": [
+    {
+      "name": "primary",
+      "description": "Core topic or entity that defines what the resource is about",
+      "vocabulary": [
+        "machine-learning", "web-design", "architecture", "skateboarding",
+        "mathematics", "kafka", "origami", "photography", "typography",
+        "react", "python", "data-viz", "animation", "music-production"
+      ],
+      "min_tags": 1,
+      "max_tags": 3,
+      "rules": ["Use the most specific term available", "Prefer compound terms over single words"]
+    },
+    {
+      "name": "contextual",
+      "description": "Format, intent, or situational context of the resource",
+      "vocabulary": [
+        "tutorial", "reference", "opinion-piece", "showcase", "research-paper",
+        "thread", "announcement", "case-study", "comparison", "deep-dive"
+      ],
+      "min_tags": 1,
+      "max_tags": 2,
+      "rules": ["Describe what the content IS, not what it's about"]
+    },
+    {
+      "name": "style",
+      "description": "Aesthetic or tonal vibe of the content",
+      "vocabulary": [
+        "dark-mode", "editorial", "raw", "minimalist", "brutalist",
+        "retro", "glossy", "technical", "playful", "cozy"
+      ],
+      "min_tags": 1,
+      "max_tags": 1,
+      "rules": ["Exactly one style tag per card", "Choose the most visually dominant trait"]
+    }
+  ],
+  "blocked_tags": [
+    "website", "link", "page", "content", "post", "cool", "nice",
+    "interesting", "design", "web", "social", "twitter", "instagram"
+  ],
+  "platform_guidelines": {
+    "twitter": "Focus on ideas and discourse, not the platform itself",
+    "instagram": "Focus on visual aesthetics and the creator",
+    "github": "Focus on tech stack and tools",
+    "youtube": "Focus on creator, format, and subject",
+    "general": "Focus on core subject and key entities"
+  }
+}

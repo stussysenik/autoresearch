@@ -1,0 +1,57 @@
+{
+  "card-001": {
+    "card_id": "card-001",
+    "tags": {
+      "primary": ["apache-kafka", "microservices"],
+      "contextual": ["deep-dive"],
+      "style": ["technical"]
+    },
+    "flat_tags": ["apache-kafka", "microservices", "deep-dive", "technical"],
+    "reasoning": "Article about Kafka patterns for microservices, technical deep-dive style.",
+    "confidence": 0.85
+  },
+  "card-002": {
+    "card_id": "card-002",
+    "tags": {
+      "primary": ["machine-learning"],
+      "contextual": ["thread", "opinion-piece"],
+      "style": ["raw"]
+    },
+    "flat_tags": ["machine-learning", "thread", "opinion-piece", "raw"],
+    "reasoning": "Twitter thread by Karpathy about LLM training data quality.",
+    "confidence": 0.85
+  },
+  "card-003": {
+    "card_id": "card-003",
+    "tags": {
+      "primary": ["architecture"],
+      "contextual": ["showcase"],
+      "style": ["brutalist"]
+    },
+    "flat_tags": ["architecture", "showcase", "brutalist"],
+    "reasoning": "Instagram photo of brutalist architecture in Tokyo.",
+    "confidence": 0.85
+  },
+  "card-004": {
+    "card_id": "card-004",
+    "tags": {
+      "primary": ["skateboarding"],
+      "contextual": ["tutorial"],
+      "style": ["raw"]
+    },
+    "flat_tags": ["skateboarding", "tutorial", "raw"],
+    "reasoning": "YouTube tutorial on skateboarding ollie technique.",
+    "confidence": 0.85
+  },
+  "card-005": {
+    "card_id": "card-005",
+    "tags": {
+      "primary": ["mathematics", "origami"],
+      "contextual": ["deep-dive"],
+      "style": ["editorial"]
+    },
+    "flat_tags": ["mathematics", "origami", "deep-dive", "editorial"],
+    "reasoning": "Article exploring the intersection of geometry and origami.",
+    "confidence": 0.85
+  }
+}

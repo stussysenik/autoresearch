@@ -1,0 +1,95 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = "native"
+}
+
+model User {
+  id                   Int          @id @default(autoincrement())
+  email                String       @unique
+  hashedPassword       String
+  salt                 String
+  resetToken           String?
+  resetTokenExpiresAt  DateTime?
+  name                 String?
+  stravaId             String?      @unique
+  stravaAccessToken    String?
+  stravaRefreshToken   String?
+  stravaTokenExpiresAt DateTime?
+  ghostRoutes          GhostRoute[]
+  favorites            Favorite[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+}
+
+model City {
+  id            Int            @id @default(autoincrement())
+  name          String
+  country       String
+  countryCode   String
+  center        String         // JSON: { lng, lat }
+  bbox          String         // JSON: { minLng, minLat, maxLng, maxLat }
+  neighborhoods Neighborhood[]
+  ghostRoutes   GhostRoute[]
+  createdAt     DateTime       @default(now())
+
+  @@unique([name, countryCode])
+}
+
+model Neighborhood {
+  id           Int          @id @default(autoincrement())
+  name         String
+  cityId       Int
+  city         City         @relation(fields: [cityId], references: [id])
+  center       String       // JSON: { lng, lat }
+  bbox         String       // JSON: { minLng, minLat, maxLng, maxLat }
+  streetLayout String       // "grid" | "organic" | "mixed"
+  goodFor      String       // JSON array: ["hearts", "letters"]
+  ghostRoutes  GhostRoute[]
+  createdAt    DateTime     @default(now())
+
+  @@unique([name, cityId])
+}
+
+model GhostRoute {
+  id                String      @id @default(cuid())
+  shapeName         String
+  shapeEmoji        String
+  shapeDescription  String?
+  routedCoordinates String      // JSON: [[lng, lat], ...]
+  controlPoints     String?     // JSON: [[lng, lat], ...]
+  bbox              String      // JSON: { minLng, minLat, maxLng, maxLat }
+  distanceKm        Float
+  durationMinutes   Int
+  similarityScore   Float?
+  waypoints         String?     // JSON: [{ index, lng, lat, instruction }]
+  userId            Int?
+  user              User?       @relation(fields: [userId], references: [id])
+  cityId            Int
+  city              City        @relation(fields: [cityId], references: [id])
+  neighborhoodId    Int?
+  neighborhood      Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+  shareSlug         String?     @unique
+  isPublic          Boolean     @default(false)
+  favorites         Favorite[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([shareSlug])
+}
+
+model Favorite {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ghostRouteId String
+  ghostRoute   GhostRoute @relation(fields: [ghostRouteId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, ghostRouteId])
+}

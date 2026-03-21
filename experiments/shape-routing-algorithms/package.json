@@ -1,0 +1,11 @@
+{
+  "name": "shape-routing-algorithms",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "fetch": "bun run src/fetch_data.ts",
+    "run:experiment": "bun run src/run_experiment.ts",
+    "analyze": "bun run src/analyze_results.ts",
+    "experiment": "bun run src/fetch_data.ts && bun run src/run_experiment.ts && bun run src/analyze_results.ts"
+  }
+}
