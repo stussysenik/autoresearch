@@ -1,0 +1,330 @@
+$ bun run src/fetch_data.ts && bun run src/run_experiment.ts && bun run src/analyze_results.ts
+
+╔══════════════════════════════════════════════════╗
+║  Phase 0: Seed Question Discovery                ║
+╚══════════════════════════════════════════════════╝
+
+Phase 0 already complete — skipping.
+
+════════════════════════════════════════════════════
+  Breakdancing Battle Analysis — Research Phases 1-5
+════════════════════════════════════════════════════
+
+
+╔══════════════════════════════════════════════════╗
+║  phase-1: Mathematical Foundation                 ║
+╚══════════════════════════════════════════════════╝
+  Dependencies: phase-0
+  Time budget: 60min | Max followups: 3
+
+  [2026-03-22 14:04:40] Gathering context from dependencies...
+  Context too large (31.3 KB). Summarizing...
+  Summarized to 11.2 KB
+  Context: 11.6 KB from 1 phases
+  [2026-03-22 14:05:59] Sending initial research prompt...
+  [2026-03-22 14:09:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 14:11:46] Initial research saved (48.9 KB)
+  [2026-03-22 14:11:46] Self-identification loop 1/3...
+  [2026-03-22 14:12:24] Found 3 gap(s). Researching...
+    Gap 1: The entire framework assumes clean joint trajectories $\mathbf{r}_j(t)$, but rea...
+  [2026-03-22 14:14:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 14:19:40] ♥ Heartbeat — experiment still running
+    Saved (1.9 KB)
+    Gap 2: The scoring model repeatedly references "detected moves $\{m_1, \ldots, m_N\}$" ...
+  [2026-03-22 14:24:40] ♥ Heartbeat — experiment still running
+    Saved (28.3 KB)
+    Gap 3: The document contains ~30 hand-tuned weights and sigmoid parameters ($k$, $x_0$)...
+    Saved (30.0 KB)
+  [2026-03-22 14:29:12] Self-identification loop 2/3...
+  [2026-03-22 14:29:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 14:30:08] Found 3 gap(s). Researching...
+    Gap 1: No analysis of whether the fixed difficulty lookup table ($d_{\text{base}}$ in §...
+  [2026-03-22 14:34:40] ♥ Heartbeat — experiment still running
+    Saved (43.1 KB)
+    Gap 2: The noise model (Follow-up 1.1) assumes additive Gaussian noise on joint positio...
+  [2026-03-22 14:39:40] ♥ Heartbeat — experiment still running
+    Saved (44.6 KB)
+    Gap 3: No mechanism for generating human-interpretable explanations of scores. The syst...
+  [2026-03-22 14:44:40] ♥ Heartbeat — experiment still running
+    Saved (40.3 KB)
+  [2026-03-22 14:45:04] Self-identification loop 3/3...
+  [2026-03-22 14:46:02] Found 3 gap(s). Researching...
+    Gap 1: The explainability system (§9.2–9.6) constructs score densities $s(t)$, key mome...
+  [2026-03-22 14:49:40] ♥ Heartbeat — experiment still running
+    Saved (39.1 KB)
+    Gap 2: When $\kappa_i$ is low (tracking loss during a move), the scoring system down-we...
+    Saved (29.7 KB)
+    Gap 3: The counterfactual optimization (§9.4) depends on several free parameters with n...
+  [2026-03-22 14:54:40] ♥ Heartbeat — experiment still running
+    Saved (27.4 KB)
+  [2026-03-22 14:58:07] Phase complete: 53.5min, 10 artifacts, 333.3 KB
+
+╔══════════════════════════════════════════════════╗
+║  phase-2: Visualization Engine Design             ║
+╚══════════════════════════════════════════════════╝
+  Dependencies: phase-0
+  Time budget: 60min | Max followups: 3
+
+  [2026-03-22 14:58:07] Gathering context from dependencies...
+  Context too large (31.3 KB). Summarizing...
+  Summarized to 11.2 KB
+  Context: 11.4 KB from 1 phases
+  [2026-03-22 14:59:35] Sending initial research prompt...
+  [2026-03-22 14:59:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 15:04:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 15:05:53] Initial research saved (68.8 KB)
+  [2026-03-22 15:05:53] Self-identification loop 1/3...
+  [2026-03-22 15:06:35] Found 3 gap(s). Researching...
+    Gap 1: The architecture diagram declares "BVH/FBX/JSON → SkeletonFrame[]" as the first ...
+  [2026-03-22 15:09:40] ♥ Heartbeat — experiment still running
+    Saved (73.3 KB)
+    Gap 2: `VisualizationState.audio` defines `beatPhase`, `downbeatPhase`, and `energy` — ...
+  [2026-03-22 15:14:40] ♥ Heartbeat — experiment still running
+    Saved (56.6 KB)
+    Gap 3: Every implementation assumes exactly one 33-joint skeleton. There's no multi-dan...
+  [2026-03-22 15:19:40] ♥ Heartbeat — experiment still running
+    Saved (40.5 KB)
+  [2026-03-22 15:23:12] Self-identification loop 2/3...
+  [2026-03-22 15:23:59] Found 3 gap(s). Researching...
+    Gap 1: When two dancers from different rounds are compared (overlay, ghost, difference ...
+  [2026-03-22 15:24:40] ♥ Heartbeat — experiment still running
+    Saved (40.6 KB)
+    Gap 2: Battle rounds have variable lengths (typically 30–60s, sometimes 15s or 90s). Wh...
+  [2026-03-22 15:29:40] ♥ Heartbeat — experiment still running
+    Saved (39.3 KB)
+    Gap 3: The pipeline diagram shows clean per-round, per-dancer input (`Round 1 Video → M...
+  [2026-03-22 15:34:40] ♥ Heartbeat — experiment still running
+    Saved (49.3 KB)
+  [2026-03-22 15:38:02] Self-identification loop 3/3...
+  [2026-03-22 15:38:53] Found 3 gap(s). Researching...
+    Gap 1: The entire segmentation pipeline (MoveNet, ByteTrack, camera stabilization) oper...
+  [2026-03-22 15:39:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 15:44:40] ♥ Heartbeat — experiment still running
+    Saved (46.2 KB)
+    Gap 2: The 88% end-to-end accuracy and per-stage error rates (e.g., "~2% active dancer ...
+  [2026-03-22 15:49:40] ♥ Heartbeat — experiment still running
+    Saved (51.1 KB)
+    Gap 3: ByteTrack tracks are built on MoveNet's 17-joint COCO detections, but the final ...
+  [2026-03-22 15:54:40] ♥ Heartbeat — experiment still running
+    Saved (49.7 KB)
+  [2026-03-22 15:56:46] Phase complete: 58.6min, 10 artifacts, 515.4 KB
+
+╔══════════════════════════════════════════════════╗
+║  phase-3: Data Model & Universal Format           ║
+╚══════════════════════════════════════════════════╝
+  Dependencies: phase-1, phase-2
+  Time budget: 45min | Max followups: 2
+
+  [2026-03-22 15:56:46] Gathering context from dependencies...
+  Context too large (862.0 KB). Summarizing...
+  Summarized to 18.0 KB
+  Context: 18.4 KB from 2 phases
+  [2026-03-22 15:59:36] Sending initial research prompt...
+  [2026-03-22 15:59:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 16:04:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 16:05:23] Initial research saved (63.8 KB)
+  [2026-03-22 16:05:23] Self-identification loop 1/2...
+  [2026-03-22 16:06:02] Found 3 gap(s). Researching...
+    Gap 1: The format represents a single performer, but the system is for bboy *battle* an...
+  [2026-03-22 16:09:40] ♥ Heartbeat — experiment still running
+    Saved (43.0 KB)
+    Gap 2: The engine import sections mention retargeting in comments ("BBSK 33-joint skele...
+  [2026-03-22 16:14:40] ♥ Heartbeat — experiment still running
+    Saved (47.7 KB)
+    Gap 3: The format stores world-space positions in meters, but the primary input pipelin...
+  [2026-03-22 16:19:40] ♥ Heartbeat — experiment still running
+    Saved (44.7 KB)
+  [2026-03-22 16:19:51] Self-identification loop 2/2...
+  [2026-03-22 16:20:34] Found 3 gap(s). Researching...
+    Gap 1: The entire pipeline assumes a single isolated person in frame. Real bboy battle ...
+  [2026-03-22 16:24:40] ♥ Heartbeat — experiment still running
+    Saved (59.7 KB)
+    Gap 2: The research acknowledges MotionBERT degrades from 37mm to an "estimated" 50-80m...
+  [2026-03-22 16:29:40] ♥ Heartbeat — experiment still running
+    Saved (46.4 KB)
+    Gap 3: Every bboy-specific accuracy number in the error budget is labeled "estimated" w...
+  [2026-03-22 16:34:40] ♥ Heartbeat — experiment still running
+    Saved (58.1 KB)
+  [2026-03-22 16:38:35] Phase complete: 41.8min, 7 artifacts, 363.3 KB
+
+╔══════════════════════════════════════════════════╗
+║  phase-4: Architecture & Integration              ║
+╚══════════════════════════════════════════════════╝
+  Dependencies: phase-1, phase-3
+  Time budget: 45min | Max followups: 2
+
+  [2026-03-22 16:38:35] Gathering context from dependencies...
+  Context too large (707.4 KB). Summarizing...
+  [2026-03-22 16:39:40] ♥ Heartbeat — experiment still running
+  Summarized to 18.0 KB
+  Context: 18.0 KB from 2 phases
+  [2026-03-22 16:41:16] Sending initial research prompt...
+  [2026-03-22 16:44:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 16:45:55] Initial research saved (43.6 KB)
+  [2026-03-22 16:45:55] Self-identification loop 1/2...
+  [2026-03-22 16:46:26] Found 3 gap(s). Researching...
+    Gap 1: The architecture specifies MS-TCN++ with 70 move classes across 3 hierarchical l...
+  [2026-03-22 16:49:40] ♥ Heartbeat — experiment still running
+    Saved (39.9 KB)
+    Gap 2: The scoring system outputs technique, musicality, originality, etc. but there's ...
+  [2026-03-22 16:54:40] ♥ Heartbeat — experiment still running
+    Saved (30.7 KB)
+    Gap 3: The pipeline has 7+ sequential stages, but there's no analysis of how errors com...
+    Saved (45.5 KB)
+  [2026-03-22 16:59:26] Self-identification loop 2/2...
+  [2026-03-22 16:59:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 17:00:17] Found 3 gap(s). Researching...
+    Gap 1: No analysis of how camera angle affects pose estimation accuracy and whether sco...
+  [2026-03-22 17:04:40] ♥ Heartbeat — experiment still running
+    Saved (55.9 KB)
+    Gap 2: The error analysis treats beat tracking and tempo estimation as essentially erro...
+  [2026-03-22 17:09:40] ♥ Heartbeat — experiment still running
+    Saved (53.9 KB)
+    Gap 3: The validation framework treats each round as an independent scoring unit, but t...
+  [2026-03-22 17:14:40] ♥ Heartbeat — experiment still running
+    Saved (57.1 KB)
+  [2026-03-22 17:16:50] Phase complete: 38.3min, 7 artifacts, 326.4 KB
+
+╔══════════════════════════════════════════════════╗
+║  phase-5: Creative Exploration                    ║
+╚══════════════════════════════════════════════════╝
+  Dependencies: phase-2
+  Time budget: 45min | Max followups: 3
+
+  [2026-03-22 17:16:50] Gathering context from dependencies...
+  Context too large (503.4 KB). Summarizing...
+  Summarized to 14.3 KB
+  Context: 14.7 KB from 1 phases
+  [2026-03-22 17:19:01] Sending initial research prompt...
+  [2026-03-22 17:19:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 17:24:03] Initial research saved (38.1 KB)
+  [2026-03-22 17:24:03] Self-identification loop 1/3...
+  [2026-03-22 17:24:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 17:24:46] Found 3 gap(s). Researching...
+    Gap 1: No analysis of how pose estimation (MoveNet, MediaPipe, MMPose) performs during ...
+    Saved (29.8 KB)
+    Gap 2: The research shows how to *display* scores (floating numbers, category icons, sc...
+  [2026-03-22 17:29:40] ♥ Heartbeat — experiment still running
+    Saved (39.6 KB)
+    Gap 3: Section 1E (Vocabulary Wheel) casually mentions needing "~500 labeled examples p...
+  [2026-03-22 17:34:40] ♥ Heartbeat — experiment still running
+    Saved (29.1 KB)
+  [2026-03-22 17:38:35] Self-identification loop 2/3...
+  [2026-03-22 17:39:17] Found 3 gap(s). Researching...
+    Gap 1: The musicality scoring relies on 30ms timing tolerance between movement onsets a...
+  [2026-03-22 17:39:40] ♥ Heartbeat — experiment still running
+    Saved (29.9 KB)
+    Gap 2: Section 8.3 assumes "200+ rounds with human judge scores (5-criteria, 1–10 scale...
+  [2026-03-22 17:44:40] ♥ Heartbeat — experiment still running
+    Saved (31.0 KB)
+    Gap 3: Individual component latencies are stated (ViTPose ~18ms, Kalman <1ms, temporal ...
+  [2026-03-22 17:49:40] ♥ Heartbeat — experiment still running
+    Saved (32.6 KB)
+  [2026-03-22 17:50:16] Self-identification loop 3/3...
+  [2026-03-22 17:51:35] Found 3 gap(s). Researching...
+    Gap 1: The entire pipeline assumes continuous, stable single-camera footage, but the ta...
+  [2026-03-22 17:54:40] ♥ Heartbeat — experiment still running
+    Saved (1.9 KB)
+    Gap 2: At 30fps, the fastest bboy movements (flares, air flares, headspin entries, powe...
+  [2026-03-22 17:59:40] ♥ Heartbeat — experiment still running
+  [2026-03-22 18:04:40] ♥ Heartbeat — experiment still running
+    Saved (46.3 KB)
+    Gap 3: The pipeline assumes 15ms beat tracking error as an "algorithmic limit," but thi...
+  [2026-03-22 18:09:40] ♥ Heartbeat — experiment still running
+    Saved (43.2 KB)
+  [2026-03-22 18:10:41] Phase complete: 53.9min, 10 artifacts, 321.5 KB
+
+  [2026-03-22 18:10:41] All research phases complete.
+
+╔══════════════════════════════════════════════════╗
+║  Phase 6: Compile Morning Report                 ║
+╚══════════════════════════════════════════════════╝
+
+Found 56 research artifacts:
+  - phase-0-seed-questions.md (33.2 KB)
+  - phase-1-mathematical-foundation-followup-1-1.md (1.9 KB)
+  - phase-1-mathematical-foundation-followup-1-2.md (28.3 KB)
+  - phase-1-mathematical-foundation-followup-1-3.md (30.0 KB)
+  - phase-1-mathematical-foundation-followup-2-1.md (43.1 KB)
+  - phase-1-mathematical-foundation-followup-2-2.md (44.6 KB)
+  - phase-1-mathematical-foundation-followup-2-3.md (40.3 KB)
+  - phase-1-mathematical-foundation-followup-3-1.md (39.1 KB)
+  - phase-1-mathematical-foundation-followup-3-2.md (29.7 KB)
+  - phase-1-mathematical-foundation-followup-3-3.md (27.4 KB)
+  - phase-1-mathematical-foundation.md (48.9 KB)
+  - phase-1-polar-primes-supplement.md (26.3 KB)
+  - phase-2-visualization-engine-design-followup-1-1.md (73.3 KB)
+  - phase-2-visualization-engine-design-followup-1-2.md (56.6 KB)
+  - phase-2-visualization-engine-design-followup-1-3.md (40.5 KB)
+  - phase-2-visualization-engine-design-followup-2-1.md (40.6 KB)
+  - phase-2-visualization-engine-design-followup-2-2.md (39.3 KB)
+  - phase-2-visualization-engine-design-followup-2-3.md (49.3 KB)
+  - phase-2-visualization-engine-design-followup-3-1.md (46.2 KB)
+  - phase-2-visualization-engine-design-followup-3-2.md (51.1 KB)
+  - phase-2-visualization-engine-design-followup-3-3.md (49.7 KB)
+  - phase-2-visualization-engine-design.md (68.8 KB)
+  - phase-3-data-model-universal-format-followup-1-1.md (43.0 KB)
+  - phase-3-data-model-universal-format-followup-1-2.md (47.7 KB)
+  - phase-3-data-model-universal-format-followup-1-3.md (44.7 KB)
+  - phase-3-data-model-universal-format-followup-2-1.md (59.7 KB)
+  - phase-3-data-model-universal-format-followup-2-2.md (46.4 KB)
+  - phase-3-data-model-universal-format-followup-2-3.md (58.1 KB)
+  - phase-3-data-model-universal-format.md (63.8 KB)
+  - phase-4-architecture-integration-followup-1-1.md (39.9 KB)
+  - phase-4-architecture-integration-followup-1-2.md (30.7 KB)
+  - phase-4-architecture-integration-followup-1-3.md (45.5 KB)
+  - phase-4-architecture-integration-followup-2-1.md (55.9 KB)
+  - phase-4-architecture-integration-followup-2-2.md (53.9 KB)
+  - phase-4-architecture-integration-followup-2-3.md (57.1 KB)
+  - phase-4-architecture-integration.md (43.6 KB)
+  - phase-5-creative-exploration-followup-1-1.md (29.8 KB)
+  - phase-5-creative-exploration-followup-1-2.md (39.6 KB)
+  - phase-5-creative-exploration-followup-1-3.md (29.1 KB)
+  - phase-5-creative-exploration-followup-2-1.md (29.9 KB)
+  - phase-5-creative-exploration-followup-2-2.md (31.0 KB)
+  - phase-5-creative-exploration-followup-2-3.md (32.6 KB)
+  - phase-5-creative-exploration-followup-3-1.md (1.9 KB)
+  - phase-5-creative-exploration-followup-3-2.md (46.3 KB)
+  - phase-5-creative-exploration-followup-3-3.md (43.2 KB)
+  - phase-5-creative-exploration.md (38.1 KB)
+  - supplement-art-visionary-pitch.md (37.4 KB)
+  - supplement-bboy-dataviz-museum.md (4.5 KB)
+  - supplement-bboy-dj-signatures.md (46.2 KB)
+  - supplement-bboy-music-history.md (55.4 KB)
+  - supplement-djing-craft-iconic-tracks.md (92.3 KB)
+  - supplement-education-economy-roadmap.md (54.2 KB)
+  - supplement-generational-evolution.md (29.1 KB)
+  - supplement-olympic-gaming-culture.md (58.5 KB)
+  - supplement-regional-cultural-styles.md (40.6 KB)
+  - supplement-unsung-legends-crews-bgirls.md (51.5 KB)
+
+Total research: 2389.3 KB across 56 files
+
+Compiling 7 sections...
+  [2026-03-22 18:10:41] Compiling: misc...
+  [2026-03-22 18:14:53] Done (33.9 KB)
+  [2026-03-22 18:14:53] Compiling: Research Landscape & Seed Discovery...
+  [2026-03-22 18:19:49] Done (45.0 KB)
+  [2026-03-22 18:19:49] Compiling: Mathematical Foundation (TRIVIUM Scoring, Physics, Movement Spectrogram)...
+  [2026-03-22 18:28:02] Done (64.8 KB)
+  [2026-03-22 18:28:02] Compiling: Visualization Engine (Blender, UE5, Godot, Unity, Three.js, Creative Modes)...
+  [2026-03-22 18:32:58] Done (47.3 KB)
+  [2026-03-22 18:32:58] Compiling: Data Model & Universal Skeleton Format...
+  [2026-03-22 18:38:32] Done (52.5 KB)
+  [2026-03-22 18:38:32] Compiling: Architecture & Integration (Pipeline, MATLAB Port, iPhone)...
+  [2026-03-22 18:45:05] Done (56.0 KB)
+  [2026-03-22 18:45:05] Compiling: Creative Exploration (AR/VR, Coaching, Generative Art)...
+  [2026-03-22 18:50:29] Done (41.5 KB)
+
+[2026-03-22 18:50:29] Stitching final report with executive summary...
+[2026-03-22 18:51:36] Got report in 2454.7s (360073 chars)
+
+Report saved to ANALYSIS.md (369.7 KB)
+
+══════════════════════════════════════════════════
+  EXPERIMENT COMPLETE
+══════════════════════════════════════════════════
+
+Compilation failed: Can't find variable: phases
+Research artifacts are preserved in data/results/ for manual review.
+error: script "experiment" exited with code 1

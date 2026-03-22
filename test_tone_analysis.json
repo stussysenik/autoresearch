@@ -1,0 +1,1000 @@
+{
+  "file": "test_tone",
+  "duration_sec": 15.0,
+  "n_segments": 58,
+  "dimensions": {
+    "BPM Stability": {
+      "mean": 0.13113128074444455,
+      "std": 0.16753641403266437,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Bass Energy": {
+      "mean": 0.34601095068175186,
+      "std": 0.3185851696626349,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Vocal Presence": {
+      "mean": 0.37808272473626175,
+      "std": 0.19398919250820765,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Beat Strength": {
+      "mean": 0.331624380748546,
+      "std": 0.27547000394839705,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Spectral Flux": {
+      "mean": 0.6594837687834546,
+      "std": 0.2784698067617788,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Rhythm Complexity": {
+      "mean": 0.30468409615535125,
+      "std": 0.3889499372461136,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Harmonic Richness": {
+      "mean": 0.4635919745417531,
+      "std": 0.37349619298566195,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Dynamic Range": {
+      "mean": 0.7073654769966949,
+      "std": 0.3756901314302711,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "Groove/Swing": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    }
+  },
+  "segment_classifications": [
+    {
+      "time": 0.0,
+      "label": "VOCAL",
+      "top_dims": "Harmonic Richness + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.3,
+        "Bass Energy": 0.0,
+        "Vocal Presence": 0.606,
+        "Beat Strength": 0.014,
+        "Spectral Flux": 0.355,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.973,
+        "Dynamic Range": 0.135,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 0.25,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.034,
+        "Bass Energy": 0.333,
+        "Vocal Presence": 0.245,
+        "Beat Strength": 0.24,
+        "Spectral Flux": 0.779,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.044,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 0.5,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.24,
+        "Bass Energy": 0.036,
+        "Vocal Presence": 0.484,
+        "Beat Strength": 0.258,
+        "Spectral Flux": 0.935,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.405,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 0.75,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.028,
+        "Bass Energy": 0.272,
+        "Vocal Presence": 0.316,
+        "Beat Strength": 0.054,
+        "Spectral Flux": 0.886,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.381,
+        "Dynamic Range": 0.684,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 1.0,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.312,
+        "Bass Energy": 0.132,
+        "Vocal Presence": 0.337,
+        "Beat Strength": 0.09,
+        "Spectral Flux": 0.884,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.146,
+        "Dynamic Range": 0.022,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 1.25,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.021,
+        "Bass Energy": 0.169,
+        "Vocal Presence": 0.256,
+        "Beat Strength": 0.298,
+        "Spectral Flux": 0.892,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.024,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 1.5,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.256,
+        "Bass Energy": 0.267,
+        "Vocal Presence": 0.213,
+        "Beat Strength": 0.258,
+        "Spectral Flux": 0.899,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.05,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 1.75,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.007,
+        "Bass Energy": 0.068,
+        "Vocal Presence": 0.556,
+        "Beat Strength": 0.036,
+        "Spectral Flux": 0.726,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.334,
+        "Dynamic Range": 0.081,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 2.0,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.268,
+        "Bass Energy": 0.419,
+        "Vocal Presence": 0.307,
+        "Beat Strength": 0.0,
+        "Spectral Flux": 0.45,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.781,
+        "Dynamic Range": 0.086,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 2.25,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.0,
+        "Bass Energy": 0.005,
+        "Vocal Presence": 0.444,
+        "Beat Strength": 0.205,
+        "Spectral Flux": 0.24,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.935,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 2.5,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Bass Energy",
+      "values": {
+        "BPM Stability": 0.05,
+        "Bass Energy": 0.515,
+        "Vocal Presence": 0.29,
+        "Beat Strength": 0.256,
+        "Spectral Flux": 0.238,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.051,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 2.75,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.0,
+        "Bass Energy": 0.012,
+        "Vocal Presence": 0.29,
+        "Beat Strength": 0.096,
+        "Spectral Flux": 0.322,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.938,
+        "Dynamic Range": 1.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 3.0,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.039,
+        "Bass Energy": 0.554,
+        "Vocal Presence": 0.293,
+        "Beat Strength": 0.119,
+        "Spectral Flux": 0.696,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.729,
+        "Dynamic Range": 0.989,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 3.25,
+      "label": "VOCAL",
+      "top_dims": "Vocal Presence + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.298,
+        "Bass Energy": 0.018,
+        "Vocal Presence": 1.0,
+        "Beat Strength": 0.124,
+        "Spectral Flux": 0.676,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.96,
+        "Dynamic Range": 0.667,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 3.5,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.027,
+        "Bass Energy": 0.48,
+        "Vocal Presence": 0.234,
+        "Beat Strength": 0.499,
+        "Spectral Flux": 0.847,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.062,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 3.75,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.261,
+        "Bass Energy": 0.121,
+        "Vocal Presence": 0.349,
+        "Beat Strength": 0.518,
+        "Spectral Flux": 0.966,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.0,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 4.0,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Bass Energy",
+      "values": {
+        "BPM Stability": 0.028,
+        "Bass Energy": 0.348,
+        "Vocal Presence": 0.331,
+        "Beat Strength": 0.174,
+        "Spectral Flux": 0.887,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.189,
+        "Dynamic Range": 0.34,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 4.25,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Bass Energy",
+      "values": {
+        "BPM Stability": 0.306,
+        "Bass Energy": 0.306,
+        "Vocal Presence": 0.305,
+        "Beat Strength": 0.191,
+        "Spectral Flux": 0.833,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.304,
+        "Dynamic Range": 0.25,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 4.5,
+      "label": "COMPLEX",
+      "top_dims": "Dynamic Range + Rhythm Complexity",
+      "values": {
+        "BPM Stability": 0.014,
+        "Bass Energy": 0.182,
+        "Vocal Presence": 0.397,
+        "Beat Strength": 0.48,
+        "Spectral Flux": 0.931,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.292,
+        "Dynamic Range": 0.996,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 4.75,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.253,
+        "Bass Energy": 0.528,
+        "Vocal Presence": 0.239,
+        "Beat Strength": 0.412,
+        "Spectral Flux": 0.941,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.055,
+        "Dynamic Range": 0.996,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 5.0,
+      "label": "COMPLEX",
+      "top_dims": "Harmonic Richness + Rhythm Complexity",
+      "values": {
+        "BPM Stability": 0.001,
+        "Bass Energy": 0.048,
+        "Vocal Presence": 0.752,
+        "Beat Strength": 0.064,
+        "Spectral Flux": 0.525,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 1.0,
+        "Dynamic Range": 0.874,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 5.25,
+      "label": "NEUTRAL",
+      "top_dims": "Harmonic Richness + Bass Energy",
+      "values": {
+        "BPM Stability": 0.05,
+        "Bass Energy": 0.696,
+        "Vocal Presence": 0.344,
+        "Beat Strength": 0.01,
+        "Spectral Flux": 0.188,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.792,
+        "Dynamic Range": 0.222,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 5.5,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.026,
+        "Bass Energy": 0.013,
+        "Vocal Presence": 0.0,
+        "Beat Strength": 0.087,
+        "Spectral Flux": 0.0,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.953,
+        "Dynamic Range": 1.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 5.75,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Bass Energy",
+      "values": {
+        "BPM Stability": 0.046,
+        "Bass Energy": 0.788,
+        "Vocal Presence": 0.235,
+        "Beat Strength": 0.483,
+        "Spectral Flux": 0.579,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.059,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 6.0,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.242,
+        "Bass Energy": 0.012,
+        "Vocal Presence": 0.765,
+        "Beat Strength": 0.588,
+        "Spectral Flux": 0.46,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.944,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 6.25,
+      "label": "BASS",
+      "top_dims": "Bass Energy + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.033,
+        "Bass Energy": 0.738,
+        "Vocal Presence": 0.306,
+        "Beat Strength": 0.169,
+        "Spectral Flux": 0.694,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.636,
+        "Dynamic Range": 0.655,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 6.5,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.307,
+        "Bass Energy": 0.084,
+        "Vocal Presence": 0.663,
+        "Beat Strength": 0.284,
+        "Spectral Flux": 0.815,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.285,
+        "Dynamic Range": 0.919,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 6.75,
+      "label": "IMPACT",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.028,
+        "Bass Energy": 0.578,
+        "Vocal Presence": 0.266,
+        "Beat Strength": 0.92,
+        "Spectral Flux": 0.977,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.013,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 7.0,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.242,
+        "Bass Energy": 0.282,
+        "Vocal Presence": 0.279,
+        "Beat Strength": 0.901,
+        "Spectral Flux": 1.0,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.011,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 7.25,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.021,
+        "Bass Energy": 0.352,
+        "Vocal Presence": 0.399,
+        "Beat Strength": 0.258,
+        "Spectral Flux": 0.792,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.09,
+        "Dynamic Range": 0.072,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 7.5,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.264,
+        "Bass Energy": 0.552,
+        "Vocal Presence": 0.305,
+        "Beat Strength": 0.205,
+        "Spectral Flux": 0.779,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.549,
+        "Dynamic Range": 0.072,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 7.75,
+      "label": "COMPLEX",
+      "top_dims": "Dynamic Range + Rhythm Complexity",
+      "values": {
+        "BPM Stability": 0.007,
+        "Bass Energy": 0.14,
+        "Vocal Presence": 0.396,
+        "Beat Strength": 0.575,
+        "Spectral Flux": 0.779,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.974,
+        "Dynamic Range": 0.995,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 8.0,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.257,
+        "Bass Energy": 0.839,
+        "Vocal Presence": 0.246,
+        "Beat Strength": 0.472,
+        "Spectral Flux": 0.516,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.041,
+        "Dynamic Range": 0.995,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 8.25,
+      "label": "VOCAL",
+      "top_dims": "Harmonic Richness + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.0,
+        "Bass Energy": 0.015,
+        "Vocal Presence": 0.672,
+        "Beat Strength": 0.063,
+        "Spectral Flux": 0.173,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.965,
+        "Dynamic Range": 0.121,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 8.5,
+      "label": "BASS",
+      "top_dims": "Bass Energy + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.05,
+        "Bass Energy": 0.979,
+        "Vocal Presence": 0.344,
+        "Beat Strength": 0.023,
+        "Spectral Flux": 0.127,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.792,
+        "Dynamic Range": 0.222,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 8.75,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.0,
+        "Bass Energy": 0.007,
+        "Vocal Presence": 0.321,
+        "Beat Strength": 0.206,
+        "Spectral Flux": 0.307,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.909,
+        "Dynamic Range": 1.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 9.0,
+      "label": "IMPACT",
+      "top_dims": "Bass Energy + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.04,
+        "Bass Energy": 1.0,
+        "Vocal Presence": 0.243,
+        "Beat Strength": 0.93,
+        "Spectral Flux": 0.778,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.01,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 9.25,
+      "label": "TRANSITION",
+      "top_dims": "Beat Strength + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.243,
+        "Bass Energy": 0.054,
+        "Vocal Presence": 0.589,
+        "Beat Strength": 1.0,
+        "Spectral Flux": 0.787,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.947,
+        "Dynamic Range": 0.998,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 9.5,
+      "label": "TRANSITION",
+      "top_dims": "Bass Energy + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.026,
+        "Bass Energy": 0.854,
+        "Vocal Presence": 0.303,
+        "Beat Strength": 0.347,
+        "Spectral Flux": 0.769,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.48,
+        "Dynamic Range": 0.063,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 9.75,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.016,
+        "Bass Energy": 0.217,
+        "Vocal Presence": 0.344,
+        "Beat Strength": 0.084,
+        "Spectral Flux": 0.877,
+        "Rhythm Complexity": 0.933,
+        "Harmonic Richness": 0.525,
+        "Dynamic Range": 0.221,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 10.0,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.028,
+        "Bass Energy": 0.053,
+        "Vocal Presence": 0.282,
+        "Beat Strength": 0.005,
+        "Spectral Flux": 0.99,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.029,
+        "Dynamic Range": 0.989,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 10.25,
+      "label": "TRANSITION",
+      "top_dims": "BPM Stability + Dynamic Range",
+      "values": {
+        "BPM Stability": 1.0,
+        "Bass Energy": 0.046,
+        "Vocal Presence": 0.075,
+        "Beat Strength": 0.313,
+        "Spectral Flux": 0.938,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.496,
+        "Dynamic Range": 1.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 10.5,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.014,
+        "Bass Energy": 0.25,
+        "Vocal Presence": 0.475,
+        "Beat Strength": 0.276,
+        "Spectral Flux": 0.806,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.037,
+        "Dynamic Range": 0.039,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 10.75,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.304,
+        "Bass Energy": 0.726,
+        "Vocal Presence": 0.295,
+        "Beat Strength": 0.215,
+        "Spectral Flux": 0.847,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.674,
+        "Dynamic Range": 0.592,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 11.0,
+      "label": "COMPLEX",
+      "top_dims": "Dynamic Range + Rhythm Complexity",
+      "values": {
+        "BPM Stability": 0.001,
+        "Bass Energy": 0.064,
+        "Vocal Presence": 0.445,
+        "Beat Strength": 0.459,
+        "Spectral Flux": 0.603,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.949,
+        "Dynamic Range": 0.996,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 11.25,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Bass Energy",
+      "values": {
+        "BPM Stability": 0.049,
+        "Bass Energy": 0.942,
+        "Vocal Presence": 0.307,
+        "Beat Strength": 0.495,
+        "Spectral Flux": 0.274,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.017,
+        "Dynamic Range": 0.997,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 11.5,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.027,
+        "Bass Energy": 0.008,
+        "Vocal Presence": 0.048,
+        "Beat Strength": 0.133,
+        "Spectral Flux": 0.011,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.919,
+        "Dynamic Range": 1.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 11.75,
+      "label": "BASS",
+      "top_dims": "Bass Energy + Harmonic Richness",
+      "values": {
+        "BPM Stability": 0.046,
+        "Bass Energy": 0.975,
+        "Vocal Presence": 0.3,
+        "Beat Strength": 0.169,
+        "Spectral Flux": 0.475,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.79,
+        "Dynamic Range": 0.577,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 12.0,
+      "label": "VOCAL",
+      "top_dims": "Harmonic Richness + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.29,
+        "Bass Energy": 0.024,
+        "Vocal Presence": 0.783,
+        "Beat Strength": 0.261,
+        "Spectral Flux": 0.365,
+        "Rhythm Complexity": 0.0,
+        "Harmonic Richness": 0.915,
+        "Dynamic Range": 0.261,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 12.25,
+      "label": "IMPACT",
+      "top_dims": "Dynamic Range + Beat Strength",
+      "values": {
+        "BPM Stability": 0.033,
+        "Bass Energy": 0.912,
+        "Vocal Presence": 0.284,
+        "Beat Strength": 0.919,
+        "Spectral Flux": 0.766,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.043,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 12.5,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Beat Strength",
+      "values": {
+        "BPM Stability": 0.256,
+        "Bass Energy": 0.102,
+        "Vocal Presence": 0.394,
+        "Beat Strength": 0.942,
+        "Spectral Flux": 0.917,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.594,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 12.75,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Dynamic Range",
+      "values": {
+        "BPM Stability": 0.029,
+        "Bass Energy": 0.655,
+        "Vocal Presence": 0.304,
+        "Beat Strength": 0.326,
+        "Spectral Flux": 0.883,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.371,
+        "Dynamic Range": 0.684,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 13.0,
+      "label": "TRANSITION",
+      "top_dims": "Spectral Flux + Beat Strength",
+      "values": {
+        "BPM Stability": 0.322,
+        "Bass Energy": 0.321,
+        "Vocal Presence": 0.343,
+        "Beat Strength": 0.372,
+        "Spectral Flux": 0.889,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.13,
+        "Dynamic Range": 0.0,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 13.25,
+      "label": "TRANSITION",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.021,
+        "Bass Energy": 0.384,
+        "Vocal Presence": 0.285,
+        "Beat Strength": 0.813,
+        "Spectral Flux": 0.905,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.018,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 13.5,
+      "label": "IMPACT",
+      "top_dims": "Dynamic Range + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.232,
+        "Bass Energy": 0.601,
+        "Vocal Presence": 0.233,
+        "Beat Strength": 0.734,
+        "Spectral Flux": 0.885,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.037,
+        "Dynamic Range": 0.999,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 13.75,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Spectral Flux",
+      "values": {
+        "BPM Stability": 0.007,
+        "Bass Energy": 0.14,
+        "Vocal Presence": 0.574,
+        "Beat Strength": 0.169,
+        "Spectral Flux": 0.704,
+        "Rhythm Complexity": 0.988,
+        "Harmonic Richness": 0.556,
+        "Dynamic Range": 0.5,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 14.0,
+      "label": "COMPLEX",
+      "top_dims": "Rhythm Complexity + Bass Energy",
+      "values": {
+        "BPM Stability": 0.305,
+        "Bass Energy": 0.837,
+        "Vocal Presence": 0.3,
+        "Beat Strength": 0.1,
+        "Spectral Flux": 0.451,
+        "Rhythm Complexity": 1.0,
+        "Harmonic Richness": 0.778,
+        "Dynamic Range": 0.754,
+        "Groove/Swing": 0.0
+      }
+    },
+    {
+      "time": 14.25,
+      "label": "DYNAMIC",
+      "top_dims": "Dynamic Range + Vocal Presence",
+      "values": {
+        "BPM Stability": 0.0,
+        "Bass Energy": 0.016,
+        "Vocal Presence": 0.937,
+        "Beat Strength": 0.542,
+        "Spectral Flux": 0.233,
+        "Rhythm Complexity": 0.119,
+        "Harmonic Richness": 0.91,
+        "Dynamic Range": 0.996,
+        "Groove/Swing": 0.0
+      }
+    }
+  ],
+  "track_profile": {
+    "VOCAL": 4,
+    "TRANSITION": 21,
+    "COMPLEX": 14,
+    "DYNAMIC": 11,
+    "NEUTRAL": 1,
+    "BASS": 3,
+    "IMPACT": 4
+  }
+}
