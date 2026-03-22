@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/checkpoints/
+data/results/
+data/manifest.json
+experiment.log
+ANALYSIS.md
