@@ -1,0 +1,485 @@
+  Prior context loaded: TECH_STACK_REEVALUATION.md + ANALYSIS_v2.md
+
+════════════════════════════════════════════════════════
+  Overnight Research Loop: Reimplementation Guides
+  (with prior research from ANALYSIS_v2.md + TECH_STACK)
+════════════════════════════════════════════════════════
+  Papers: MotionBERT, CoTracker3, SAM3D
+  Phases: 6 per paper × 3 papers = 18 total
+  Circuit breaker: 8h max wall time
+════════════════════════════════════════════════════════
+
+
+╔══════════════════════════════════════════════════════════╗
+║  📄 MotionBERT                                        ║
+║  MotionBERT: A Unified Perspective on Learning Human Mo║
+╚══════════════════════════════════════════════════════════╝
+
+  ╔══════════════════════════════════════════════════╗
+  ║  motionbert-phase-1: Architecture Survey                   ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: none
+    Budget: 15min | Max followups: 2
+    [2026-03-23 01:26:34] Gathering context...
+    Context: 0.1KB
+    Prior research: 22.2KB
+    [2026-03-23 01:26:34] Sending research prompt...
+    [2026-03-23 01:29:26] Initial research saved (25.1KB)
+    [2026-03-23 01:29:26] Self-identification 1/2...
+    [2026-03-23 01:29:57] Found 3 gap(s). Researching...
+      Gap 1: The survey benchmarks MotionBERT only on H36M (everyday actions), 3DPW (outdoor ...
+  [2026-03-23 01:31:34] ♥ Heartbeat — research still running
+      Saved (13.5KB)
+      Gap 2: The pipeline diagram shows SAM-Body4D and MotionBERT both producing 3D joint pos...
+      Saved (11.2KB)
+      Gap 3: The limitations section acknowledges MotionBERT lacks rotation invariance and wa...
+      Saved (19.3KB)
+    [2026-03-23 01:36:33] Self-identification 2/2...
+  [2026-03-23 01:36:34] ♥ Heartbeat — research still running
+    [2026-03-23 01:37:12] Found 3 gap(s). Researching...
+      Gap 1: The core recommendation is to use MotionBERT's DSTformer as a temporal smoother ...
+      Saved (26.7KB)
+      Gap 2: The pipeline delegates all primary 3D estimation to SAM-Body4D based on the clai...
+  [2026-03-23 01:41:34] ♥ Heartbeat — research still running
+      Saved (28.2KB)
+      Gap 3: The research flags `[NEEDS VERIFICATION]` on whether DanceFormer's 18.4mm AIST++...
+  [2026-03-23 01:46:34] ♥ Heartbeat — research still running
+      Saved (17.7KB)
+    [2026-03-23 01:47:21] Phase complete: 20.8min, 7 artifacts, 141.8KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  motionbert-phase-2: Math Deep Dive                        ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: motionbert-phase-1
+    Budget: 15min | Max followups: 2
+    [2026-03-23 01:47:21] Gathering context...
+    Context too large (138.7KB). Summarizing...
+    Summarized to 16.9KB
+    Context: 17.2KB
+    Prior research: 22.2KB
+    [2026-03-23 01:49:52] Sending research prompt...
+  [2026-03-23 01:51:34] ♥ Heartbeat — research still running
+    [2026-03-23 01:53:42] Initial research saved (34.6KB)
+    [2026-03-23 01:53:42] Self-identification 1/2...
+    [2026-03-23 01:54:28] Found 3 gap(s). Researching...
+      Gap 1: The document states T=243 is fixed and mentions "longer sequences use sliding wi...
+  [2026-03-23 01:56:34] ♥ Heartbeat — research still running
+      Saved (21.0KB)
+      Gap 2: The document reports 6.3M parameters but provides zero analysis of FLOPs per for...
+  [2026-03-23 02:01:34] ♥ Heartbeat — research still running
+      Saved (22.1KB)
+      Gap 3: The paper's central "unified" claim covers three downstream tasks: 3D pose, mesh...
+      Saved (34.7KB)
+    [2026-03-23 02:06:19] Time budget exhausted (19.0min).
+    [2026-03-23 02:06:19] Phase complete: 19.0min, 4 artifacts, 112.4KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  motionbert-phase-3: Minimal Implementation Audit          ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: motionbert-phase-1, motionbert-phase-2
+    Budget: 12min | Max followups: 2
+    [2026-03-23 02:06:19] Gathering context...
+    Context too large (250.7KB). Summarizing...
+  [2026-03-23 02:06:34] ♥ Heartbeat — research still running
+    Summarized to 16.6KB
+    Context: 16.9KB
+    Prior research: 22.2KB
+    [2026-03-23 02:08:41] Sending research prompt...
+    [2026-03-23 02:10:52] Initial research saved (18.5KB)
+    [2026-03-23 02:10:52] Self-identification 1/2...
+  [2026-03-23 02:11:34] ♥ Heartbeat — research still running
+    [2026-03-23 02:11:44] Found 3 gap(s). Researching...
+      Gap 1: The dataset module says "normalized 2D keypoints" and "root-relative mm" but nev...
+      Saved (16.5KB)
+      Gap 2: The plan says to download `best_epoch.bin` and "load and evaluate immediately," ...
+  [2026-03-23 02:16:34] ♥ Heartbeat — research still running
+      Saved (35.0KB)
+      Gap 3: The plan adds spatial and temporal positional embeddings once in `DSTformer.forw...
+      Saved (13.4KB)
+    [2026-03-23 02:19:51] Time budget exhausted (13.5min).
+    [2026-03-23 02:19:51] Phase complete: 13.5min, 4 artifacts, 83.4KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  motionbert-phase-4: Breakdance Adaptation                 ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: motionbert-phase-1, motionbert-phase-2, motionbert-phase-3
+    Budget: 12min | Max followups: 3
+    [2026-03-23 02:19:51] Gathering context...
+    Context too large (333.0KB). Summarizing...
+  [2026-03-23 02:21:34] ♥ Heartbeat — research still running
+    Summarized to 16.1KB
+    Context: 16.5KB
+    Prior research: 22.2KB
+    [2026-03-23 02:22:08] Sending research prompt...
+    [2026-03-23 02:25:42] Initial research saved (26.4KB)
+    [2026-03-23 02:25:42] Self-identification 1/3...
+    [2026-03-23 02:26:30] Found 3 gap(s). Researching...
+      Gap 1: The aggregated movement energy SNR calculation assumes noise is uncorrelated acr...
+  [2026-03-23 02:26:34] ♥ Heartbeat — research still running
+  [2026-03-23 02:31:34] ♥ Heartbeat — research still running
+      Saved (22.0KB)
+      Gap 2: Every scenario proposes fine-tuning modifications (rotation augmentation, contac...
+      Saved (25.7KB)
+      Gap 3: All MPJPE estimates, SNR calculations, and degradation curves are derived theore...
+  [2026-03-23 02:36:34] ♥ Heartbeat — research still running
+      Saved (24.9KB)
+    [2026-03-23 02:39:44] Time budget exhausted (19.9min).
+    [2026-03-23 02:39:44] Phase complete: 19.9min, 4 artifacts, 99.0KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  motionbert-phase-5: Gap Identification                    ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: motionbert-phase-1, motionbert-phase-2, motionbert-phase-3, motionbert-phase-4
+    Budget: 10min | Max followups: 1
+    [2026-03-23 02:39:44] Gathering context...
+    Context too large (431.0KB). Summarizing...
+  [2026-03-23 02:41:34] ♥ Heartbeat — research still running
+    Summarized to 17.2KB
+    Context: 17.4KB
+    Prior research: 22.2KB
+    [2026-03-23 02:42:10] Sending research prompt...
+  [2026-03-23 02:46:34] ♥ Heartbeat — research still running
+    [2026-03-23 02:48:04] Initial research saved (27.9KB)
+    [2026-03-23 02:48:04] Self-identification 1/1...
+    [2026-03-23 02:48:48] Found 3 gap(s). Researching...
+      Gap 1: The analysis produces detailed error estimates (78mm fused MPJPE, velocity SNR ~...
+  [2026-03-23 02:51:34] ♥ Heartbeat — research still running
+      Saved (21.3KB)
+      Gap 2: Breaking battles have two dancers, a DJ, judges, and spectators — all in frame. ...
+      Saved (26.1KB)
+      Gap 3: The analysis flags SAM-Body4D as potentially non-existent (6A, rated CRITICAL) b...
+  [2026-03-23 02:56:34] ♥ Heartbeat — research still running
+      Saved (21.6KB)
+    [2026-03-23 02:58:08] Phase complete: 18.4min, 4 artifacts, 96.8KB
+
+  [2026-03-23 02:58:08] Synthesizing guide for MotionBERT...
+  [2026-03-23 02:58:08] Context for motionbert is 527.3KB — summarizing...
+  [2026-03-23 03:01:28] Summarized to 24.6KB
+  [2026-03-23 03:01:34] ♥ Heartbeat — research still running
+  [2026-03-23 03:06:34] ♥ Heartbeat — research still running
+  [2026-03-23 03:06:49] Quality Report: motionbert — 90/100 (PASS)
+  Sections: 10 | Words: 6298 | Refs: 4
+  Mermaid: ✓ | LaTeX: ✓ | Pseudocode: ✓
+  Breakdance: ✓ | Integration: ✓ | Limitations: ✓
+  [2026-03-23 03:06:49] Saved MOTIONBERT_REIMPL_GUIDE.md (48.6 KB)
+
+╔══════════════════════════════════════════════════════════╗
+║  📄 CoTracker3                                        ║
+║  CoTracker3: Simpler and Better Point Tracking by Pseud║
+╚══════════════════════════════════════════════════════════╝
+
+  ╔══════════════════════════════════════════════════╗
+  ║  cotracker3-phase-1: Architecture Survey                   ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: none
+    Budget: 15min | Max followups: 2
+    [2026-03-23 03:06:49] Gathering context...
+    Context: 0.1KB
+    Prior research: 15.7KB
+    [2026-03-23 03:06:49] Sending research prompt...
+    [2026-03-23 03:10:51] Initial research saved (36.3KB)
+    [2026-03-23 03:10:51] Self-identification 1/2...
+    [2026-03-23 03:11:27] Found 3 gap(s). Researching...
+      Gap 1: The entire review is theoretical — there's no benchmark or even qualitative test...
+  [2026-03-23 03:11:34] ♥ Heartbeat — research still running
+      Saved (17.7KB)
+      Gap 2: The pipeline assumes dense point tracking → numerical differentiation → velocity...
+  [2026-03-23 03:16:34] ♥ Heartbeat — research still running
+      Saved (27.3KB)
+      Gap 3: The review marks the real video training sources as `[NEEDS VERIFICATION]` and s...
+      Saved (11.4KB)
+    [2026-03-23 03:19:22] Self-identification 2/2...
+    [2026-03-23 03:20:04] Found 3 gap(s). Researching...
+      Gap 1: The research proposes SG filtering as the key solution to derivative noise ampli...
+  [2026-03-23 03:21:34] ♥ Heartbeat — research still running
+      Saved (31.3KB)
+      Gap 2: All noise calculations assume 30fps ($\Delta t = 1/30$). The $1/\Delta t^3$ jerk...
+  [2026-03-23 03:26:34] ♥ Heartbeat — research still running
+      Saved (38.2KB)
+      Gap 3: The research proposes 4 concrete experiments (category-stratified TAP-Vid-Kineti...
+  [2026-03-23 03:31:34] ♥ Heartbeat — research still running
+      Saved (27.8KB)
+    [2026-03-23 03:34:01] Phase complete: 27.2min, 7 artifacts, 190.0KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  cotracker3-phase-2: Math Deep Dive                        ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: cotracker3-phase-1
+    Budget: 15min | Max followups: 2
+    [2026-03-23 03:34:01] Gathering context...
+    Context too large (184.0KB). Summarizing...
+    Summarized to 14.2KB
+    Context: 14.4KB
+    Prior research: 15.7KB
+    [2026-03-23 03:36:10] Sending research prompt...
+  [2026-03-23 03:36:34] ♥ Heartbeat — research still running
+    [2026-03-23 03:40:26] Initial research saved (36.4KB)
+    [2026-03-23 03:40:26] Self-identification 1/2...
+    [2026-03-23 03:41:05] Found 3 gap(s). Researching...
+      Gap 1: The document explicitly states browser access was denied and all equations were ...
+      Saved (0.4KB)
+      Gap 2: The breakdancing section identifies that 20+ px/frame extremity displacement exc...
+  [2026-03-23 03:41:34] ♥ Heartbeat — research still running
+  [2026-03-23 03:46:34] ♥ Heartbeat — research still running
+      Saved (24.8KB)
+      Gap 3: With K=4 iterations, what is the maximum per-iteration position correction the r...
+  [2026-03-23 03:51:34] ♥ Heartbeat — research still running
+      Saved (26.9KB)
+    [2026-03-23 03:53:39] Time budget exhausted (19.6min).
+    [2026-03-23 03:53:39] Phase complete: 19.6min, 4 artifacts, 88.5KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  cotracker3-phase-3: Minimal Implementation Audit          ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: cotracker3-phase-1, cotracker3-phase-2
+    Budget: 12min | Max followups: 2
+    [2026-03-23 03:53:39] Gathering context...
+    Context too large (272.2KB). Summarizing...
+    Summarized to 13.8KB
+    Context: 13.9KB
+    Prior research: 15.7KB
+    [2026-03-23 03:55:48] Sending research prompt...
+  [2026-03-23 03:56:34] ♥ Heartbeat — research still running
+    [2026-03-23 03:58:46] Initial research saved (1.2KB)
+    [2026-03-23 03:58:46] Self-identification 1/2...
+    [2026-03-23 03:59:08] Found 3 gap(s). Researching...
+      Gap 1: How does the minimal implementation handle point occlusion and re-emergence? Bbo...
+      Saved (14.4KB)
+      Gap 2: The audit focuses on CoTracker3 in isolation but says nothing about the output f...
+  [2026-03-23 04:01:34] ♥ Heartbeat — research still running
+      Saved (14.6KB)
+      Gap 3: The audit claims 16px search radius is the "main bottleneck" and that extremity ...
+      Saved (13.5KB)
+    [2026-03-23 04:05:08] Self-identification 2/2...
+    [2026-03-23 04:06:02] Found 3 gap(s). Researching...
+      Gap 1: Every displacement number, error estimate, and threshold recommendation is deriv...
+  [2026-03-23 04:06:34] ♥ Heartbeat — research still running
+      Saved (29.3KB)
+      Gap 2: The research says "ResNet or similar, pretrained (~60 LOC)" for feature extracti...
+  [2026-03-23 04:11:34] ♥ Heartbeat — research still running
+      Saved (26.3KB)
+      Gap 3: The research assumes N tracked points exist but never addresses how they're sele...
+  [2026-03-23 04:16:34] ♥ Heartbeat — research still running
+      Saved (32.1KB)
+    [2026-03-23 04:17:18] Phase complete: 23.6min, 7 artifacts, 131.5KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  cotracker3-phase-4: Breakdance Adaptation                 ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: cotracker3-phase-1, cotracker3-phase-2, cotracker3-phase-3
+    Budget: 12min | Max followups: 3
+    [2026-03-23 04:17:18] Gathering context...
+    Context too large (401.4KB). Summarizing...
+    Summarized to 13.6KB
+    Context: 13.7KB
+    Prior research: 15.7KB
+    [2026-03-23 04:19:24] Sending research prompt...
+  [2026-03-23 04:21:34] ♥ Heartbeat — research still running
+    [2026-03-23 04:23:01] Initial research saved (28.4KB)
+    [2026-03-23 04:23:01] Self-identification 1/3...
+    [2026-03-23 04:23:57] Found 3 gap(s). Researching...
+      Gap 1: Every quantitative claim ($\Delta p_{\text{hand}} \approx 20$ px/frame, search r...
+  [2026-03-23 04:26:34] ♥ Heartbeat — research still running
+      Saved (21.7KB)
+      Gap 2: Breaking is performed as continuous sequences (toprock → drop → footwork → power...
+  [2026-03-23 04:31:34] ♥ Heartbeat — research still running
+      Saved (29.1KB)
+      Gap 3: The research presents precise failure rates (identity swap 15-25% per half-rotat...
+      Saved (34.8KB)
+    [2026-03-23 04:36:29] Time budget exhausted (19.2min).
+    [2026-03-23 04:36:29] Phase complete: 19.2min, 4 artifacts, 114.0KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  cotracker3-phase-5: Gap Identification                    ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: cotracker3-phase-1, cotracker3-phase-2, cotracker3-phase-3, cotracker3-phase-4
+    Budget: 10min | Max followups: 1
+    [2026-03-23 04:36:29] Gathering context...
+    Context too large (514.3KB). Summarizing...
+  [2026-03-23 04:36:34] ♥ Heartbeat — research still running
+    Summarized to 16.8KB
+    Context: 17.0KB
+    Prior research: 15.7KB
+    [2026-03-23 04:39:03] Sending research prompt...
+  [2026-03-23 04:41:34] ♥ Heartbeat — research still running
+    [2026-03-23 04:44:10] Initial research saved (28.0KB)
+    [2026-03-23 04:44:10] Self-identification 1/1...
+    [2026-03-23 04:45:01] Found 3 gap(s). Researching...
+      Gap 1: The analysis catalogs individual noise sources (camera shake §4.1, clothing §3.1...
+  [2026-03-23 04:46:34] ♥ Heartbeat — research still running
+      Saved (30.3KB)
+      Gap 2: The analysis evaluates component-level metrics (AJ for tracking, AIST accuracy f...
+      Saved (14.8KB)
+      Gap 3: The analysis flags the camera model issue (§5.2) and SAM-Body4D verification (§6...
+  [2026-03-23 04:51:34] ♥ Heartbeat — research still running
+      Saved (20.9KB)
+    [2026-03-23 04:54:38] Phase complete: 18.2min, 4 artifacts, 93.9KB
+
+  [2026-03-23 04:54:38] Synthesizing guide for CoTracker3...
+  [2026-03-23 04:54:38] Context for cotracker3 is 607.8KB — summarizing...
+  [2026-03-23 04:56:34] ♥ Heartbeat — research still running
+  [2026-03-23 04:58:03] Summarized to 24.1KB
+  [2026-03-23 05:01:34] ♥ Heartbeat — research still running
+  [2026-03-23 05:03:57] Quality Report: cotracker3 — 100/100 (PASS)
+  Sections: 10 | Words: 7224 | Refs: 5
+  Mermaid: ✓ | LaTeX: ✓ | Pseudocode: ✓
+  Breakdance: ✓ | Integration: ✓ | Limitations: ✓
+  [2026-03-23 05:03:57] Saved COTRACKER3_REIMPL_GUIDE.md (55.3 KB)
+
+╔══════════════════════════════════════════════════════════╗
+║  📄 SAM3D                                             ║
+║  SAM3D: Segment Anything in 3D Scenes                  ║
+╚══════════════════════════════════════════════════════════╝
+
+  ╔══════════════════════════════════════════════════╗
+  ║  sam3d-phase-1: Architecture Survey                   ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: none
+    Budget: 15min | Max followups: 2
+    [2026-03-23 05:03:57] Gathering context...
+    Context: 0.1KB
+    Prior research: 15.9KB
+    [2026-03-23 05:03:57] Sending research prompt...
+    [2026-03-23 05:06:26] Initial research saved (24.3KB)
+    [2026-03-23 05:06:26] Self-identification 1/2...
+  [2026-03-23 05:06:34] ♥ Heartbeat — research still running
+    [2026-03-23 05:06:56] Found 3 gap(s). Researching...
+      Gap 1: The survey identifies SAM 3, SAM-Body4D, and SAM-3D-Body as the actual tools to ...
+      Saved (0.8KB)
+      Gap 2: The limitations table lists "use monocular depth estimation (ZoeDepth, Depth Any...
+      Saved (18.6KB)
+      Gap 3: Six separate `[NEEDS VERIFICATION]` tags appear across the ablation table (Secti...
+  [2026-03-23 05:11:34] ♥ Heartbeat — research still running
+      Saved (14.3KB)
+    [2026-03-23 05:14:30] Self-identification 2/2...
+    [2026-03-23 05:15:06] Found 2 gap(s). Researching...
+      Gap 1: The survey's entire recommendation is "bypass SAM3D, use SAM 3 + SAM-Body4D" — y...
+  [2026-03-23 05:16:34] ♥ Heartbeat — research still running
+      Saved (15.7KB)
+      Gap 2: SAM3D received a detailed 11-section architecture survey plus a rigorous depth-e...
+      Saved (2.6KB)
+    [2026-03-23 05:18:22] Phase complete: 14.4min, 6 artifacts, 76.3KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  sam3d-phase-2: Math Deep Dive                        ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: sam3d-phase-1
+    Budget: 15min | Max followups: 2
+    [2026-03-23 05:18:22] Gathering context...
+    Context too large (73.3KB). Summarizing...
+    Summarized to 14.4KB
+    Context: 14.7KB
+    Prior research: 15.9KB
+    [2026-03-23 05:20:32] Sending research prompt...
+  [2026-03-23 05:21:34] ♥ Heartbeat — research still running
+    [2026-03-23 05:24:04] Initial research saved (30.0KB)
+    [2026-03-23 05:24:04] Self-identification 1/2...
+    [2026-03-23 05:24:46] Found 3 gap(s). Researching...
+      Gap 1: The entire equation set (Eqs 7-14) assumes multiple views of a **static scene**....
+  [2026-03-23 05:26:34] ♥ Heartbeat — research still running
+      Saved (20.7KB)
+      Gap 2: The research verifies every equation dimensionally but never states SAM3D's actu...
+  [2026-03-23 05:31:34] ♥ Heartbeat — research still running
+      Saved (15.2KB)
+      Gap 3: The merge thresholds ($\tau_{\text{merge}} \approx 0.5$, $\tau_{\text{boundary}}...
+      Saved (18.9KB)
+    [2026-03-23 05:35:01] Time budget exhausted (16.6min).
+    [2026-03-23 05:35:01] Phase complete: 16.6min, 4 artifacts, 84.8KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  sam3d-phase-3: Minimal Implementation Audit          ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: sam3d-phase-1, sam3d-phase-2
+    Budget: 12min | Max followups: 2
+    [2026-03-23 05:35:01] Gathering context...
+    Context too large (157.5KB). Summarizing...
+  [2026-03-23 05:36:34] ♥ Heartbeat — research still running
+    Summarized to 12.1KB
+    Context: 12.2KB
+    Prior research: 15.9KB
+    [2026-03-23 05:36:55] Sending research prompt...
+    [2026-03-23 05:39:20] Initial research saved (23.8KB)
+    [2026-03-23 05:39:20] Self-identification 1/2...
+    [2026-03-23 05:40:09] Found 3 gap(s). Researching...
+      Gap 1: The backprojection formula `R.T @ (points_cam - t.reshape(3,1))` bakes in one sp...
+  [2026-03-23 05:41:34] ♥ Heartbeat — research still running
+      Saved (14.8KB)
+      Gap 2: There's no description of how to verify correctness at each pipeline stage — no ...
+      Saved (28.2KB)
+      Gap 3: The vote matrix is dense `(N_sp, M_total)` where `M_total` = sum of masks across...
+  [2026-03-23 05:46:34] ♥ Heartbeat — research still running
+      Saved (19.1KB)
+    [2026-03-23 05:48:39] Time budget exhausted (13.6min).
+    [2026-03-23 05:48:39] Phase complete: 13.6min, 4 artifacts, 85.9KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  sam3d-phase-4: Breakdance Adaptation                 ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: sam3d-phase-1, sam3d-phase-2, sam3d-phase-3
+    Budget: 12min | Max followups: 3
+    [2026-03-23 05:48:39] Gathering context...
+    Context too large (243.3KB). Summarizing...
+    Summarized to 14.5KB
+    Context: 14.6KB
+    Prior research: 15.9KB
+    [2026-03-23 05:50:51] Sending research prompt...
+  [2026-03-23 05:51:34] ♥ Heartbeat — research still running
+    [2026-03-23 05:54:31] Initial research saved (27.1KB)
+    [2026-03-23 05:54:31] Self-identification 1/3...
+    [2026-03-23 05:55:41] Found 2 gap(s). Researching...
+      Gap 1: The verdict recommends "SAM 2 → CoTracker3 → HMR 2.0/WHAM" as the viable pipelin...
+  [2026-03-23 05:56:34] ♥ Heartbeat — research still running
+      Saved (29.1KB)
+      Gap 2: The analysis makes strong claims gated on specific precision requirements — 33ms...
+  [2026-03-23 06:01:34] ♥ Heartbeat — research still running
+      Saved (27.8KB)
+    [2026-03-23 06:04:32] Time budget exhausted (15.9min).
+    [2026-03-23 06:04:32] Phase complete: 15.9min, 3 artifacts, 84.0KB
+
+  ╔══════════════════════════════════════════════════╗
+  ║  sam3d-phase-5: Gap Identification                    ║
+  ╚══════════════════════════════════════════════════╝
+    Dependencies: sam3d-phase-1, sam3d-phase-2, sam3d-phase-3, sam3d-phase-4
+    Budget: 10min | Max followups: 1
+    [2026-03-23 06:04:32] Gathering context...
+    Context too large (326.6KB). Summarizing...
+  [2026-03-23 06:06:34] ♥ Heartbeat — research still running
+    Summarized to 16.6KB
+    Context: 16.8KB
+    Prior research: 15.9KB
+    [2026-03-23 06:07:01] Sending research prompt...
+  [2026-03-23 06:11:34] ♥ Heartbeat — research still running
+    [2026-03-23 06:11:59] Initial research saved (22.6KB)
+    [2026-03-23 06:11:59] Self-identification 1/1...
+    [2026-03-23 06:12:42] Found 3 gap(s). Researching...
+      Gap 1: Gap 6.1 correctly flags that hallucinated tools are in the canonical pipeline an...
+      Saved (24.8KB)
+      Gap 2: The analysis makes dozens of specific quantitative claims (37% boundary error, m...
+  [2026-03-23 06:16:34] ♥ Heartbeat — research still running
+      Saved (25.8KB)
+      Gap 3: The analysis proves SAM3D is structurally incompatible with dynamic monocular vi...
+  [2026-03-23 06:21:34] ♥ Heartbeat — research still running
+      Saved (18.6KB)
+    [2026-03-23 06:22:51] Phase complete: 18.3min, 4 artifacts, 91.9KB
+
+  [2026-03-23 06:22:51] Synthesizing guide for SAM3D...
+  [2026-03-23 06:22:51] Context for sam3d is 418.0KB — summarizing...
+  [2026-03-23 06:26:01] Summarized to 21.7KB
+  [2026-03-23 06:26:34] ♥ Heartbeat — research still running
+  [2026-03-23 06:31:23] Quality Report: sam3d — 100/100 (PASS)
+  Sections: 10 | Words: 6790 | Refs: 27
+  Mermaid: ✓ | LaTeX: ✓ | Pseudocode: ✓
+  Breakdance: ✓ | Integration: ✓ | Limitations: ✓
+  [2026-03-23 06:31:23] Saved SAM3D_REIMPL_GUIDE.md (50.6 KB)
+
+════════════════════════════════════════════════════════
+  RESEARCH LOOP COMPLETE
+════════════════════════════════════════════════════════
+  MotionBERT: 5 phases ✓, 0 failed | Guide: ✓ (90/100)
+  CoTracker3: 5 phases ✓, 0 failed | Guide: ✓ (100/100)
+  SAM3D: 5 phases ✓, 0 failed | Guide: ✓ (100/100)
+
+  Total: 1574.3KB written
+  Duration: 5.1h
+════════════════════════════════════════════════════════
+
