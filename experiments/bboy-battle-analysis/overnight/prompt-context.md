@@ -1,0 +1,157 @@
+# Context for TRIVIUM Engine Code Generation
+
+You are generating a quantitative breakdancing scoring engine. It takes SMPL 24-joint positions from JOSH (monocular 4D human reconstruction) and audio features, and computes a TRIVIUM score (0-100).
+
+## JOSH Output Format
+JOSH outputs SMPL body meshes. After forward kinematics:
+- `joints_3d`: float32 [T, 24, 3] — joint positions in meters, world-grounded, at 30fps
+- SMPL 24-joint topology: 0=pelvis, 1=left_hip, 2=right_hip, 3=spine1, 4=left_knee, 5=right_knee, 6=spine2, 7=left_ankle, 8=right_ankle, 9=spine3, 10=left_foot, 11=right_foot, 12=neck, 13=left_collar, 14=right_collar, 15=head, 16=left_shoulder, 17=right_shoulder, 18=left_elbow, 19=right_elbow, 20=left_wrist, 21=right_wrist, 22=left_hand, 23=right_hand
+
+## TRIVIUM Scoring Model
+
+### Total: S = 0.40·BODY + 0.35·SOUL + 0.25·MIND
+
+### BODY (40%) = 0.40·Tech + 0.20·Vocab + 0.15·Prog + 0.25·Clean
+- **Technique** = Σ(d_i · q_i) / Σ(d_i). Difficulty from angular velocity peaks. Quality Q_L = 1 - CV(|L|) for spins, Q_F = 1 - σ(max||v_CoM||/ε_F) for freezes. ε_F = 0.01 m/s.
+- **Vocabulary** = H(p)/log₂(C). Shannon entropy of move category distribution. C = 5 categories (toprock, footwork, power, freeze, transition).
+- **Progression** = σ(β₁) where β₁ = OLS slope of difficulty vs time.
+- **Cleanliness** = 1 - σ(mean(jerk_j)/jerk_ref). Third derivative magnitude. Use LDLJ-V (log dimensionless jerk) or SPARC (spectral arc length) — these are the ONLY valid smoothness metrics (Balasubramanian 2015).
+
+### SOUL (35%) = 0.45·Music + 0.25·Phrase + 0.30·Create
+- **Musicality** = 0.25·μ_ant + 0.30·μ_multi + 0.25·μ_hit + 0.20·Groove
+  - μ = max_τ corr(M(t), H(t-τ)), τ ∈ [-200ms, 200ms]
+  - μ_ant = μ · φ(τ*), φ(τ) = 1 + (γ/2)·erf(-τ/σ_τ), γ=0.5, σ_τ=50ms
+  - μ_hit = Σ D₄(b_k)·hit(b_k) / Σ D₄(b_k), δ=70ms
+  - Groove = 1 - CV({Δφ_k}) clamped [0,1]
+- **Phrasing** = 1 - DTW(audio_phrases, motion_phrases)/DTW_max. STUB for v0.1.
+- **Creativity** = novelty score from movement model. STUB for v0.1 (needs corpus).
+
+### MIND (25%) = 0.30·Flow + 0.20·Energy + 0.30·Response + 0.20·Stage
+- **Flow** = 1 - mean(σ(|Δv_CoM|/v̄_CoM)) at transitions. Use SPARC on CoM velocity.
+- **Energy Management** = 1 - max(0, (E̅₁ - E̅₃)/E̅₁). Split round into thirds. Penalizes fading.
+- **Response** = STUB for v0.1 (needs opponent data).
+- **Stage Use** = H_spatial(p)/log₂(G²). Spatial entropy of CoM on G×G grid.
+
+## Key Formulas (numpy pseudocode)
+
+```python
+# Velocities via central differences
+velocities = np.zeros_like(joints_3d)
+velocities[1:-1] = (joints_3d[2:] - joints_3d[:-2]) * fps / 2
+velocities[0] = (joints_3d[1] - joints_3d[0]) * fps
+velocities[-1] = (joints_3d[-1] - joints_3d[-2]) * fps
+speed = np.linalg.norm(velocities, axis=-1)  # [T, 24]
+
+# Movement energy profile M(t)
+M_t = speed @ JOINT_WEIGHTS  # [T]
+
+# Movement accent function A_m(t) = [dM/dt]+
+from scipy.ndimage import gaussian_filter1d
+M_smooth = gaussian_filter1d(M_t, sigma=0.050 * fps)
+dM = np.gradient(M_smooth) * fps
+A_m = np.maximum(0, dM)
+
+# Jerk (third derivative)
+accel = np.diff(velocities, axis=0) * fps
+jerk = np.diff(accel, axis=0) * fps
+jerk_mag = np.linalg.norm(jerk, axis=-1)  # [T-2, 24]
+
+# SPARC (Spectral Arc Length) — valid smoothness metric
+def sparc(speed_profile, fps):
+    N = len(speed_profile)
+    freq = np.fft.rfftfreq(N, d=1.0/fps)
+    spec = np.abs(np.fft.rfft(speed_profile))
+    spec = spec / (spec.max() + 1e-8)
+    # Arc length of normalized spectrum up to movement bandwidth
+    cutoff = min(20.0, fps/2)  # Hz
+    mask = freq <= cutoff
+    dfreq = np.diff(freq[mask])
+    dspec = np.diff(spec[mask])
+    arc_length = -np.sum(np.sqrt(dfreq**2 + dspec**2))
+    return arc_length  # more negative = less smooth
+
+# Log Dimensionless Jerk (LDLJ-V)
+def ldlj(speed_profile, fps, duration):
+    jerk_sq = np.sum(np.diff(speed_profile, n=3)**2) * fps**3
+    v_peak = np.max(np.abs(speed_profile))
+    return -np.log(abs(duration**3 / (v_peak**2 + 1e-8) * jerk_sq) + 1e-8)
+
+# Cross-correlation with lag search
+def lagged_pearson(x, y, max_lag):
+    x = (x - x.mean()) / (x.std() + 1e-8)
+    y = (y - y.mean()) / (y.std() + 1e-8)
+    best_corr, best_lag = -1, 0
+    for lag in range(-max_lag, max_lag + 1):
+        if lag < 0:
+            corr = np.mean(x[-lag:] * y[:len(x)+lag])
+        elif lag > 0:
+            corr = np.mean(x[:len(x)-lag] * y[lag:])
+        else:
+            corr = np.mean(x * y[:len(x)])
+        if corr > best_corr:
+            best_corr, best_lag = corr, lag
+    return best_corr, best_lag
+
+# Shannon entropy (vocabulary)
+def shannon_entropy_normalized(counts, n_categories):
+    p = counts / (counts.sum() + 1e-8)
+    p = p[p > 0]
+    H = -np.sum(p * np.log2(p))
+    return H / np.log2(n_categories)
+
+# Spatial entropy (stage use)
+def spatial_entropy(com_xy, grid_size=10):
+    H, _, _ = np.histogram2d(com_xy[:, 0], com_xy[:, 1], bins=grid_size)
+    p = H.flatten() / (H.sum() + 1e-8)
+    p = p[p > 0]
+    return -np.sum(p * np.log2(p)) / np.log2(grid_size**2)
+```
+
+## De Leva 1996 Joint Mass Table (70kg reference)
+```python
+JOINT_MASSES_KG = {
+    0: 11.17, 1: 2.78, 2: 2.78, 3: 5.0, 4: 3.28, 5: 3.28,
+    6: 3.0, 7: 0.61, 8: 0.61, 9: 2.5, 10: 0.97, 11: 0.97,
+    12: 1.5, 13: 0.5, 14: 0.5, 15: 5.0, 16: 2.0, 17: 2.0,
+    18: 1.14, 19: 1.14, 20: 0.45, 21: 0.45, 22: 0.41, 23: 0.41,
+}
+JOINT_WEIGHTS = np.array([JOINT_MASSES_KG[j] for j in range(24)])
+JOINT_WEIGHTS /= JOINT_WEIGHTS.sum()
+```
+
+## Joint Groups
+```python
+JOINT_GROUPS = {
+    'legs':  [1, 2, 4, 5, 7, 8, 10, 11],
+    'torso': [0, 3, 6, 9],
+    'arms':  [13, 14, 16, 17, 18, 19],
+    'hands': [20, 21, 22, 23],
+    'head':  [12, 15],
+}
+```
+
+## Existing analyze_track.py (audio side, 548 LOC)
+9 dimensions: BPM Stability, Bass Energy, Vocal Presence, Beat Strength, Spectral Flux, Rhythm Complexity, Harmonic Richness, Dynamic Range, Groove/Swing. Per-track min-max normalization to [0,1]. 3 weight profiles (bboy/dj/curator).
+
+Audio hotness H(t) = weighted sum of 9D features. Bboy weights: [0.05, 0.20, 0.03, 0.25, 0.10, 0.20, 0.02, 0.10, 0.05].
+
+## Output Files Required
+
+### File 1: analyze_motion.py
+- Takes joints_3d [T, 24, 3] at 30fps
+- Computes 9D motion features (mirroring audio 9D)
+- Computes ALL kinematic quantities needed for TRIVIUM (velocities, jerk, CoM, angular momentum)
+- Phase detection: classify segments as toprock/footwork/power/freeze/transition
+- SPARC and LDLJ-V smoothness metrics
+- Per-track min-max normalization to [0,1]
+- CLI: `python analyze_motion.py joints.npz` or test mode (no args)
+- JSON output with all TRIVIUM-computable sub-scores
+
+### File 2: match_beats.py
+- Takes motion analysis + audio analysis
+- Level 1: accent-beat timestamp matching (AHR, weighted hit score, downbeat bonus)
+- Level 2: spectral cross-correlation (μ, μ_ant, band correlations)
+- TRIVIUM score computation: BODY + SOUL + MIND → 0-100
+- Stubs for theoretical components (creativity, battle response, phrasing)
+- CLI: `python match_beats.py --motion joints.npz --audio track.wav` or `--test`
+- JSON output with full TRIVIUM breakdown
