@@ -30,6 +30,15 @@ AGENTS.md
 # Experimental code/artifacts
 dev/
 
+# Breaking analytics — large generated artifacts (keep reports, ignore binaries)
+*.npy
+*.npz
+*.pt
+*.png
+*.pdf
+# But track the overnight report and OpenSpec docs
+!overnight/batch_results/validation_report.txt
+
 # Results file
 results.tsv
 
