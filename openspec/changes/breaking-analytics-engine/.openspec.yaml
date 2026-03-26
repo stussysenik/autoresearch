@@ -1,0 +1,4 @@
+schema: "1.0"
+created: "2026-03-26"
+name: breaking-analytics-engine
+description: Unified breaking analytics engine with dependency injection, move algebra, graph theory, and visualization
