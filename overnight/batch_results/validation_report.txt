@@ -1,0 +1,70 @@
+BREAKING ANALYTICS ENGINE — OVERNIGHT VALIDATION REPORT
+Generated: 2026-03-26T02:56:02.587447
+============================================================
+
+[02:55:57] TASK 1: Loading BRACE segments.csv → MoveEvent format
+[02:55:57]   Loaded 1352 segments from 81 videos, 64 dancers
+[02:55:57]     toprock: 465
+[02:55:57]     power: 462
+[02:55:57]     footwork: 425
+[02:55:57] 
+TASK 2: Building transition graph from 1,352 labeled segments
+[02:55:57]   Transition graph: 3 nodes, 9 edges
+[02:55:57]   After toprock: [('power', '0.60'), ('footwork', '0.38'), ('toprock', '0.02')]
+[02:55:57]   After power: [('footwork', '0.53'), ('toprock', '0.40'), ('power', '0.06')]
+[02:55:57]   After footwork: [('toprock', '0.55'), ('power', '0.40'), ('footwork', '0.05')]
+[02:55:57]   Steady-state distribution: {'power': 0.3488328208992707, 'footwork': 0.3256385890847479, 'toprock': 0.32552859001598133}
+[02:55:57]   Transition matrix saved ((3, 3))
+[02:55:57] 
+TASK 3: Computing style signatures for 64 dancers
+[02:55:58]   Computed 64 style signatures
+[02:55:58]   Most common central move: [('toprock', 38), ('power', 15), ('footwork', 11)]
+[02:55:58]   Style similarity matrix: (64, 64)
+[02:55:58]     Mean similarity: 0.979
+[02:55:58]     Min similarity: 0.946
+[02:55:58]     Max similarity (non-self): 0.990
+[02:55:58]     Most similar dancers: flying buddha & philip (1.000)
+[02:55:58]     Most different dancers: arex & lil kev (0.946)
+[02:55:58] 
+TASK 4: Extracting MoveSignatures from seq4 real 3D skeleton
+[02:55:58]   Loaded joints_3d_REAL_seq4.npy: (999, 24, 3)
+[02:55:58]   RS0mFARO1x4 has 23 labeled segments
+[02:55:59]     toprock [0:232] (232 frames): complexity=0.886, smoothness=-22.095, symmetry=0.342
+[02:55:59]     footwork [252:349] (97 frames): complexity=0.906, smoothness=-18.826, symmetry=0.492
+[02:55:59]     toprock [369:467] (98 frames): complexity=0.898, smoothness=-16.685, symmetry=0.113
+[02:55:59]     power [530:621] (91 frames): complexity=0.940, smoothness=-16.204, symmetry=0.727
+[02:55:59]     footwork [643:999] (356 frames): complexity=0.911, smoothness=-22.802, symmetry=0.809
+[02:55:59]   Extracted 5 signatures from seq4
+[02:55:59]   Full clip signature: complexity=0.911, smoothness=-38.456
+[02:55:59]     rotation_count=None, pivot_stability=None
+[02:55:59] 
+TASK 5: Signature discrimination — do move types separate?
+[02:55:59]   Within-type distance:  mean=0.2667 (n=2)
+[02:55:59]   Between-type distance: mean=0.2212 (n=8)
+[02:55:59]   Discrimination ratio:  0.83x (>1.0 = types separate)
+[02:55:59]   FAIL — signatures do NOT discriminate (need tuning)
+[02:55:59] 
+TASK 6: Generating visualizations from real data
+[02:56:00]   Transition graph: /teamspace/studios/this_studio/autoresearch/overnight/batch_results/real_transition_graph.png
+[02:56:01]   Distance matrix: /teamspace/studios/this_studio/autoresearch/overnight/batch_results/real_signature_distances.png
+[02:56:01]   Energy series FAILED: 'y1' is not 1-dimensional
+[02:56:01]   Style distances: /teamspace/studios/this_studio/autoresearch/overnight/batch_results/real_style_distances.png
+[02:56:02]   Pitch PDF: /teamspace/studios/this_studio/autoresearch/overnight/batch_results/real_pitch.pdf
+[02:56:02] 
+TASK 7: Graph metrics and community detection
+[02:56:02]   Graph summary: {
+  "node_count": 3,
+  "edge_count": 9,
+  "density": 1.5,
+  "avg_clustering": 1.0,
+  "strongly_connected_components": 1,
+  "weakly_connected_components": 1,
+  "diameter": 1,
+  "avg_in_degree": 3.0,
+  "avg_out_degree": 3.0
+}
+[02:56:02]   Communities detected: 1
+[02:56:02]     Community 1: ['footwork', 'power', 'toprock']
+[02:56:02]   betweenness_centrality: [('toprock', '0.000'), ('power', '0.000'), ('footwork', '0.000')]
+[02:56:02]   pagerank: [('power', '0.347'), ('toprock', '0.326'), ('footwork', '0.326')]
+[02:56:02]   eigenvector_centrality: [('power', '0.604'), ('footwork', '0.564'), ('toprock', '0.564')]

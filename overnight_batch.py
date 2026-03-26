@@ -218,7 +218,7 @@ log(f"  Extracted {len(seg_signatures)} signatures from seq4")
 # Also extract full-clip signature
 full_sig = extract_signature(joints_3d, fps=30.0, move_type="unknown")
 log(f"  Full clip signature: complexity={full_sig.complexity:.3f}, smoothness={full_sig.smoothness:.3f}")
-log(f"    rotation_count={full_sig.rotation_count:.3f}, pivot_stability={full_sig.pivot_stability}")
+log(f"    rotation_count={full_sig.rotation_count}, pivot_stability={full_sig.pivot_stability}")
 
 
 # ─────────────────────────────────────────────────────────────────
