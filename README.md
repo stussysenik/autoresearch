@@ -36,6 +36,37 @@ bun run fetch && bun run run && bun run analyze
 
 ---
 
+## Breaking Analytics Engine
+
+4-layer analytics system for breaking (bboy) movement analysis. Built for 3 use cases: learning specific moves, studying battle footage, and event replay analysis.
+
+| Layer | Package | What it does |
+|-------|---------|-------------|
+| DI Engine | `engine/` | Dependency injection pipeline, 4 analysis modes, CLI |
+| Move Algebra | `algebra/` | Mathematical move fingerprints, similarity metrics, rotation physics |
+| Graph Engine | `graphs/` | Transition Markov chains, style signatures, strategy trees, battle DAGs |
+| Visualization | `viz/` | CLI sparklines, matrix heatmaps, graph plots, pitch-ready PDF |
+
+**3 modes for 3 types of days:**
+
+```bash
+# Mode 1: Move Learning — "I want to study 1990s mechanics"
+python engine/cli.py move_drill skeleton.npz --output table
+
+# Mode 2: Battle Study — "Why did this bboy lose at BC One?"
+python engine/cli.py battle_eval battle_dir/ --audio track.wav --output pdf
+
+# Mode 3: Event Replay — "Outbreak Europe big screen analysis"
+python engine/cli.py battle_eval pre_computed.npz --output pdf
+# → Pitch-ready PDF in < 30 seconds, big screen resolution
+```
+
+All CPU-only. Pure Python + NumPy + SciPy + NetworkX + Matplotlib + Rich.
+
+**Full gameplan:** [`GAMEPLAN.md`](./GAMEPLAN.md) | **Specs:** [`openspec/changes/breaking-analytics-engine/`](./openspec/changes/breaking-analytics-engine/)
+
+---
+
 ## 🌳 Fork & Branch Strategy
 
 ### What is a Fork?
