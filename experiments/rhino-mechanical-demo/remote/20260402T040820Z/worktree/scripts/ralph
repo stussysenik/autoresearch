@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
+
+# shellcheck source=scripts/mpc-live-ii-loop.lib.sh
+source "$SCRIPT_DIR/mpc-live-ii-loop.lib.sh"
+
+CHANGE_NAME="add-mpc-live-ii-reconstruction-demo"
+SESSION_ID="mpc-live-ii-ralph"
+THRESHOLD=75
+MAX_ITERATIONS=6
+CLI_MODE="run"
+NO_REFRESH=0
+
+PROMPTS=(
+  "create mpc live ii button cap play start named mpc-play-start-cap"
+  "create mpc live ii button cap stop named mpc-stop-cap"
+  "create mpc live ii panel demo named mpc-panel-demo"
+)
+
+usage() {
+  cat <<'EOF'
+Usage: ralph [options]
+
+Options:
+  --session NAME       Session id to use for CLI iterations
+  --threshold N        Match score threshold before stopping (default: 75)
+  --max-iterations N   Maximum iterations to run (default: 6)
+  --cli-mode MODE      run|plan (default: run)
+  --no-refresh         Skip downloading official Akai sources on each iteration
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --session)
+      SESSION_ID="${2:?missing value}"
+      shift 2
+      ;;
+    --threshold)
+      THRESHOLD="${2:?missing value}"
+      shift 2
+      ;;
+    --max-iterations)
+      MAX_ITERATIONS="${2:?missing value}"
+      shift 2
+      ;;
+    --cli-mode)
+      CLI_MODE="${2:?missing value}"
+      shift 2
+      ;;
+    --no-refresh)
+      NO_REFRESH=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+mpc_require_tools
+
+work_root="$(mpc_work_root)"
+mkdir -p "$work_root/logs"
+
+iteration=1
+best_score=0
+best_json=""
+
+while [[ "$iteration" -le "$MAX_ITERATIONS" ]]; do
+  prompt_index=$(( (iteration - 1) % ${#PROMPTS[@]} ))
+  prompt="${PROMPTS[$prompt_index]}"
+  iteration_log="$work_root/logs/ralph-${iteration}.json"
+
+  if [[ "$NO_REFRESH" -eq 0 ]]; then
+    autoresearcher_args=(--iteration "$iteration" --session "$SESSION_ID" --prompt "$prompt" --threshold "$THRESHOLD" --cli-mode "$CLI_MODE")
+  else
+    autoresearcher_args=(--iteration "$iteration" --session "$SESSION_ID" --prompt "$prompt" --threshold "$THRESHOLD" --cli-mode "$CLI_MODE" --no-refresh)
+  fi
+
+  "$SCRIPT_DIR/autoresearcher" "${autoresearcher_args[@]}" | tee "$iteration_log"
+
+  score="$(jq -r '.score.match_score' "$iteration_log")"
+  if [[ "$score" -gt "$best_score" ]]; then
+    best_score="$score"
+    best_json="$iteration_log"
+  fi
+
+  printf 'iteration %s prompt=%s score=%s threshold=%s\n' "$iteration" "$prompt" "$score" "$THRESHOLD"
+
+  if [[ "$score" -ge "$THRESHOLD" ]]; then
+    printf 'ralph: threshold reached, stopping\n'
+    break
+  fi
+
+  iteration=$((iteration + 1))
+done
+
+if [[ -n "$best_json" ]]; then
+  printf 'best_iteration_log=%s\n' "$best_json"
+fi
+

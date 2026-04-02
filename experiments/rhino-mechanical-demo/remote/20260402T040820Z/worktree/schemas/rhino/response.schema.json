@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rhino-nlcli.local/schemas/rhino/response.schema.json",
+  "title": "RhinoJsonRpcResponse",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["jsonrpc", "id", "result"],
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "id": {
+          "type": ["string", "null"]
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "objects"],
+          "properties": {
+            "status": {
+              "const": "ok"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "export_path": {
+              "type": ["string", "null"]
+            },
+            "document_id": {
+              "type": ["string", "null"]
+            },
+            "objects": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["host_id"],
+                "properties": {
+                  "alias": {
+                    "type": ["string", "null"]
+                  },
+                  "host_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "kind": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": ["jsonrpc", "id", "result"],
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "id": {
+          "type": ["string", "null"]
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "runtime"],
+          "properties": {
+            "status": {
+              "const": "ok"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "runtime": {
+              "$ref": "./runtime.schema.json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": ["jsonrpc", "id", "result"],
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "id": {
+          "type": ["string", "null"]
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "document"],
+          "properties": {
+            "status": {
+              "const": "ok"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "document_id": {
+              "type": ["string", "null"]
+            },
+            "document": {
+              "$ref": "./document.schema.json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": ["jsonrpc", "id", "error"],
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "id": {
+          "type": ["string", "null"]
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

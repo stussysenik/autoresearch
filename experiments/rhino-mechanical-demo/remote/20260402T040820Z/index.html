@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MPC Live II Winning Run</title>
+  <style>
+    :root {
+      --bg: #f2efe8;
+      --ink: #1e2428;
+      --muted: #5e6a70;
+      --panel: #fffdfa;
+      --line: #d9d2c7;
+      --accent: #b85c38;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.12), transparent 28%),
+        linear-gradient(180deg, #f6f3ee, var(--bg));
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+    h1, h2 { margin: 0 0 12px; line-height: 1.05; }
+    p { margin: 0 0 16px; color: var(--muted); }
+    .hero, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(32, 24, 16, 0.06);
+    }
+    .hero { padding: 28px; margin-bottom: 24px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .stat {
+      padding: 14px;
+      border-radius: 14px;
+      background: #faf6f0;
+      border: 1px solid var(--line);
+    }
+    .stat strong { display: block; font-size: 1.4rem; color: var(--accent); }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .card { padding: 18px; }
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>MPC Live II Winning Run</h1>
+      <p>Run <code>20260402T040820Z</code> reached the harness target with calibrated cap geometry and the full ordered Rhino layer contract.</p>
+      <div class="stats">
+        <div class="stat"><strong>100.0</strong><span>Best Score</span></div>
+        <div class="stat"><strong>0.0000</strong><span>Best Loss</span></div>
+        <div class="stat"><strong>8 / 8</strong><span>Binary Passes</span></div>
+        <div class="stat"><strong>18.0 × 8.6 × 3.4 mm</strong><span>Calibrated Cap</span></div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <article class="card">
+        <h2>Cap Isometric</h2>
+        <img src="previews/cap-isometric.png" alt="MPC Live II Play Start cap isometric preview">
+      </article>
+      <article class="card">
+        <h2>Panel Isometric</h2>
+        <img src="previews/panel-isometric.png" alt="MPC Live II panel isometric preview">
+      </article>
+      <article class="card">
+        <h2>Panel Top</h2>
+        <img src="previews/panel-top.png" alt="MPC Live II panel top preview">
+      </article>
+    </section>
+
+    <section class="card" style="margin-top: 24px;">
+      <h2>Included Files</h2>
+      <ul>
+        <li><a href="artifacts/overnight-cap-20260402T040820Z-overnight-play-start-cap-20264-2.stl">Winning cap STL</a></li>
+        <li><a href="artifacts/overnight-panel-20260402T040820Z-overnight-panel-demo-22082-2.stl">Winning panel STL</a></li>
+        <li><a href="artifacts/cap-calibration.json">Cap calibration artifact</a></li>
+        <li><a href="artifacts/objective.json">Canonical objective</a></li>
+        <li><a href="README.md">Bundle notes</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "run_id": "20260402T040820Z",
+  "score": 100.0,
+  "loss": 0.0,
+  "binary_pass_count": 8,
+  "binary_total_count": 8,
+  "description": "load cap calibration artifact and ordered MPC layers",
+  "calibrated_cap_bbox_mm": {
+    "width": 18.0,
+    "depth": 8.6,
+    "height": 3.4
+  },
+  "preview_images": [
+    "previews/cap-isometric.png",
+    "previews/panel-isometric.png",
+    "previews/panel-top.png"
+  ],
+  "artifacts": [
+    "artifacts/overnight-cap-20260402T040820Z-overnight-play-start-cap-20264-2.stl",
+    "artifacts/overnight-panel-20260402T040820Z-overnight-panel-demo-22082-2.stl",
+    "artifacts/overnight-cap-20260402T040820Z-20264-2.py",
+    "artifacts/overnight-panel-20260402T040820Z-22082-2.py",
+    "artifacts/cap-calibration.json",
+    "artifacts/objective.json",
+    "artifacts/best.json",
+    "artifacts/summary.txt"
+  ],
+  "worktree_snapshot": "worktree"
+}

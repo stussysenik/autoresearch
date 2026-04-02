@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rhino-nlcli.local/schemas/rhino/request.schema.json",
+  "title": "RhinoJsonRpcRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jsonrpc", "id", "method", "params"],
+  "properties": {
+    "jsonrpc": {
+      "const": "2.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "rhino.system.ping",
+        "rhino.system.describe_runtime",
+        "rhino.document.open_headless",
+        "rhino.document.describe",
+        "rhino.document.close",
+        "rhino.geometry.create_cube",
+        "rhino.geometry.create_sphere",
+        "rhino.geometry.create_cylinder",
+        "rhino.geometry.create_organic_blob",
+        "rhino.geometry.create_scientific_shell",
+        "rhino.geometry.create_mpc_live_ii_button_cap",
+        "rhino.geometry.create_mpc_live_ii_panel_demo",
+        "rhino.geometry.create_spiral_staircase",
+        "rhino.objects.translate"
+      ]
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "type": ["string", "null"]
+        },
+        "host_id": {
+          "type": ["string", "null"]
+        },
+        "document_id": {
+          "type": ["string", "null"]
+        },
+        "document_path": {
+          "type": ["string", "null"]
+        },
+        "size_mm": {
+          "type": ["number", "null"]
+        },
+        "radius_mm": {
+          "type": ["number", "null"]
+        },
+        "height_mm": {
+          "type": ["number", "null"]
+        },
+        "step_count": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "distance_mm": {
+          "type": ["number", "null"]
+        },
+        "direction": {
+          "type": ["string", "null"],
+          "enum": ["left", "right", "up", "down", "forward", "back", null]
+        }
+      }
+    }
+  }
+}

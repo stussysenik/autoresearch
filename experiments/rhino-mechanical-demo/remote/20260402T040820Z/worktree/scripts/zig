@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "$(dirname "$0")/../.tools/zig-aarch64-macos-0.16.0-dev.3061+9b1eaad13/zig" "$@"

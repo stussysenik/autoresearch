@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rhino-nlcli.local/schemas/rhino/document.schema.json",
+  "title": "RhinoDocumentDescriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "unit_system",
+    "model_tolerance_mm",
+    "headless"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unit_system": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_tolerance_mm": {
+      "type": "number",
+      "minimum": 0
+    },
+    "headless": {
+      "type": "boolean"
+    },
+    "document_path": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}
