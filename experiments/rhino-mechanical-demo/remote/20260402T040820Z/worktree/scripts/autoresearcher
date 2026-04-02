@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
+
+# shellcheck source=scripts/mpc-live-ii-loop.lib.sh
+source "$SCRIPT_DIR/mpc-live-ii-loop.lib.sh"
+
+CHANGE_NAME="add-mpc-live-ii-reconstruction-demo"
+SESSION_ID="mpc-live-ii"
+THRESHOLD=75
+ITERATION=1
+PROMPT=""
+CLI_MODE="run"
+NO_REFRESH=0
+
+usage() {
+  cat <<'EOF'
+Usage: autoresearcher [options]
+
+Options:
+  --iteration N       Iteration label for logs and output files
+  --session NAME      Session id to use when invoking rhino-nlcli
+  --prompt TEXT       Optional CLI prompt to execute once the source pack is refreshed
+  --threshold N       Match score threshold that counts as source-backed
+  --no-refresh        Skip downloading official Akai sources
+  --cli-mode MODE     run|plan (default: run)
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --iteration)
+      ITERATION="${2:?missing value}"
+      shift 2
+      ;;
+    --session)
+      SESSION_ID="${2:?missing value}"
+      shift 2
+      ;;
+    --prompt)
+      PROMPT="${2:?missing value}"
+      shift 2
+      ;;
+    --threshold)
+      THRESHOLD="${2:?missing value}"
+      shift 2
+      ;;
+    --no-refresh)
+      NO_REFRESH=1
+      shift
+      ;;
+    --cli-mode)
+      CLI_MODE="${2:?missing value}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+mpc_require_tools
+
+work_root="$(mpc_work_root)"
+source_dir="$(mpc_source_dir)"
+research_dir="$(mpc_research_dir)"
+iteration_dir="$work_root/iterations/$ITERATION"
+mkdir -p "$iteration_dir" "$research_dir"
+
+if [[ "$NO_REFRESH" -eq 0 ]]; then
+  mpc_refresh_source_pack >/dev/null
+fi
+
+research_json="$iteration_dir/research.json"
+score_json="$iteration_dir/score.json"
+cap_reference_path="$ROOT_DIR/research/mpc-live-ii/cap-calibration.json"
+cli_json="$iteration_dir/cli.json"
+cli_exit=0
+
+mpc_extract_research_json "$source_dir" > "$research_json"
+if [[ -n "$PROMPT" ]]; then
+  set +e
+  if [[ "$CLI_MODE" == "plan" ]]; then
+    "$ROOT_DIR/zig-out/bin/rhino-nlcli" plan --prompt "$PROMPT" > "$cli_json" 2>&1
+    cli_exit=$?
+  else
+    "$ROOT_DIR/zig-out/bin/rhino-nlcli" run \
+      --profile rhino-inside \
+      --session "$SESSION_ID" \
+      --prompt "$PROMPT" > "$cli_json" 2>&1
+    cli_exit=$?
+  fi
+  set -e
+fi
+
+mpc_score_research_json "$research_json" "$cap_reference_path" "$cli_json" "$cli_exit" > "$score_json"
+
+jq -n \
+  --arg iteration "$ITERATION" \
+  --slurpfile research "$research_json" \
+  --slurpfile score "$score_json" \
+  --arg cli_prompt "$PROMPT" \
+  --arg cli_mode "$CLI_MODE" \
+  --argjson cli_exit "$cli_exit" \
+  '
+  {
+    iteration: $iteration,
+    cli: {
+      mode: $cli_mode,
+      prompt: $cli_prompt,
+      exit_code: $cli_exit
+    },
+    research: $research[0],
+    score: $score[0]
+  }
+  '

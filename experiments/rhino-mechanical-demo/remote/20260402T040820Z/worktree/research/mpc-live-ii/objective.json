@@ -1,0 +1,37 @@
+{
+  "objective_name": "mpc_live_ii_demo_loss_v1",
+  "goal": "minimize_loss",
+  "search_policy": {
+    "learning_rate": "one coherent product change per evaluation round",
+    "mode": "low"
+  },
+  "loss_function": {
+    "formula": "loss = (1 - binary_pass_fraction) + secondary_weight * (1 - secondary_score / 100)",
+    "secondary_weight": 0.25
+  },
+  "binary_metrics": [
+    "source_pack_ready",
+    "button_cap_generation_ok",
+    "panel_demo_generation_ok",
+    "calibration_artifact_valid",
+    "runtime_uses_calibration",
+    "calibrated_summary_ok",
+    "cap_bbox_matches_calibration",
+    "chronological_layers_ok"
+  ],
+  "ordered_layers": [
+    "MPCLiveII::01_Sources",
+    "MPCLiveII::02_Envelope",
+    "MPCLiveII::03_Anchors",
+    "MPCLiveII::04_ButtonFamily",
+    "MPCLiveII::05_Cap2D",
+    "MPCLiveII::06_Cap3D",
+    "MPCLiveII::07_Mesh",
+    "MPCLiveII::08_Export"
+  ],
+  "bbox_tolerance_mm": {
+    "width": 1.5,
+    "depth": 1.5,
+    "height": 1.0
+  }
+}

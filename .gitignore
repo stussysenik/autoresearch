@@ -48,3 +48,12 @@ weather-markets/data/
 weather-markets/results.tsv
 weather-markets/summary.txt
 weather-markets/market_snapshot.json
+
+# Color science bench generated artifacts
+experiments/color-science-bench/artifacts/
+experiments/color-science-bench/summary.txt
+experiments/color-science-bench/data/measured/manifest.json
+
+# Parallel search lanes generated during self-learning runs
+experiments/swarm-*/
+experiments/color-science-bench-swarm-*/

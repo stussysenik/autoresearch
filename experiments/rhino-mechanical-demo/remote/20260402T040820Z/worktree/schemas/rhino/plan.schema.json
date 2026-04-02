@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rhino-nlcli.local/schemas/rhino/plan.schema.json",
+  "title": "RhinoNormalizedPlan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "kind", "method"],
+  "properties": {
+    "host": {
+      "const": "rhino"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "create_cube",
+        "create_sphere",
+        "create_cylinder",
+        "create_organic_blob",
+        "create_scientific_shell",
+        "create_mpc_live_ii_button_cap",
+        "create_mpc_live_ii_panel_demo",
+        "create_spiral_staircase",
+        "move_object"
+      ]
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "rhino.geometry.create_cube",
+        "rhino.geometry.create_sphere",
+        "rhino.geometry.create_cylinder",
+        "rhino.geometry.create_organic_blob",
+        "rhino.geometry.create_scientific_shell",
+        "rhino.geometry.create_mpc_live_ii_button_cap",
+        "rhino.geometry.create_mpc_live_ii_panel_demo",
+        "rhino.geometry.create_spiral_staircase",
+        "rhino.objects.translate"
+      ]
+    },
+    "alias": {
+      "type": ["string", "null"]
+    },
+    "document_id": {
+      "type": ["string", "null"]
+    },
+    "host_id": {
+      "type": ["string", "null"]
+    },
+    "size_mm": {
+      "type": ["number", "null"]
+    },
+    "radius_mm": {
+      "type": ["number", "null"]
+    },
+    "height_mm": {
+      "type": ["number", "null"]
+    },
+    "step_count": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "distance_mm": {
+      "type": ["number", "null"]
+    },
+    "direction": {
+      "type": ["string", "null"],
+      "enum": ["left", "right", "up", "down", "forward", "back", null]
+    }
+  }
+}

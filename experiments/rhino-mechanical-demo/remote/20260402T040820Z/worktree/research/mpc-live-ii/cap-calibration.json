@@ -1,0 +1,23 @@
+{
+  "button_family": "MPC Live II transport row Play Start button cap",
+  "measured_from": "Akai product-page device photo scaled by the published 411.5 mm chassis width and cross-checked against the MPC Live II user-guide transport labels.",
+  "provenance_tier": "official-image-calibrated-estimate",
+  "notes": "This is a calibrated reference for live reconstruction, not a factory drawing. Dimensions are a conservative image-scaled estimate anchored to official Akai sources and should be presented as such.",
+  "cap_width_mm": 18.0,
+  "cap_depth_mm": 8.6,
+  "cap_height_mm": 3.4,
+  "top_width_mm": 15.8,
+  "top_depth_mm": 7.4,
+  "corner_radius_mm": 1.7,
+  "shoulder_height_mm": 1.4,
+  "official_sources": [
+    "https://www.akaipro.com/mpc-live-2/",
+    "https://www.akaipro.com/page-data/mpc-live-2/page-data.json",
+    "https://cdn.inmusicbrands.com/akai/M2P11C6VI/MPC%20X%2C%20MPC%20Live%2C%20MPC%20Live%20II%2C%20MPC%20One%2C%20MPC%20Key%2061%2C%20MPC%20Studio%20mk2%2C%20MPC%20Touch%20-%20User%20Guide%20-%20v2.11.6.pdf"
+  ],
+  "scale_basis": {
+    "device_width_mm": 411.5,
+    "device_depth_mm": 243.8,
+    "device_height_mm": 45.7
+  }
+}

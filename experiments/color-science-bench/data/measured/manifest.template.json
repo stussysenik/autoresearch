@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "description": "Replace these template spectra with measured reflectance and illuminant data before using as a real benchmark.",
+  "reflectance_csv": "reflectances.template.csv",
+  "illuminant_csv": "illuminants.template.csv",
+  "calibration_pairs": [
+    {
+      "name": "train::neutral_patch_5::d65_capture",
+      "reflectance": "neutral_patch_5",
+      "illuminant": "d65_capture"
+    },
+    {
+      "name": "train::skin_patch_3::tungsten_a",
+      "reflectance": "skin_patch_3",
+      "illuminant": "tungsten_a"
+    }
+  ],
+  "benchmark_pairs": [
+    {
+      "name": "eval::blue_patch_1::led_panel_a",
+      "reflectance": "blue_patch_1",
+      "illuminant": "led_panel_a"
+    },
+    {
+      "name": "eval::skin_patch_3::d65_capture",
+      "reflectance": "skin_patch_3",
+      "illuminant": "d65_capture"
+    }
+  ],
+  "adaptation_pairs": [
+    {
+      "name": "adapt::neutral_patch_5::tungsten_a->d65_capture",
+      "reflectance": "neutral_patch_5",
+      "source_illuminant": "tungsten_a",
+      "target_illuminant": "d65_capture",
+      "is_neutral": true
+    },
+    {
+      "name": "adapt::blue_patch_1::led_panel_a->d65_capture",
+      "reflectance": "blue_patch_1",
+      "source_illuminant": "led_panel_a",
+      "target_illuminant": "d65_capture",
+      "is_neutral": false
+    }
+  ],
+  "distance_pairs": [
+    {
+      "name": "distance::d65_capture::neutral_patch_5::skin_patch_3",
+      "illuminant": "d65_capture",
+      "sample_a": "neutral_patch_5",
+      "sample_b": "skin_patch_3"
+    },
+    {
+      "name": "distance::led_panel_a::blue_patch_1::skin_patch_3",
+      "illuminant": "led_panel_a",
+      "sample_a": "blue_patch_1",
+      "sample_b": "skin_patch_3"
+    }
+  ]
+}
