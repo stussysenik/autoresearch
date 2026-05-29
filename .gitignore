@@ -57,3 +57,4 @@ experiments/color-science-bench/data/measured/manifest.json
 # Parallel search lanes generated during self-learning runs
 experiments/swarm-*/
 experiments/color-science-bench-swarm-*/
+.aider*

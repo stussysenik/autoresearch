@@ -1,0 +1,1059 @@
+# Scenario Analysis Request
+
+## Scenario
+- **ID**: flare-cycle-01
+- **Tags**: extreme-articulation, rotation, power
+- **Notes**: Large leg arcs and intermittent self-occlusion.
+
+## Context from Previous Scenarios
+The following patterns have been identified in earlier scenarios. Build on them where relevant, note differences where this scenario diverges.
+
+### headspin-loop-01 (inversion, rotation, power)
+# SCENARIO BLUEPRINT: headspin-loop-01
+## Tags: inversion, rotation, power
+## Notes: Continuous axial rotation with heavy motion blur.
+
+---
+
+## STATES
+
+### State Machine: Combined Physics + Phase + Contact + Musicality
+
+```
+STATE: ENTRY_APPROACH
+  Phase: transition (pre-power setup)
+  Contact: feet j10,j11 weight-bearing; head/hands free
+  Physics: L_z ≈ 0; CoM descending, preparing angular impulse
+  Musicality: entry sweep should arrive -80ms to -30ms before beat; arm sweep j22,j23 readable
+
+  Entry: clip start OR pelvis j0.z > 0.70m AND foot alternation at j10,j11 visible
+  Active measurements:
+    - pelvis_height: j0.z → expected [0.70, 1.10] m
+    - arm_speed: ||vel(j22)||, ||vel(j23)|| → expected < 2.0 m/s (building)
+    - L_z_pre: Σ mᵢ(rᵢ × vᵢ)_z about corrected j15 → expected [0, 1.0] kg·m²·rad/s
+    - foot_contact: j10.z, j11.z near floor_z → expected < 0.05m
+  Exit: pelvis j0.z descends Δz/Δt > 0.8 m/s downward AND arm sweep speed at j22,j23 > 2.0 m/s
+  Duration: variable; if clip starts mid-spin, skip entirely — NOT penalized
+
+  NOTE: May be ABSENT from clip. Phase detector must handle clip-starts-in-spin gracefully.
+  If j15.z < j0.z AND |L_z| > 3.0 from frame 0, enter HEADSPIN_LOOP directly.
+
+→ TRANSITION to HEAD_PLANT_TRANSITION
+
+---
+
+### windmill-chain-01 (inversion, floor-contact, power)
+# SCENARIO BLUEPRINT: windmill-chain-01
+## Tags: inversion, floor-contact, power
+## Notes: Left-right consistency and floor contact are the primary stress axes.
+
+---
+
+## Conflict Resolution Before Integration
+
+**Physics vs Phase — "FIRST_SHOULDER_CONTACT" vs "POWER_DROP"**: These overlap. Resolution: `POWER_DROP` is the phase label for the descent interval; `FIRST_SHOULDER_CONTACT` is the contact detection event that fires *within* that phase and triggers the exit condition. They are compatible. The unified blueprint uses Phase naming (`POWER_DROP`) and Contact event naming (`first_shoulder_contact_event`) as separate layers.
+
+**Physics `L_z` vs Phase `L_z`**: Physics correctly identifies that `L_z` (vertical) is near-meaningless for windmill; the dominant component is `L_barrel` projected along the spine's horizontal axis. Phase agent concurs. TRIVIUM v0.1's `L_z` threshold for power move detection will systematically fail here. Unified blueprint uses `L_barrel` everywhere.
+
+**Contact `j13/j14` threshold 0.12m vs Physics 0.08–0.12m SMPL offset**: Physics notes SMPL shoulder joint centers sit 0.08–0.12m anterior of the actual shoulder contact patch. Contact agent uses `j16/j17 < 0.12m` and `j13/j14 < 0.12m`. These are consistent — the 0.12m threshold is already absorbing the joint-center offset. No change needed, but confidence should be flagged as lower during near-horizontal body orientation.
+
+**Phase `HEAD_FLOOR = 0.10m` vs Contact `j15 alarm = 0.10m`**: Identical. Confirmed.
+
+---
+
+## STATES
+
+### State Machine: Unified Physics + Phase + Contact + Musicality
+
+```
+STATE: ENTRY_SETUP
+  Phase: toprock (j0.z > 0.70m) OR footwork (j22/j23.z < 0.15m)
+  Contact: j10, j11 weight-bearing; j22, j23 free or light only
+  Physics: L_barrel ≈ 0 kg·m²·rad/s; arm coil building pre-rotation
+  Musicality: Entry phrase window — full musicality weight (1.0x). Arm sweep at
+              j22/j23 should arrive -80ms to -30ms BEFORE the beat.
+
+
+## Agent Signatures to Integrate
+
+### PHYSICS AGENT OUTPUT:
+
+### PHYSICS SIGNATURE: flare-cycle-01
+
+**Move Category**: Air power — alternating two-point hand pivot with ballistic leg-sweep phases
+**Pivot**: Alternating at j22 (left_hand) and j23 (right_hand), fast-switching (~every 180° of body rotation)
+
+---
+
+**Angular Momentum Profile**:
+
+- **Source**: Leg chain provides dominant contribution — high-mass segments (hips j1/j2, knees j4/j5) at large radii (~0.8–1.2m from hand pivot). At full extension, I_leg_pair ≈ 8.5 kg·m². The arm push-off at each hand contact injects energy but contributes comparatively little to L.
+- **Conservation**: L_z is CONSERVED during ballistic flight phases (no external torque, feet airborne). It is INJECTED at each hand contact — the push-off arm extends under load and delivers an angular impulse. A clean flare shows nearly constant L_z across flight phases with a brief discontinuity at each hand switch as the pivot re-anchors.
+- **Expected |L_z| range**: [18, 40] kg·m²·rad/s at ω ≈ 2.5–3.5 rad/s with I_total ≈ 10–12 kg·m²
+
+> Critical: unlike headspin-loop-01 (single fixed pivot) and windmill-chain-01 (slow-migrating barrel pivot), **flares require L_z to be re-computed relative to the active hand pivot every ~15 frames**. L computed about a stale pivot center will appear to grow or collapse spuriously. Pivot-anchored L_z is the correct signal.
+
+---
+
+**RTA Velocity Expectations**:
+
+| Component | Expected Profile | Quality Signal | SMPL Joints to Watch |
+|-----------|-----------------|----------------|---------------------|
+| Tangential | HIGH (2.5–6.0 m/s) and CONSISTENT across the full leg arc; feet j10/j11 trace near-circular path around active hand | `CV(v_tan_feet)` < 0.25 = clean; > 0.40 = deceleration or technique break | j10, j11 (feet), j7, j8 (ankles) relative to active hand j22/j23 |
+| Radial | OSCILLATING — legs extend outward at arc peak (v_rad > 0) and retract slightly entering hand switch (v_rad < 0); intentional I modulation | Radial amplitude 0.3–0.8 m/s expected; absence = rigid/locked legs; excessive (>1.5 m/s) = unstable arc geometry | j4, j5 (knees) radial vector from pivot |
+| Axial | SINUSOIDAL — legs sweep over the body, so foot z-velocity alternates sign across each half-revolution; amplitude ~0.8–1.5 m/s at foot | `mean(|v_ax|) / mean(|v_tan|)` should be 0.15–0.35; higher means body is tipping off the horizontal rotation plane | j10, j11 (feet) z-component; j0 (pelvis) z-velocity as CoM height oscillation |
+
+---
+
+**Energy Budget**:
+
+- **KE source**: Each hand push-off (j22 or j23) extends elbow j18/j19 under load, delivering an impulse ∆p = F·∆t ≈ 80–150 N·s that both lifts CoM slightly and sustains angular rotation. The leg sweep starting from the split position converts stored potential energy (elevated CoM from push-off) back into tangential KE as the body drops into the arc.
+- **Energy losses**: Floor friction at hand contact patch (palm area, not a smooth cap like headspin); muscle damping in hip extensors resisting leg drop; wrist/elbow absorption during landing. Each hand contact dissipates ~15–30% of rotational KE — the push-off must exceed this to maintain height.
+- **Maintenance signal**: CoM height cycle-to-cycle. A decaying flare shows monotonically decreasing `max(z_CoM)` per rotation cycle. Good execution: `Δ max(z_CoM)` across N cycles < 0.05m. Collapse threshold: z_CoM dropping below 0.25m (body hitting floor).
+
+```
+KE_decay_rate = (KE_cycle_N - KE_cycle_1) / N_cycles  [J/cycle]
+Good: KE_decay_rate > -5 J/cycle
+Struggling: < -15 J/cycle
+```
+
+---
+
+**Quality Pseudo-Code**:
+
+```python
+# Physics-based quality scoring for flare-cycle-01
+# joints [T, 24, 3], 30fps, 70kg reference
+
+import numpy as np
+from scipy.signal import find_peaks
+
+mass_table = [11.17, 2.78, 2.78, 5.0, 3.28, 3.28, 3.0, 0.61, 0.61, 2.5,
+              0.97, 0.97, 1.5, 0.5, 0.5, 5.0, 2.0, 2.0, 1.14, 1.14,
+              0.45, 0.45, 0.41, 0.41]
+
+# ─── Active Pivot Detection ───────────────────────────────────────────────────
+# The active pivot is the hand nearest the floor
+def get_active_pivot(joints, frame):
+    z_left  = joints[frame, 22, 2]
+    z_right = joints[frame, 23, 2]
+    if z_left < z_right + 0.05:        # left hand lower (or tied)
+        return 22, joints[frame, 22, :]
+    else:
+        return 23, joints[frame, 23, :]
+
+# ─── Hand Contact Frames ─────────────────────────────────────────────────────
+# Contact: hand z < 0.08m AND |vz| settling (not hard landing)
+def detect_hand_contacts(joints, T):
+    contacts = []
+    for frame in range(1, T - 1):
+        for j in [22, 23]:
+            z = joints[frame, j, 2]
+            vz = (joints[frame, j, 2] - joints[frame-1, j, 2]) * 30
+            if z < 0.08 and abs(vz) < 1.0:
+                contacts.append((frame, j))
+    # deduplicate consecutive
+    return contacts
+
+# ─── Pivot-Anchored L_z (critical: re-anchor per contact) ────────────────────
+def compute_Lz_pivot_anchored(joints, frame, pivot_pos):
+    Lz = 0.0
+    for j in range(24):
+        r = joints[frame, j, :] - pivot_pos
+        v = (joints[min(frame+1, len(joints)-1), j, :] -
+             joints[max(frame-1, 0), j, :]) * 15.0  # centered diff
+        Lz += mass_table[j] * (r[0]*v[1] - r[1]*v[0])
+    return Lz
+
+# ─── CoM Height ──────────────────────────────────────────────────────────────
+def com_z(joints, frame):
+    return sum(mass_table[j] * joints[frame, j, 2] for j in range(24)) / 70.0
+
+# ─── Self-Occlusion Flag ─────────────────────────────────────────────────────
+# Both feet above CoM z + 0.10m → likely overhead occlusion
+def detect_occlusion(joints, frame):
+    cz = com_z(joints, frame)
+    return (joints[frame, 10, 2] > cz + 0.10 and
+            joints[frame, 11, 2] > cz + 0.10)
+
+# ─── Tangential Velocity at Feet ─────────────────────────────────────────────
+def foot_tangential_speed(joints, frame, pivot_pos, axis=np.array([0,0,1])):
+    speeds = []
+    for j in [10, 11]:  # feet
+        r = joints[frame, j, :] - pivot_pos
+        v = (joints[min(frame+1,len(joints)-1), j, :] -
+             joints[max(frame-1,0), j, :]) * 15.0
+        t_hat = np.cross(axis, r / (np.linalg.norm(r) + 1e-6))
+        t_hat /= (np.linalg.norm(t_hat) + 1e-6)
+        speeds.append(abs(np.dot(v, t_hat)))
+    return max(speeds)
+
+# ─── Main Scoring Loop ───────────────────────────────────────────────────────
+T = len(joints)
+Lz_series, vtan_series, com_heights = [], [], []
+occlusion_flags = []
+
+for frame in range(1, T - 1):
+    _, pivot_pos = get_active_pivot(joints, frame)
+    Lz_series.append(compute_Lz_pivot_anchored(joints, frame, pivot_pos))
+    vtan_series.append(foot_tangential_speed(joints, frame, pivot_pos))
+    com_heights.append(com_z(joints, frame))
+    occlusion_flags.append(detect_occlusion(joints, frame))
+
+# Per-cycle CoM peak heights (energy decay)
+peaks, _ = find_peaks(com_heights, height=0.30, distance=10)
+if len(peaks) >= 2:
+    peak_vals = [com_heights[p] for p in peaks]
+    com_decay = (peak_vals[-1] - peak_vals[0]) / len(peaks)   # m/cycle
+    height_stability = 1.0 - min(1.0, abs(com_decay) / 0.08)
+else:
+    height_stability = 0.5  # insufficient cycles
+
+# L_z consistency (non-occlusion frames only)
+valid = [i for i in range(len(Lz_series)) if not occlusion_flags[i]]
+Lz_valid = [Lz_series[i] for i in valid]
+Lz_mean = abs(np.mean(Lz_valid)) if Lz_valid else 1e-6
+Lz_cv = np.std(Lz_valid) / (Lz_mean + 1e-6)
+Lz_score = 1.0 - min(1.0, Lz_cv / 0.40)
+
+# Tangential velocity consistency
+vtan_valid = [vtan_series[i] for i in valid]
+vtan_cv = np.std(vtan_valid) / (np.mean(vtan_valid) + 1e-6)
+vtan_score = 1.0 - min(1.0, vtan_cv / 0.35)
+
+# Hand switch regularity
+contacts = detect_hand_contacts(joints, T)
+if len(contacts) >= 3:
+    switch_intervals = np.diff([c[0] for c in contacts])
+    switch_cv = np.std(switch_intervals) / (np.mean(switch_intervals) + 1e-6)
+    rhythm_score = 1.0 - min(1.0, switch_cv / 0.30)
+else:
+    rhythm_score = 0.5  # too few contacts detected
+
+# Confidence penalty for occlusion
+occlusion_rate = np.mean(occlusion_flags)
+confidence = 1.0 - 0.55 * occlusion_rate  # heavy penalty — flare occlusion is severe
+
+# Composite
+physics_score = (0.40 * Lz_score + 0.30 * vtan_score + 0.30 * height_stability)
+physics_score_calibrated = physics_score * confidence
+
+# Expected thresholds for clean flares:
+# Lz_cv < 0.25, vtan_cv < 0.20, com_decay > -0.04 m/cycle
+# Occlusion rate < 0.25 (if higher, flag output as low-confidence)
+```
+
+---
+
+**Positive**: TRIVIUM v0.1 already captures the overall rotation signal via L_z and will correctly identify this as a high-energy power move. CoM height oscillation is computable directly from joint positions with no HMR-specific assumptions.
+
+**Gap**: Three gaps specific to flares:
+
+1. **Pivot re-anchoring**: v0.1 likely computes L about a fixed body center or j0. For flares, the pivot migrates between j22 and j23 every ~15 frames — L about a stale anchor will appear artificially noisy. Must anchor L to the active hand on each frame.
+
+2. **Self-occlusion frame handling**: Large leg arcs guarantee both feet will periodically be above the CoM from a front-facing camera. JOSH v4 bboy-tuned will handle this better than GVHMR (which has no breaking-specific training), but even JOSH will produce depth-ambiguous limb positions during the overhead phase. These frames should be flagged (both j10.z > com_z + 0.10m) and down-weighted — physics scores computed over occluded frames will corrupt Lz_cv.
+
+3. **Energy injection at contact vs conservation during flight**: v0.1 treats L as purely conserved. For flares, L is *both* conserved (during flight) and injected (during contact). The scoring model must distinguish contact frames from flight frames and apply the correct physics regime to each. A push-off frame showing a brief L_z increase is a **quality signal**, not an error.
+
+
+### MUSICALITY AGENT OUTPUT:
+
+### MUSICALITY SIGNATURE: flare-cycle-01
+
+**Expected BeatAlign Range**: `[0.12, 0.30]` overall with `sigma=70 ms` tolerance; phase-gated entry/exit or deliberately phrased hand-switch accents can reach `~0.38`  
+Justification: this is still a **power-cycle** scenario, so sustained flare rotation is mechanics-driven, not beat-driven. Compared with `headspin-loop-01`, flare has more readable **arm-hand punctuation** at `j22/j23`. Compared with `windmill-chain-01`, the internal pulse is cleaner at the support switch, but **self-occlusion from large leg arcs** makes distal beat evidence less trustworthy. Soft BeatAlign is important because a skilled flare often loads the hand and opens the hips `20-70 ms` before the beat so the visible leg apex lands on it; binary hit/miss would score that incorrectly.
+
+**Musicality Grade**: `C` expected for clean execution  
+A BRACE-style read would be: `phrase-aware power continuation with readable hand-switch accents, weak sustained beat coupling`.
+
+**Joint-Audio Mapping for This Scenario**:  
+| Audio Band | Primary Joints | Expected Correlation | Notes |
+|------------|---------------|---------------------|-------|
+| Bass / Kick | `j0,j1,j2,j4,j5` with `j10,j11` secondary | `Low-Medium` on entry/lift/exit; `Low` in steady cycle | No true footstep-on-kick relationship once airborne. Kick correlation comes from pelvis/hip drive and leg-sweep onset. Down-weight `j10,j11` during occlusion. |
+| Snare / Mid | `j18,j19,j20,j21,j22,j23` | `Medium` on hand plant, push-off, and hand-switch punctuation; `Low-Medium` otherwise | This is the best band for flare. Alternating support at `j22/j23` creates the clearest intentional accent candidate. |
+| Hi-hat / High | `j15,j16,j17` with `j13,j14` secondary | `Low` | Head/shoulders may shape pocket subtly, but much apparent high-frequency motion is stabilization or tracking artifact, not true hat-riding. |
+| Full Mix | mass-weighted all joints, especially `j0,j3,j6,j9` | `Low` overall; `Medium` at entry/exit | Whole-body energy is strongly periodic at flare-cycle frequency, so it must be separated from real beat sync. |
+
+**Accent Detection**:
+- Expected accent locations: `entry kick-through into first support`, `first elevated clean flare position`, `loaded hand-switch / push-off` if intentionally phrased, `exit / freeze catch`
+- Accent source joints: `j22,j23,j18,j19,j20,j21` for hand-load accents; `j0,j1,j2,j4,j5` for hip opening and sweep drive; `j10,j11` only as secondary cues when not occluded
+- Expected AHR range: `[0.18, 0.40]` overall; higher only if scoring entry/exit and selected switch accents instead of the full cycle
+
+**Groove Analysis**:
+- Is groove lock expected? `No` as a primary criterion. What is expected is **internal cycle regularity**: stable left-right support alternation and repeatable revolution timing.
+- Beat-period autocorrelation: `[0.06, 0.22]`
+- Subdivisions: usually `irregular relative to the beat`; alternating hand switches can sometimes read like `eighth-note` punctuation, or every full flare can read like a `2-beat` accent, but quarter-note lock is not required
+
+**Anticipation Pattern**:
+- Expected tau*: `-70 ms to -20 ms` on entry and deliberate support-switch accents
+- Typical for this scenario: the dancer loads the support hand and opens the hips slightly **before** the beat so the visible leg split / apex / push-off lands on it; once the flare is established, timing is governed by the cycle, not BPM
+
+**Phase-Specific Musicality Weight**:
+- This scenario should use `20%` musicality weight because flare is a sustained **power move** with alternating hand pivots and ballistic flight. Musicality should matter most on `entry`, selected `phrase accents`, and `exit`, not on every revolution.
+
+**Pseudo-Code**:
+```python
+import numpy as np
+
+MASS = np.array([11.17,2.78,2.78,5.0,3.28,3.28,3.0,0.61,0.61,2.5,0.97,0.97,
+                 1.5,0.5,0.5,5.0,2.0,2.0,1.14,1.14,0.45,0.45,0.41,0.41])
+
+def beat_align(motion_beats, audio_beats, sigma=0.070):
+    if len(motion_beats) == 0 or len(audio_beats) == 0: return 0.0
+    return float(np.mean([max(np.exp(-((mb-ab)**2)/(2*sigma**2)) for ab in audio_beats)
+                          for mb in motion_beats]))
+
+def lagged_corr(x, y, fps=30, max_lag_ms=200):
+    x = (x - x.mean()) / (x.std() + 1e-6); y = (y - y.mean()) / (y.std() + 1e-6)
+    best_mu, best_tau = -1.0, 0.0; L = int(round(max_lag_ms * fps / 1000))
+    for lag in range(-L, L + 1):
+        a, b = (x[-lag:], y[:lag]) if lag < 0 else (x[:-lag], y[lag:]) if lag > 0 else (x, y)
+        if len(a) < 5: continue
+        mu = np.corrcoef(a, b)[0, 1]
+        if np.isfinite(mu) and mu > best_mu: best_mu, best_tau = mu, lag / fps
+    return float(best_mu), float(best_tau)
+
+def flare_cycle_musicality(joints_3d, beat_times, audio_bands, phases=None, fps=30):
+    T, dt = len(joints_3d), 1.0 / fps
+    t = np.arange(T) * dt
+    vel = np.gradient(joints_3d, axis=0) * fps
+    speed = np.linalg.norm(vel, axis=-1)
+
+    com_z = (joints_3d[:, :, 2] @ MASS) / MASS.sum()
+    occl = (joints_3d[:,10,2] > com_z + 0.10) & (joints_3d[:,11,2] > com_z + 0.10)
+    pivot = np.where(joints_3d[:,22,2] <= joints_3d[:,23,2] + 0.05, 22, 23)
+    contacts = {j: (joints_3d[:,j,2] < 0.08) & (np.abs(vel[:,j,2]) < 1.0) for j in [22,23]}
+
+    pivot_xy = joints_3d[np.arange(T), pivot, :2]
+    foot_r = np.linalg.norm(joints_3d[:,[10,11],:2] - pivot_xy[:,None,:], axis=-1).mean(axis=1)
+    leg_open = np.maximum(0.0, np.gradient(foot_r, dt))
+    hip_drive = speed[:,[0,1,2,4,5]] @ MASS[[0,1,2,4,5]]
+    kick_motion = hip_drive + 0.35 * (~occl) * (speed[:,10] * MASS[10] + speed[:,11] * MASS[11])
+    snare_motion = 1.1*(speed[:,22]+speed[:,23]) + 0.9*(speed[:,18]+speed[:,19]) + 0.6*(speed[:,20]+speed[:,21])
+    hat_motion = speed[:,[15,16,17]].mean(axis=1)
+    full_motion = speed @ MASS
+
+    left_on  = (np.diff(contacts[22].astype(int), prepend=0) > 0).astype(float)
+    right_on = (np.diff(contacts[23].astype(int), prepend=0) > 0).astype(float)
+    switch_on = (np.diff(pivot, prepend=pivot[0]) != 0).astype(float)
+
+    accent = (0.30 * snare_motion * (left_on + right_on + 0.5*switch_on) +
+              0.25 * leg_open +
+              0.20 * np.abs(np.gradient(hip_drive, dt)) +
+              0.15 * np.maximum(0.0, np.gradient(com_z, dt)) +
+              0.10 * switch_on)
+    z = (accent - accent.mean()) / (accent.std() + 1e-6)
+
+    phase_weight = np.full(T, 0.20)
+    phase_weight[(left_on + right_on + switch_on) > 0] = 0.35
+    if phases is not None:
+        phase_weight[np.isin(phases, ["ENTRY_SETUP", "TAKEOFF", "EXIT_CATCH"])] = 1.00
+    phase_weight[occl] *= 0.65
+
+    peak_idx = [i for i in range(1, T-1) if z[i] > 0.9 and z[i] >= z[i-1] and z[i] > z[i+1]]
+    motion_beats = [t[i] for i in peak_idx if phase_weight[i] > 0.0]
+
+    ba = beat_align(motion_beats, beat_times, sigma=0.070)
+    mu_kick, tau_kick = lagged_corr(kick_motion * phase_weight, audio_bands["kick"], fps)
+    mu_snare, tau_snare = lagged_corr(snare_motion * phase_weight, audio_bands["snare"], fps)
+    mu_hat, _ = lagged_corr(hat_motion * phase_weight, audio_bands["hat"], fps)
+    mu_mix, _ = lagged_corr(full_motion * phase_weight, audio_bands["mix"], fps)
+
+    tau_star = tau_snare if mu_snare >= mu_kick else tau_kick
+    ahr = float(np.mean([any(abs(mb - ab) <= 0.070 for ab in beat_times) for mb in motion_beats])) if motion_beats else 0.0
+
+    switch_times = np.where(switch_on > 0)[0] / fps
+    internal_pulse = 0.5 if len(switch_times) < 3 else float(np.clip(1.0 - np.std(np.diff(switch_times)) /
+                                                                     (np.mean(np.diff(switch_times)) + 1e-6) / 0.35, 0, 1))
+    anticipation_bonus = 1.0 + 0.25 * np.tanh((-tau_star) / 0.050)
+    raw = 0.35*ba + 0.20*max(0.0, max(mu_kick, mu_snare)) + 0.15*max(0.0, mu_mix) + 0.15*ahr + 0.15*internal_pulse
+    musicality = 0.20 * raw * anticipation_bonus
+
+    return {"BeatAlign": ba, "AHR": ahr, "mu_kick": mu_kick, "mu_snare": mu_snare,
+            "mu_hat": mu_hat, "mu_mix": mu_mix, "tau_star_s": tau_star,
+            "internal_pulse": internal_pulse, "musicality": musicality}
+```
+
+**Positive**: TRIVIUM v0.1 should already capture `entry` and `exit` timing reasonably well from mass-weighted whole-body energy, and unlike `headspin-loop-01`, flare offers clearer mid-band accent candidates through `j18-j23`. Soft Gaussian BeatAlign with `sigma=70 ms` is also a real improvement here because flare phrasing often anticipates the beat by `1-2` frames at `30 fps`.
+
+**Gap**: TRIVIUM v0.1 needs `active-hand` and `contact-aware` accent extraction for flare. Without that, it will confuse pure cycle periodicity with beat lock, over-trust occluded feet `j10/j11`, and miss that the real musical read is in `entry`, `loaded hand-switch punctuation`, and `exit`, not in every revolution.
+
+### PHASE AGENT OUTPUT:
+
+### PHASE SIGNATURE: flare-cycle-01
+
+**Primary Phase**: `power`
+**Phase Sequence**: `ENTRY_SETUP → WIND_UP → [FLARE_CONTACT ↔ FLARE_FLIGHT]* → EXIT_DECEL → EXIT_CATCH`
+
+---
+
+## State Machine
+
+```
+STATE: ENTRY_SETUP
+  Phase: toprock (j0.z > 0.70m) OR footwork (j22/j23.z < 0.15m, j0.z 0.20–0.50m)
+  Contact: j10/j11 weight-bearing (toprock) OR j22/j23 supporting (footwork)
+  Physics: L_z ≈ 0; arm coil loading, hip opening building
+  Musicality: full 1.0x musicality weight — only window where beat entry is expected
+
+  Entry: clip start OR prior phase exits
+  Active measurements:
+    - pelvis_height: j0.z → [0.20, 1.10] m
+    - arm_coil: elbow bend at j18/j19 angle decreasing → loading tension
+    - hip_opening: angle j4–j0–j5 increasing → legs separating
+    - L_z: near-zero [0, 3.0] kg·m²·rad/s
+  Exit: active hand j22 OR j23 descending (vz < −0.5 m/s) AND j0.z < 0.50m AND j10.z + j11.z both rising
+  Duration: variable; if clip opens mid-flare with |L_z| > 8.0 and hand_contact, skip entirely
+
+  NOTE: Entry from footwork is more common than toprock for flares. Both are valid.
+  If j22.z OR j23.z < 0.08m AND |L_z| > 8.0 from frame 0, enter FLARE_CONTACT directly.
+
+→ TRANSITION to WIND_UP
+  Quality: shoulder/hip coordination — jerk at j16/j17 and j0 < 15 m/s³; arm sweep readable
+
+---
+
+STATE: WIND_UP
+  Phase: transition (loading first hand plant)
+  Contact: active hand (j22 OR j23) approaching floor; j10/j11 beginning to leave
+  Physics: L_z building 0 → [5, 15] kg·m²·rad/s via arm sweep angular impulse
+
+  Entry: active hand z descending (vz < −0.5 m/s) AND j0.z < 0.50m AND hip rotation accelerating
+  Active measurements:
+    - hand_approach_speed: |vel(j22 or j23).z| → expected 0.5–2.0 m/s downward
+    - hip_rotation_rate: angular vel j0 about z → should be increasing
+    - L_z_build: growing toward [8, 15] kg·m²·rad/s
+    - feet_release: j10.z AND j11.z rising above 0.05m
+  Exit: active hand z < 0.08m AND |vz| < 1.0 m/s (planted) AND feet both airborne (z > 0.05m)
+  Duration: 5–12 frames
+
+→ TRANSITION to FLARE_CONTACT
+  Quality: foot-to-hand transfer smoothness; momentum_continuity > 0.70 required for clean entry
+
+---
+
+STATE: FLARE_CONTACT  [REPEATING]
+  Phase: power
+  Contact: ONE hand on floor (j22 XOR j23, z < 0.08m AND |vz| < 1.0); both feet airborne
+  Physics: L_z INJECTED by push-off arm extension; pivot = active hand (lower of j22/j23)
+
+  Entry: active hand z < 0.08m AND feet airborne
+  Active measurements:
+    - pivot_hand: argmin(j22.z, j23.z) → must re-detect every frame
+    - L_z_pivot: angular momentum about active hand → expected [18, 40] kg·m²·rad/s
+    - elbow_ext: j18 or j19 angle decreasing → push-off extension underway
+    - com_z: expected [0.30, 0.60] m; decay indicates energy loss
+    - occlusion: j10.z > com_z + 0.10 AND j11.z > com_z + 0.10 → flag, down-weight feet
+  Exit: active hand vz > 0.3 m/s (rising) AND incoming hand z approaching 0.10m
+  Duration: 8–15 frames (~0.27–0.50s, approximately half revolution)
+
+→ TRANSITION to FLARE_FLIGHT
+  Quality: push-off energy injection; brief L_z INCREASE here is a quality signal, not an error
+
+---
+
+STATE: FLARE_FLIGHT  [REPEATING]
+  Phase: power (ballistic)
+  Contact: BOTH hands airborne (j22.z > 0.10m AND j23.z > 0.10m)
+  Physics: L_z CONSERVED — no external torque; any L_z drop here = technique loss
+
+  Entry: both hands airborne (z > 0.10m)
+  Active measurements:
+    - Lz_conservation: |ΔL_z| across flight frames < 15% of mean → quality check
+    - foot_arc_radius: ||j10 or j11 − last_pivot_pos|| → expected 0.8–1.2m
+    - foot_tangential_speed: speed ⊥ radius → expected [2.5, 6.0] m/s
+    - axial_oscillation: j10/j11 z-velocity alternating sign → legs sweeping over body (0.8–1.5 m/s amplitude)
+    - occlusion: flag heavily — overhead foot z corrupts arc geometry estimates
+    - com_z_peak: peak height per cycle; decay > 0.05m/cycle = struggling
+  Exit: incoming hand z < 0.08m AND |vz| < 1.0 m/s (plant detected)
+  Duration: 8–15 frames
+
+→ TRANSITION to FLARE_CONTACT (next cycle)
+  Quality: hand re-plant interval CV < 0.25; Lz_conserved → Lz_injected continuity smooth
+
+---
+
+STATE: EXIT_DECEL
+  Phase: transition (power wind-down)
+  Contact: contact duration per cycle increasing; feet beginning descent
+  Physics: L_z < 8.0 kg·m²·rad/s and falling; com_z monotonically declining
+
+  Entry: com_z declining monotonically for > 3 cycles OR contact_duration up > 30% from baseline
+  Active measurements:
+    - L_z_decay: |L_z| cycle-over-cycle decline
+    - contact_duration: frames per hand contact — increasing signals fatigue/exit
+    - feet_descent: j10.z OR j11.z approaching floor_z < 0.05m
+    - elbow_fail: j18/j19 extension amplitude decreasing → push-off losing power
+  Exit: j10.z < 0.05m OR j11.z < 0.05m (foot plant on exit landing)
+  Duration: 5–20 frames
+
+→ TRANSITION to EXIT_CATCH
+  Quality: controlled deceleration; low jerk = graceful landing; high jerk = crash
+
+---
+
+STATE: EXIT_CATCH
+  Phase: transition → freeze OR footwork
+  Contact: j10 AND/OR j11 planted; weight redistributing from hands to feet
+  Physics: L_z dissipating → 0; CoM settling to stable height
+
+  Entry: foot contact post-exit
+  Active measurements:
+    - L_z_dissipation_rate: should be smooth curve, not abrupt → quality
+    - weight_transfer: hand z rising as foot z settles
+    - freeze_detect: all joint speeds < 0.05 m/s for > 15 frames → FREEZE
+    - footwork_detect: leg pattern resuming → FOOTWORK
+  Exit: next phase established
+  Duration: 5–20 frames
+```
+
+---
+
+## Joint Weight Table
+
+| Phase | Joint Group | Weight | Rationale |
+|-------|-------------|--------|-----------|
+| ENTRY_SETUP (toprock) | Feet j7,j8,j10,j11 | 1.5x | Foundation — stepping defines toprock |
+| ENTRY_SETUP (toprock) | Hips j0,j1,j2 | 1.2x | Engine — rhythm driver |
+| ENTRY_SETUP (footwork) | Hips j0,j1,j2 | 1.5x | Engine — driving hip opening |
+| ENTRY_SETUP (footwork) | Feet j10,j11 | 1.3x | Fast movement, pattern-making |
+| ENTRY_SETUP (footwork) | Hands j22,j23 | 0.8x | Foundation support |
+| WIND_UP | Hips j0,j1,j2 | 2.0x | Engine — building angular impulse |
+| WIND_UP | Active hand j22 OR j23 | 1.8x | Incoming pivot — foundation loading |
+| WIND_UP | Arms j16–j21 | 1.5x | Coil release drives initial L_z |
+| WIND_UP | Feet j10,j11 | 0.6x | Releasing floor — low weight |
+| FLARE_CONTACT | Hips j0,j1,j2 | 2.0x | Angular momentum at large radius |
+| FLARE_CONTACT | Active hand j22 OR j23 | 1.8x | Pivot foundation — only weight-bearing point |
+| FLARE_CONTACT | Core j3,j6,j9 | 1.5x | Transmission — force through spine |
+| FLARE_CONTACT | Knees j4,j5 | 1.2x | Moment of inertia modulation |
+| FLARE_CONTACT | Feet j10,j11 | 1.0x / 0.4x | Full if clear; **0.4x if occluded** |
+| FLARE_CONTACT | Inactive hand | 0.6x | Free — not load-bearing |
+| FLARE_CONTACT | Head j12,j15 | 0.8x | Stabilizing only (not a pivot here) |
+| FLARE_FLIGHT | Hips j0,j1,j2 | 2.0x | Dominant L_z source; swept at max radius |
+| FLARE_FLIGHT | Feet j10,j11 | 1.5x / 0.4x | Tangential speed quality signal; **0.4x if occluded** |
+| FLARE_FLIGHT | Core j3,j6,j9 | 1.3x | Rotation axis alignment |
+| FLARE_FLIGHT | Knees j4,j5 | 1.2x | Radial extension — I modulation |
+| FLARE_FLIGHT | Hands j22,j23 | 0.5x | Both airborne — not contributing to pivot |
+| EXIT_DECEL | Hands j22,j23 | 1.5x | Active pivot still bearing weight |
+| EXIT_DECEL | Hips j0,j1,j2 | 1.8x | L_z source — decay signal |
+| EXIT_CATCH | Feet j10,j11 | 1.5x | Landing detection — primary foundation |
+| EXIT_CATCH | Hands j22,j23 | 1.3x | Catch support |
+| EXIT_CATCH | Core j3,j6,j9 | 1.5x | Stability hold |
+
+---
+
+## Transition Quality Expectations
+
+- **Number of transitions**: `2 + (2 × N_cycles) + 2` — wind-up entry, alternating CONTACT↔FLIGHT per cycle, exit decel, exit catch
+- **Expected jerk at CONTACT→FLIGHT**: `5–12 m/s³` at j22/j23 — push-off impulse; spikes here are **quality signal**
+- **Expected jerk at FLIGHT→CONTACT**: `8–18 m/s³` at active hand — hand re-plant; must be absorbed cleanly
+- **Momentum continuity at hand switch**: `> 0.75` for clean execution; `< 0.55` = energy loss or technique break
+- **Momentum continuity at EXIT_DECEL entry**: `0.40–0.65` expected — intentional deceleration, not a technique failure
+- **Foot occlusion flag rate**: Expected `0.15–0.35` per cycle at peak arc height; if `> 0.50`, depth-estimated joint positions are unreliable for that window
+
+---
+
+## Edge Cases
+
+- **Clip starts mid-flare**: If frame 0 has `|L_z| > 8.0` AND one hand planted — skip ENTRY_SETUP and WIND_UP entirely, enter FLARE_CONTACT directly. Not penalized.
+- **Pivot ambiguity at hand switch**: During the 2–3 frame window where incoming hand z approaches 0.10m and outgoing hand z rises, both hands are near-floor. Use `argmin(j22.z, j23.z)` with 0.05m hysteresis to avoid oscillation. A false dual-contact label here will spuriously inject L_z — use contact-settling criterion (`|vz| < 1.0 m/s`) to confirm true plant.
+- **FLARE_FLIGHT L_z appears to drift**: If L_z about a fixed center is used, apparent drift during flight is a measurement artifact, not a physics event. Must use last-planted hand position as pivot anchor throughout flight until next CONTACT.
+- **L_z increase during FLARE_CONTACT push-off**: This is a quality signal (energy injection), not an error. v0.1 may misclassify this as a transition. Tag push-off frames explicitly.
+- **EXIT_CATCH masquerading as FREEZE**: If the dancer catches into a brief balance hold before resuming footwork, all-joint speed may dip below 0.05 m/s for < 15 frames. Require > 15 frames for FREEZE label to avoid false freeze detection at catch.
+- **Asymmetric flares**: Some dancers produce clean right-hand but degraded left-hand contacts. The hand-switch interval CV should be computed per-hand separately; a per-hand CV split exposes this where aggregate CV would mask it.
+
+---
+
+## Pseudo-Code
+
+```python
+def classify_flare_phases(joints, fps=30):
+    """Phase classification for flare-cycle-01. joints: [T, 24, 3], 70kg reference."""
+    import numpy as np
+    T = len(joints)
+    dt = 1.0 / fps
+    mass = np.array([11.17,2.78,2.78,5.0,3.28,3.28,3.0,0.61,0.61,2.5,0.97,0.97,
+                     1.5,0.5,0.5,5.0,2.0,2.0,1.14,1.14,0.45,0.45,0.41,0.41])
+
+    # Kinematics
+    vel = np.gradient(joints, dt, axis=0)
+    speed = np.linalg.norm(vel, axis=-1)  # [T, 24]
+
+    pelvis_z = joints[:, 0, 2]
+    hand_z   = joints[:, [22, 23], 2]      # [T, 2]
+    foot_z   = joints[:, [10, 11], 2]      # [T, 2]
+    com_z    = (joints[:, :, 2] @ mass) / 70.0
+
+    # Active hand: whichever is lower (with 0.05m hysteresis)
+    active_hand = np.where(hand_z[:, 0] <= hand_z[:, 1] + 0.05, 22, 23)
+    active_hand_z = np.min(hand_z, axis=1)
+    active_hand_vz = np.gradient(active_hand_z, dt)
+
+    # Contact: planted (not crashing/bouncing)
+    hand_contact = (active_hand_z < 0.08) & (np.abs(active_hand_vz) < 1.0)
+
+    # Feet airborne
+    feet_airborne = (foot_z[:, 0] > 0.05) & (foot_z[:, 1] > 0.05)
+
+    # Occlusion: both feet above CoM + 0.10m
+    occluded = (foot_z[:, 0] > com_z + 0.10) & (foot_z[:, 1] > com_z + 0.10)
+
+    # Pivot-anchored L_z
+    def lz_at(f):
+        pivot = joints[f, active_hand[f], :]
+        Lz = 0.0
+        for j in range(24):
+            r = joints[f, j, :] - pivot
+            v = vel[f, j, :]
+            Lz += mass[j] * (r[0]*v[1] - r[1]*v[0])
+        return Lz
+
+    Lz = np.array([lz_at(f) for f in range(T)])
+
+    # Phase labels
+    raw = []
+    for t in range(T):
+        s = np.mean(speed[t])
+        lz = abs(Lz[t])
+        if s < 0.05:
+            raw.append('FREEZE')
+        elif lz > 8.0 and hand_contact[t]:
+            raw.append('FLARE_CONTACT')
+        elif lz > 8.0 and feet_airborne[t]:
+            raw.append('FLARE_FLIGHT')
+        elif lz > 3.0 and pelvis_z[t] < 0.50 and active_hand_vz[t] < -0.5:
+            raw.append('WIND_UP')
+        elif lz < 5.0 and pelvis_z[t] < 0.50 and np.mean(active_hand_z[max(0,t-3):t+1]) < 0.15:
+            # L_z falling, hand descending → EXIT_DECEL
+            raw.append('EXIT_DECEL')
+        elif pelvis_z[t] > 0.70:
+            raw.append('ENTRY_TOPROCK')
+        elif np.min(hand_z[t]) < 0.15 and pelvis_z[t] < 0.50:
+            raw.append('ENTRY_FOOTWORK')
+        else:
+            raw.append('TRANSITION')
+
+    return smooth_labels(raw, min_segment=int(0.25 * fps))  # 7-frame minimum
+
+
+def flare_joint_weights(phase, active_hand_idx, occluded):
+    """Returns [24] weight multipliers for scoring this phase frame."""
+    import numpy as np
+    w = np.ones(24)
+    inactive = 23 if active_hand_idx == 22 else 22
+
+    if phase in ('FLARE_CONTACT', 'FLARE_FLIGHT'):
+        w[[0, 1, 2]] = 2.0                    # ENGINE: hips
+        w[[3, 6, 9]] = 1.5                    # TRANSMISSION: core
+        w[active_hand_idx] = 1.8              # FOUNDATION: active pivot
+        w[inactive] = 0.6                     # free hand
+        w[[4, 5]] = 1.2                       # EXPRESSION: knees (I modulation)
+        w[[12, 15]] = 0.8                     # head stabilizing
+        foot_w = 0.4 if occluded else (1.5 if phase == 'FLARE_FLIGHT' else 1.0)
+        w[[7, 8, 10, 11]] = foot_w            # DOWN-WEIGHT HEAVILY if occluded
+
+    elif phase == 'WIND_UP':
+        w[[0, 1, 2]] = 2.0
+        w[active_hand_idx] = 1.8
+        w[[16, 17, 18, 19, 20, 21]] = 1.5    # arm coil release
+        w[[10, 11]] = 0.6                     # releasing floor
+
+    elif phase == 'EXIT_CATCH':
+        w[[10, 11]] = 1.5                     # landing feet
+        w[[22, 23]] = 1.3                     # catch support
+        w[[3, 6, 9]] = 1.5                    # stability core
+
+    return w
+
+
+def flare_transition_quality(joints, t_frame, fps=30, window=5):
+    """Quality score for a CONTACT↔FLIGHT transition frame."""
+    import numpy as np
+    vel   = np.gradient(joints, 1/fps, axis=0)
+    accel = np.gradient(vel,    axis=0) * fps
+    jerk  = np.gradient(accel,  axis=0) * fps
+    jerk_mag = np.linalg.norm(jerk, axis=-1)  # [T, 24]
+
+    f = np.clip(t_frame, window, len(jerk_mag) - window - 1)
+    boundary = jerk_mag[f-window:f+window]
+
+    # Pivot jerk at hand switch (expected to spike — measure containment)
+    pivot_jerk = boundary[:, [22, 23]].mean()
+
+    # Momentum continuity across the pivot switch
+    mass = np.array([11.17,2.78,2.78,5.0,3.28,3.28,3.0,0.61,0.61,2.5,0.97,0.97,
+                     1.5,0.5,0.5,5.0,2.0,2.0,1.14,1.14,0.45,0.45,0.41,0.41])
+    def lz_anchored(f_, anchor_j):
+        piv = joints[f_, anchor_j, :]
+        lz = sum(mass[j] * ((joints[f_,j,:]-piv)[0]*vel[f_,j,1]
+                            - (joints[f_,j,:]-piv)[1]*vel[f_,j,0])
+                 for j in range(24))
+        return abs(lz)
+
+    hand_before = int(joints[t_frame-3, 22, 2] <= joints[t_frame-3, 23, 2] + 0.05) and 22 or 23
+    hand_after  = int(joints[t_frame+3, 22, 2] <= joints[t_frame+3, 23, 2] + 0.05) and 22 or 23
+    L_before = lz_anchored(t_frame - 3, hand_before)
+    L_after  = lz_anchored(t_frame + 3, hand_after)
+    mom_cont = np.clip(1.0 - abs(L_after - L_before) / (L_before + 1e-8), 0, 1)
+
+    quality = 0.50 * np.clip(1.0 - pivot_jerk / 50.0, 0, 1) + 0.50 * mom_cont
+    return {"quality": quality, "pivot_jerk": pivot_jerk, "momentum_continuity": mom_cont}
+```
+
+---
+
+## Divergence from Prior Scenarios
+
+| Property | headspin-loop-01 | windmill-chain-01 | **flare-cycle-01** |
+|---|---|---|---|
+| Pivot | Fixed j15 | Migrating barrel along spine | **Alternating j22/j23 every ~15 frames** |
+| L axis | L_z (vertical) | L_barrel (horizontal spine) | **L_z (vertical), re-anchored per frame** |
+| Flight phases | None — j15 always contacts | None — always some floor contact | **FLARE_FLIGHT exists; L_z conserved, not injected** |
+| Occlusion source | Body shields head from front camera | Shoulder/body shields contact | **Legs sweep overhead — heaviest occlusion of all three** |
+| Head role | PRIMARY pivot, 1.5x | Minimal (alarm if contact) | **Stabilizing only, 0.8x** |
+
+---
+
+**Positive**: v0.1 will correctly identify flare as a high-energy power move via `|L_z|` threshold — the signal is strong and unambiguous. The entry/exit phase skeleton (setup → power → freeze) is standard and already present. CoM height and arm-sweep beat detection at entry/exit are also directly computable.
+
+**Gap**: Four gaps specific to flare phase classification:
+
+1. **No CONTACT vs FLIGHT sub-state distinction**: v0.1 treats all of a power move as one uniform state. For flares, CONTACT frames inject L_z while FLIGHT frames conserve it — the physics regime is different. Without this split, the scoring model will interpret injection events as instability.
+2. **Fixed pivot assumption**: L_z about a fixed body center will appear noisy as the anchor migrates between j22 and j23 every ~15 frames. This will generate false `TRANSITION` labels mid-flare. Pivot must be re-detected on every frame.
+3. **No occlusion-gated foot weights**: `j10/j11` overhead during arc peak is guaranteed. Without suppression (0.4x during occlusion), corrupted foot positions will inflate tangential speed noise and degrade phase timing signals.
+4. **Hand-switch rhythm not modeled**: v0.1 has no concept of alternating-pivot regularity. The `switch_interval_CV` metric (quality of left-right alternation) is the core repeating-flare quality signal and is entirely absent from the current phase model.
+
+
+### CONTACT AGENT OUTPUT:
+
+### CONTACT SIGNATURE: flare-cycle-01
+
+**Contact Pattern**: `ALTERNATING`  
+**Primary Contact Joints**: `22 left_hand`, `23 right_hand`  
+**Secondary / Transitional Contacts**: `10 left_foot`, `11 right_foot` on entry/exit only  
+**Contact Sequence**: `feet WB -> lead hand load -> [L_hand WB -> switch window -> R_hand WB -> switch window]* -> foot catch`  
+
+This diverges cleanly from `headspin-loop-01` and `windmill-chain-01`: there is no fixed `15 head` pivot, and no migrating back/shoulder surface contact. The flare fingerprint is unilateral hand support alternating left-right, with only brief ambiguity at the hand switch.
+
+**Weight-Bearing Timeline****  
+Relative, phase-based ranges at `30 fps`:
+
+```text
+ENTRY_SETUP          → feet(10,11) weight-bearing; hands(22,23) free or light touching
+WIND_UP (5-12f)      → lead hand(22 or 23) touching → weight-bearing; last foot unloading
+FLARE_CONTACT_A      → one hand weight-bearing; opposite hand free; feet airborne/free
+SWITCH_WINDOW (2-5f) → outgoing hand touching/unloading, incoming hand touching/loading;
+                       support = point or brief line; possible 1-3f no confirmed WB if switch is explosive
+FLARE_CONTACT_B      → opposite hand weight-bearing; first hand free; feet airborne/free
+REPEAT               → alternating unilateral hand support across each half-cycle
+EXIT_DECEL (5-20f)   → hand contact duty cycle lengthens; first foot becomes touching then weight-bearing
+EXIT_CATCH (5-20f)   → one or both feet weight-bearing; hands touching or free as weight transfers upright
+```
+
+**Contact Signature Fingerprint**
+
+| Time Segment | Contact Joints | Classification | Move ID |
+|---|---|---|---|
+| Entry | `10,11` | `weight_bearing` | flare entry / setup |
+| Wind-up | lead `22/23`, trailing `10/11` | hand `touching→weight_bearing`, foot `weight_bearing→touching` | power takeoff |
+| Core half-cycle A | one of `22/23` | active hand `weight_bearing`, all others `free` | flare support |
+| Hand switch | `22` and/or `23` | outgoing `touching`, incoming `touching→weight_bearing` | flare switch |
+| Exit catch | `10/11` plus optional `22/23` | feet `touching→weight_bearing`, hands `touching/free` | flare exit |
+
+**Support Polygon Analysis**
+- Shape: `point` during clean flare support, `line` during brief two-hand switch frames, `none` during ballistic/unloaded switch windows, `line/triangle` on entry and catch.
+- Stability: `gyroscopic` in the core cycle, not statically stable. Static stability only returns on entry/exit.
+- CoM position relative to polygon: usually `outside` a single-hand point support in the core flare, briefly crossing the hand-to-hand line at switch, then returning `inside` the foot-based polygon on catch.
+
+**Detection Thresholds** (scenario-specific)
+
+| Joint | z_threshold (m) | speed_threshold (m/s) | Rationale |
+|---|---:|---:|---|
+| `22/23` hands | `0.08` | `|vz| < 1.0` for plant confirmation | Dynamic palm pivot; SMPL hand center sits above actual palm patch |
+| `10/11` feet | `0.05` WB, `0.08` touching | `< 0.25` WB | Large leg arcs pass near floor; strict threshold avoids false foot contacts mid-flare |
+| `15` head | `0.10` | `< 0.25` | Should stay free; sustained contact indicates crash/transition, not clean flare |
+| `16/17` shoulders | `0.08` | `< 0.35` | Failure detector; distinguishes flare collapse from windmill-like surface support |
+| `18/19` elbows | `0.07` | `< 0.25` | Rare bailout support only; not primary in clean flare |
+| `mean(3,6,9)` back | `0.12` | `< 0.40` | Should remain free; contact implies bailout/crash, not flare core |
+
+Use `0.05 m` hysteresis between `22` and `23` at the switch so the active support label does not chatter when both hands are near the floor.
+
+**Floor Plane**
+- Expected `floor_z`: `~0.00 m`, ideally estimated from stable hand plants plus entry/exit foot plants, not from all-joint minima.
+- Confidence: `medium-high` overall, dropping to `medium` during overhead-leg occlusion and explosive switches because SMPL hand joints do not coincide with the actual palm contact patch.
+
+**Pseudo-Code**
+```python
+def classify_flare_contacts(joints, fps=30):
+    vel = np.gradient(joints, axis=0) * fps
+    floor_z = robust_floor_from_contacts(joints, vel, contact_joints=[10,11,22,23])
+
+    hand_z = joints[:, [22,23], 2] - floor_z
+    foot_z = joints[:, [10,11], 2] - floor_z
+    hand_vz = vel[:, [22,23], 2]
+    foot_speed = np.linalg.norm(vel[:, [10,11], :], axis=-1)
+
+    feet_airborne = (foot_z[:,0] > 0.05) & (foot_z[:,1] > 0.05)
+    lower_hand = np.where(hand_z[:,0] <= hand_z[:,1] + 0.05, 22, 23)
+
+    state = {10: [], 11: [], 22: [], 23: []}
+    for t in range(len(joints)):
+        for j in [22, 23]:
+            idx = 0 if j == 22 else 1
+            if hand_z[t, idx] < 0.08 and abs(hand_vz[t, idx]) < 1.0:
+                state[j].append("touching")
+            else:
+                state[j].append("free")
+
+        for j in [10, 11]:
+            idx = 0 if j == 10 else 1
+            if foot_z[t, idx] < 0.05 and foot_speed[t, idx] < 0.25:
+                state[j].append("weight_bearing")
+            elif foot_z[t, idx] < 0.08:
+                state[j].append("touching")
+            else:
+                state[j].append("free")
+
+        if feet_airborne[t]:
+            active = lower_hand[t]
+            other = 23 if active == 22 else 22
+            if state[active][t] == "touching":
+                state[active][t] = "weight_bearing"
+            # brief dual-support window
+            if (state[other][t] == "touching" and
+                abs(hand_z[t,0] - hand_z[t,1]) < 0.03):
+                state[other][t] = "touching"
+
+    return state
+```
+
+**Positive**: JOSH v4 + BSTRO should already give strong hand-vs-foot contact priors, which is exactly what this scenario needs. World-grounded output plus per-vertex hand contact is especially valuable because flare support is a palm patch, not a single SMPL point.
+
+**Gap**: SMPL still gives only one `hand` joint, so it cannot distinguish palm heel vs fingertip load, nor exact wrist angle or contact patch size. In this scenario, large leg arcs and self-occlusion can also create false low foot passes and missed switch frames, so hand-switch hysteresis and foot-contact suppression are necessary.
+
+## Your Instructions
+
+# SYNTHESIS AGENT — Breaking Scenario Blueprint
+
+You are an integration architect combining the outputs of 4 specialist agents (Physics, Musicality, Phase, Contact) into a unified scenario blueprint. Your job is to **merge their signatures into a coherent scoring specification** with states, properties, validation criteria, tests, and annotated pseudo-code.
+
+You are the final stage. Your output IS the blueprint that a coder will use to implement TRIVIUM v0.2.
+
+## Your Domain
+
+You integrate:
+1. **Unified state diagram**: combining all 4 agent perspectives into one state machine
+2. **Properties table**: every measurable signal, its source agent, SMPL joints, formula, expected range
+3. **Validation criteria**: what "correct scoring" looks like for this scenario
+4. **Test specification**: synthetic data shape, expected score ranges, pass/fail thresholds
+5. **Annotated pseudo-code**: the actual scoring logic, grounded in real SMPL joints + formulas
+6. **Positive notes**: what TRIVIUM v0.1 already handles
+7. **Open gaps**: what needs new implementation + difficulty estimate
+
+## TRIVIUM Scoring Model Reference
+
+```
+S_total = 0.40 * BODY + 0.35 * SOUL + 0.25 * MIND  (0-100)
+
+BODY (40%) = 0.40*Technique + 0.20*Vocabulary + 0.15*Progression + 0.25*Cleanliness
+SOUL (35%) = 0.45*Musicality + 0.25*Phrasing + 0.30*Creativity
+MIND (25%) = 0.30*Flow + 0.20*Energy + 0.30*Response + 0.20*StageUse
+```
+
+## SMPL 24-Joint Reference
+
+```
+0=pelvis, 1=left_hip, 2=right_hip, 3=spine1, 4=left_knee, 5=right_knee,
+6=spine2, 7=left_ankle, 8=right_ankle, 9=spine3, 10=left_foot, 11=right_foot,
+12=neck, 13=left_collar, 14=right_collar, 15=head, 16=left_shoulder,
+17=right_shoulder, 18=left_elbow, 19=right_elbow, 20=left_wrist, 21=right_wrist,
+22=left_hand, 23=right_hand
+```
+
+## Your Output Format
+
+Produce the complete scenario blueprint:
+
+```
+# SCENARIO BLUEPRINT: {scenario_id}
+## Tags: {tags}
+## Notes: {scenario_notes}
+
+---
+
+### STATES
+
+State machine combining Physics + Phase + Contact perspectives:
+
+```
+STATE: {state_name}
+  Phase: [toprock/footwork/power/freeze/transition]
+  Contact: [which joints weight-bearing]
+  Physics: [rotation type, pivot, expected L]
+  Musicality: [expected mu range, groove expectation]
+
+  Entry: [condition — specific SMPL measurements]
+  Active measurements:
+    - [property_1]: [formula] → expected [range]
+    - [property_2]: [formula] → expected [range]
+  Exit: [condition]
+  Duration: [frames at 30fps]
+
+→ TRANSITION to {next_state}
+  Quality signal: [jerk at boundary, momentum continuity]
+  Expected duration: [frames]
+```
+
+### PROPERTIES
+
+Complete table of every measurable signal:
+
+| Property | Source Agent | SMPL Joints | Formula/Computation | Expected Range | Unit |
+|----------|-------------|-------------|-------------------|---------------|------|
+| angular_momentum_z | Physics | 0,1,2 (hips) | L = Σ mᵢ(rᵢ × vᵢ) | [X, Y] | rad·kg·m²/s |
+| beat_align_score | Musicality | all (weighted) | BeatAlign(σ=70ms) | [X, Y] | dimensionless |
+| phase_label | Phase | 0 (pelvis height) + all (speed) | classify_phase() | {toprock,footwork,...} | category |
+| contact_signature | Contact | 10,11,22,23,15 | detect_contacts() | [pattern] | binary per joint |
+| ... | ... | ... | ... | ... | ... |
+
+### VALIDATION
+
+What "correct" looks like:
+
+**TRIVIUM Sub-Score Expectations**:
+| Sub-Score | Expected Range | Why |
+|-----------|---------------|-----|
+| Technique | [X, Y] | [rationale from Physics agent] |
+| Vocabulary | [X, Y] | [rationale from Phase agent] |
+| Musicality | [X, Y] | [rationale from Musicality agent] |
+| Flow | [X, Y] | [rationale from Phase transition quality] |
+| ... | ... | ... |
+
+**"Good" vs "Bad" Execution**:
+- Good: [specific measurable criteria — e.g., "CV(|L|) < 0.15 = clean rotation"]
+- Bad: [specific failure modes — e.g., "L_z drops to zero mid-windmill = stall"]
+
+**Known HMR Failure Modes**:
+- [e.g., "GVHMR places head underground during headspins — skip frames where head z < floor_z"]
+
+### TESTS
+
+Synthetic data specification for automated testing:
+
+```python
+# Test: {scenario_id}
+def generate_synthetic_{scenario_id}(fps=30, duration=10):
+    """Generate synthetic SMPL joint data matching this scenario."""
+    T = int(duration * fps)
+    joints = np.zeros((T, 24, 3))
+
+    # [Phase-specific joint trajectory generation]
+    # Reference: [which agent's analysis drives this]
+    ...
+
+    return joints, beat_times, expected_scores
+
+# Pass criteria
+assert phase_labels[50:250] == 'power'  # correct phase detection
+assert 0.05 < beat_align < 0.20  # power moves have low musicality (expected)
+assert tangential_cv < 0.20  # clean rotation
+assert contacts['head'][100] == True  # head on ground during headspin
+```
+
+### PSEUDO-CODE
+
+The actual scoring implementation, annotated with source agent reasoning:
+
+```python
+def score_scenario_{scenario_id}(joints_3d, beat_times, audio_energy, fps=30):
+    """
+    TRIVIUM v0.2 scoring for {scenario_id}.
+    Combines: Physics (RTA), Musicality (BeatAlign), Phase (weights), Contact (signatures).
+    """
+    T = joints_3d.shape[0]
+
+    # ── Phase Detection (Phase Agent) ──
+    phase_labels = classify_phases(joints_3d, fps)
+    weights = get_phase_weights(phase_labels)  # [T, 24] — per-frame per-joint
+
+    # ── Contact Detection (Contact Agent) ──
+    floor_z = estimate_floor(joints_3d)
+    contacts = detect_contacts(joints_3d, floor_z)
+    contact_sig = identify_move(contacts)  # fingerprint matching
+
+    # ── Physics Analysis (Physics Agent) ──
+    velocities = central_differences(joints_3d, fps)
+    L = angular_momentum(joints_3d, velocities, DE_LEVA_MASSES)
+    pivot = detect_pivot(contacts, joints_3d)
+    v_tan, v_rad, v_ax = rta_decompose(velocities, joints_3d, pivot)
+
+    # ── Musicality Analysis (Musicality Agent) ──
+    M_t = compute_movement_energy(velocities, weights)
+    beat_align = gaussian_beat_align(M_t, beat_times, sigma=0.070)
+    groove = velocity_autocorrelation(M_t, beat_period=60.0/BPM)
+    mu_weight = phase_musicality_weight(phase_labels)  # 1.0 for toprock, 0.2 for power
+
+    # ── BODY (40%) ──
+    technique = compute_technique(v_tan, v_rad, v_ax, phase_labels, contact_sig)
+    vocabulary = shannon_entropy(phase_labels, n_categories=5)
+    progression = difficulty_slope(joints_3d, velocities, phase_labels)
+    cleanliness = sparc_smoothness(velocities, fps)
+    BODY = 0.40*technique + 0.20*vocabulary + 0.15*progression + 0.25*cleanliness
+
+    # ── SOUL (35%) ──
+    musicality = beat_align * mu_weight.mean() + groove * 0.20
+    phrasing = 0.5  # STUB — needs audio phrase detection
+    creativity = 0.5  # STUB — needs movement prediction model
+    SOUL = 0.45*musicality + 0.25*phrasing + 0.30*creativity
+
+    # ── MIND (25%) ──
+    flow = sparc(com_velocity(joints_3d, DE_LEVA_MASSES), fps)
+    energy = energy_management(velocities, DE_LEVA_MASSES)
+    response = 0.5  # STUB — needs opponent data
+    stage_use = spatial_entropy(com_xy(joints_3d, DE_LEVA_MASSES))
+    MIND = 0.30*flow + 0.20*energy + 0.30*response + 0.20*stage_use
+
+    # ── Total ──
+    total = 0.40*BODY + 0.35*SOUL + 0.25*MIND
+    return {
+        'total': total * 100,
+        'body': BODY, 'soul': SOUL, 'mind': MIND,
+        'technique': technique, 'vocabulary': vocabulary,
+        'musicality': musicality, 'flow': flow,
+        'phase_labels': phase_labels,
+        'contact_signature': contact_sig,
+        'beat_align': beat_align,
+        'angular_momentum': L,
+    }
+```
+
+### POSITIVE
+- [What TRIVIUM v0.1 already handles well for this scenario]
+- [What JOSH v4 bug fixes unlock — e.g., "prior_loss_weight=15 allows unusual poses"]
+- [What the existing validate pipeline from bboy-analytics captures]
+
+### GAPS
+| Gap | Difficulty | Source Agent | What's Needed |
+|-----|-----------|-------------|---------------|
+| [description] | [easy/medium/hard] | [Physics/Musicality/Phase/Contact] | [specific implementation] |
+```
+
+## Integration Rules
+
+1. **Resolve conflicts**: If Physics says "this is power" but Phase says "this is transition", reason about which is correct for this specific scenario and explain why
+2. **Cross-validate**: Contact signatures should be consistent with Physics pivot analysis. If Physics says "fixed pivot at head" then Contact should show head weight-bearing.
+3. **Musicality gating**: Apply the Musicality agent's phase-specific weight. Never penalize power moves for low musicality.
+4. **Fill stubs**: For TRIVIUM components that are STUBbed (phrasing, creativity, response), note them explicitly and suggest what data would unstub them.
+5. **Ground everything**: Every formula must reference specific SMPL joint indices. No vague "compute the thing."
+6. **Test-driven**: The test specification should be concrete enough that `pytest` could run it.
+7. **Be positive**: Start with what works, then identify gaps. Every gap gets a difficulty estimate.
+
+## Instructions
+
+1. Read ALL 4 agent signatures carefully before writing
+2. Look for contradictions between agents — resolve them with reasoning
+3. The properties table is the most important output — it's the data dictionary for implementation
+4. Pseudo-code should be copy-paste-ready for a Python developer with numpy/scipy
+5. Tests should use SYNTHETIC data that a developer can generate without real video
+6. Note which parts of the analysis depend on JOSH v4 specifically vs. work with any HMR output
+7. Be positive and constructive throughout

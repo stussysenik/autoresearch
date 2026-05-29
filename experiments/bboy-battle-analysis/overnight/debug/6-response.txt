@@ -1,0 +1,1752 @@
+--- FILE: analyze_motion.py ---
+from __future__ import annotations
+
+import argparse
+import json
+import math
+from pathlib import Path
+from typing import Any, Dict, List, Sequence, Tuple
+
+import numpy as np
+from scipy.ndimage import gaussian_filter1d
+from scipy.signal import find_peaks, stft
+
+EPS = 1e-8
+SMOOTH_SIGMA_SECONDS = 0.05
+SEGMENT_SECONDS = 1.0
+HOP_SECONDS = 0.25
+
+FEATURE_NAMES = [
+    "movement_tempo_stability",
+    "low_freq_motion_energy",
+    "distal_expressivity",
+    "movement_accent_strength",
+    "movement_flux",
+    "movement_complexity",
+    "movement_periodicity",
+    "motion_dynamic_range",
+    "movement_groove",
+]
+
+CATEGORY_NAMES = ["toprock", "footwork", "power", "freeze", "transition"]
+
+JOINT_MASSES_KG = {
+    0: 11.17,
+    1: 2.78,
+    2: 2.78,
+    3: 5.0,
+    4: 3.28,
+    5: 3.28,
+    6: 3.0,
+    7: 0.61,
+    8: 0.61,
+    9: 2.5,
+    10: 0.97,
+    11: 0.97,
+    12: 1.5,
+    13: 0.5,
+    14: 0.5,
+    15: 5.0,
+    16: 2.0,
+    17: 2.0,
+    18: 1.14,
+    19: 1.14,
+    20: 0.45,
+    21: 0.45,
+    22: 0.41,
+    23: 0.41,
+}
+JOINT_WEIGHTS = np.array([JOINT_MASSES_KG[j] for j in range(24)], dtype=np.float64)
+JOINT_WEIGHTS /= JOINT_WEIGHTS.sum()
+
+JOINT_GROUPS = {
+    "legs": [1, 2, 4, 5, 7, 8, 10, 11],
+    "torso": [0, 3, 6, 9],
+    "arms": [13, 14, 16, 17, 18, 19],
+    "hands": [20, 21, 22, 23],
+    "head": [12, 15],
+}
+
+DISTAL_INDICES = [10, 11, 12, 15, 20, 21, 22, 23]
+PROXIMAL_INDICES = [0, 1, 2, 3, 6, 9, 13, 14, 16, 17]
+
+BONE_PAIRS = [
+    (0, 1),
+    (1, 4),
+    (4, 7),
+    (7, 10),
+    (0, 2),
+    (2, 5),
+    (5, 8),
+    (8, 11),
+    (0, 3),
+    (3, 6),
+    (6, 9),
+    (9, 12),
+    (12, 15),
+    (12, 13),
+    (13, 16),
+    (16, 18),
+    (18, 20),
+    (20, 22),
+    (12, 14),
+    (14, 17),
+    (17, 19),
+    (19, 21),
+    (21, 23),
+]
+
+BASE_SKELETON = np.array(
+    [
+        [0.00, 0.00, 0.95],
+        [-0.09, 0.00, 0.90],
+        [0.09, 0.00, 0.90],
+        [0.00, 0.00, 1.05],
+        [-0.10, 0.00, 0.55],
+        [0.10, 0.00, 0.55],
+        [0.00, 0.00, 1.15],
+        [-0.10, 0.00, 0.15],
+        [0.10, 0.00, 0.15],
+        [0.00, 0.00, 1.30],
+        [-0.10, 0.08, 0.05],
+        [0.10, 0.08, 0.05],
+        [0.00, 0.00, 1.45],
+        [-0.08, 0.00, 1.40],
+        [0.08, 0.00, 1.40],
+        [0.00, 0.00, 1.65],
+        [-0.18, 0.00, 1.35],
+        [0.18, 0.00, 1.35],
+        [-0.35, 0.00, 1.20],
+        [0.35, 0.00, 1.20],
+        [-0.50, 0.00, 1.05],
+        [0.50, 0.00, 1.05],
+        [-0.58, 0.00, 1.02],
+        [0.58, 0.00, 1.02],
+    ],
+    dtype=np.float64,
+)
+
+
+def clamp01(value: float) -> float:
+    return float(np.clip(value, 0.0, 1.0))
+
+
+def logistic(value: float) -> float:
+    return float(1.0 / (1.0 + math.exp(-float(value))))
+
+
+def stable_div(numerator: float, denominator: float, default: float = 0.0) -> float:
+    if abs(float(denominator)) < EPS:
+        return float(default)
+    return float(numerator) / float(denominator)
+
+
+def to_serializable(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {str(key): to_serializable(value) for key, value in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [to_serializable(value) for value in obj]
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (np.floating, np.integer)):
+        value = obj.item()
+        if isinstance(value, float) and not math.isfinite(value):
+            return None
+        return value
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    return obj
+
+
+def validate_joints(joints_3d: np.ndarray) -> np.ndarray:
+    joints = np.asarray(joints_3d, dtype=np.float64)
+    if joints.ndim != 3 or joints.shape[1:] != (24, 3):
+        raise ValueError("Expected joints_3d with shape [T, 24, 3].")
+    if joints.shape[0] < 8:
+        raise ValueError("Need at least 8 frames of motion.")
+    return joints
+
+
+def minmax_normalize(values: Sequence[float], fill: float = 0.5) -> np.ndarray:
+    arr = np.asarray(values, dtype=np.float64)
+    if arr.size == 0:
+        return arr
+    finite = np.isfinite(arr)
+    if not np.any(finite):
+        return np.full(arr.shape, fill, dtype=np.float64)
+    lo = float(np.nanmin(arr))
+    hi = float(np.nanmax(arr))
+    if hi - lo < EPS:
+        return np.full(arr.shape, fill, dtype=np.float64)
+    out = (arr - lo) / (hi - lo)
+    out[~finite] = fill
+    return np.clip(out, 0.0, 1.0)
+
+
+def build_segments(n_frames: int, window: int, hop: int) -> List[Tuple[int, int]]:
+    window = max(4, min(int(window), n_frames))
+    hop = max(1, int(hop))
+    starts = list(range(0, max(n_frames - window + 1, 1), hop))
+    last_start = max(0, n_frames - window)
+    if not starts or starts[-1] != last_start:
+        starts.append(last_start)
+    deduped: List[int] = []
+    seen = set()
+    for start in starts:
+        if start not in seen:
+            deduped.append(start)
+            seen.add(start)
+    return [(start, min(n_frames, start + window)) for start in deduped]
+
+
+def central_derivative(values: np.ndarray, fps: float) -> np.ndarray:
+    return np.gradient(values, axis=0) * float(fps)
+
+
+def weighted_mean_profile(values: np.ndarray, indices: Sequence[int]) -> np.ndarray:
+    idx = np.asarray(indices, dtype=np.int64)
+    if values.shape[0] == 0:
+        return np.zeros(0, dtype=np.float64)
+    weights = JOINT_WEIGHTS[idx]
+    weights = weights / (weights.sum() + EPS)
+    return values[:, idx] @ weights
+
+
+def autocorr_at_lag(signal: Sequence[float], lag: int) -> float:
+    x = np.asarray(signal, dtype=np.float64)
+    lag = int(lag)
+    if x.size < 3 or lag < 1 or lag >= x.size:
+        return 0.0
+    a = x[:-lag]
+    b = x[lag:]
+    a = a - np.mean(a)
+    b = b - np.mean(b)
+    denom = math.sqrt(float(np.mean(a * a) * np.mean(b * b))) + EPS
+    return float(np.mean(a * b) / denom)
+
+
+def band_power(signal: Sequence[float], fps: float, low_hz: float, high_hz: float) -> float:
+    x = np.asarray(signal, dtype=np.float64)
+    if x.size < 4:
+        return 0.0
+    x = x - np.mean(x)
+    window = np.hanning(x.size)
+    spectrum = np.abs(np.fft.rfft(x * window)) ** 2
+    freqs = np.fft.rfftfreq(x.size, d=1.0 / fps)
+    mask = (freqs >= low_hz) & (freqs < high_hz)
+    if not np.any(mask):
+        return 0.0
+    return float(np.mean(spectrum[mask]))
+
+
+def spectral_flatness(signal: Sequence[float]) -> float:
+    x = np.asarray(signal, dtype=np.float64)
+    if x.size < 4:
+        return 1.0
+    spectrum = np.abs(np.fft.rfft(x - np.mean(x))) + EPS
+    return float(np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum))
+
+
+def estimate_dominant_lag(signal: Sequence[float], fps: float, min_hz: float = 0.5, max_hz: float = 4.0) -> int:
+    x = np.asarray(signal, dtype=np.float64)
+    if x.size < 8:
+        return max(1, int(round(fps / 2.0)))
+    x = x - np.mean(x)
+    freqs = np.fft.rfftfreq(x.size, d=1.0 / fps)
+    spectrum = np.abs(np.fft.rfft(x))
+    mask = (freqs >= min_hz) & (freqs <= max_hz)
+    if not np.any(mask) or float(np.max(spectrum[mask])) < EPS:
+        return max(1, int(round(fps / 2.0)))
+    dom_freq = float(freqs[mask][int(np.argmax(spectrum[mask]))])
+    if dom_freq < EPS:
+        return max(1, int(round(fps / 2.0)))
+    return max(1, int(round(fps / dom_freq)))
+
+
+def sparc(speed_profile: Sequence[float], fps: float) -> float:
+    x = np.asarray(speed_profile, dtype=np.float64)
+    if x.size < 4:
+        return 0.0
+    x = x - np.mean(x)
+    freqs = np.fft.rfftfreq(x.size, d=1.0 / fps)
+    spec = np.abs(np.fft.rfft(x))
+    if float(np.max(spec)) < EPS:
+        return 0.0
+    spec = spec / (np.max(spec) + EPS)
+    cutoff = min(20.0, fps / 2.0)
+    mask = freqs <= cutoff
+    if np.count_nonzero(mask) < 2:
+        return 0.0
+    dfreq = np.diff(freqs[mask])
+    dspec = np.diff(spec[mask])
+    arc_length = -np.sum(np.sqrt(dfreq * dfreq + dspec * dspec))
+    return float(arc_length)
+
+
+def ldlj(speed_profile: Sequence[float], fps: float) -> float:
+    x = np.asarray(speed_profile, dtype=np.float64)
+    if x.size < 5:
+        return 0.0
+    duration = x.size / float(fps)
+    jerk_sq = np.sum(np.diff(x, n=3) ** 2) * (fps ** 3)
+    v_peak = max(float(np.max(np.abs(x))), EPS)
+    return float(-np.log(abs((duration ** 3 / (v_peak * v_peak + EPS)) * jerk_sq) + EPS))
+
+
+def shannon_entropy_normalized(counts: Sequence[float], n_categories: int) -> float:
+    counts_arr = np.asarray(counts, dtype=np.float64)
+    if counts_arr.size == 0 or float(np.sum(counts_arr)) < EPS:
+        return 0.0
+    p = counts_arr / (np.sum(counts_arr) + EPS)
+    p = p[p > 0]
+    if p.size == 0:
+        return 0.0
+    entropy = -np.sum(p * np.log2(p))
+    return clamp01(float(entropy / math.log2(float(n_categories))))
+
+
+def spatial_entropy(com_xy: np.ndarray, grid_size: int = 10) -> float:
+    xy = np.asarray(com_xy, dtype=np.float64)
+    if xy.ndim != 2 or xy.shape[0] == 0 or xy.shape[1] != 2:
+        return 0.0
+    if np.allclose(xy, xy[0]):
+        return 0.0
+    hist, _, _ = np.histogram2d(xy[:, 0], xy[:, 1], bins=grid_size)
+    p = hist.reshape(-1)
+    if float(np.sum(p)) < EPS:
+        return 0.0
+    p = p / (np.sum(p) + EPS)
+    p = p[p > 0]
+    return clamp01(float(-np.sum(p * np.log2(p)) / math.log2(float(grid_size * grid_size))))
+
+
+def load_joints_file(path: str) -> np.ndarray:
+    file_path = Path(path)
+    if not file_path.exists():
+        raise FileNotFoundError(path)
+    if file_path.suffix.lower() == ".npy":
+        return validate_joints(np.load(file_path))
+    data = np.load(file_path, allow_pickle=True)
+    if hasattr(data, "files"):
+        files = list(data.files)
+        for key in ("joints", "joints_3d", "arr_0"):
+            if key in files:
+                return validate_joints(data[key])
+        if len(files) == 1:
+            return validate_joints(data[files[0]])
+        raise KeyError("Could not find joints array in npz file.")
+    return validate_joints(data)
+
+
+def compute_bone_angular_velocity(joints_3d: np.ndarray, fps: float) -> np.ndarray:
+    n_frames = joints_3d.shape[0]
+    all_bones: List[np.ndarray] = []
+    for parent, child in BONE_PAIRS:
+        bone = joints_3d[:, child] - joints_3d[:, parent]
+        norm = np.linalg.norm(bone, axis=-1, keepdims=True)
+        unit = bone / np.maximum(norm, EPS)
+        if n_frames < 2:
+            angular = np.zeros((n_frames,), dtype=np.float64)
+        else:
+            cosang = np.sum(unit[1:] * unit[:-1], axis=-1)
+            angular = np.arccos(np.clip(cosang, -1.0, 1.0)) * fps
+            angular = np.concatenate([angular[:1], angular], axis=0)
+        all_bones.append(angular)
+    return np.stack(all_bones, axis=1)
+
+
+def compute_center_of_mass(joints_3d: np.ndarray) -> np.ndarray:
+    return np.tensordot(joints_3d, JOINT_WEIGHTS, axes=([1], [0]))
+
+
+def compute_angular_momentum(joints_3d: np.ndarray, velocities: np.ndarray, com: np.ndarray) -> np.ndarray:
+    relative = joints_3d - com[:, None, :]
+    momentum = velocities * JOINT_WEIGHTS[None, :, None]
+    return np.sum(np.cross(relative, momentum), axis=1)
+
+
+def compute_motion_spectrogram(speed: np.ndarray, fps: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if speed.shape[0] < 4:
+        return (
+            np.zeros(0, dtype=np.float64),
+            np.zeros(0, dtype=np.float64),
+            np.zeros((0, 0), dtype=np.float64),
+        )
+    nperseg = min(64, speed.shape[0])
+    noverlap = min(max(0, nperseg - 8), nperseg - 1)
+    weighted_power = None
+    freqs = np.zeros(0, dtype=np.float64)
+    times = np.zeros(0, dtype=np.float64)
+    for joint_idx in range(speed.shape[1]):
+        freqs, times, zxx = stft(
+            speed[:, joint_idx],
+            fs=fps,
+            nperseg=nperseg,
+            noverlap=noverlap,
+            boundary=None,
+        )
+        power = np.abs(zxx) ** 2
+        contribution = JOINT_WEIGHTS[joint_idx] * power
+        if weighted_power is None:
+            weighted_power = contribution
+        else:
+            weighted_power += contribution
+    if weighted_power is None:
+        weighted_power = np.zeros((0, 0), dtype=np.float64)
+    return freqs, times, weighted_power
+
+
+def detect_motion_accents(movement_energy: np.ndarray, fps: float) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
+    smooth = gaussian_filter1d(movement_energy, sigma=max(1.0, SMOOTH_SIGMA_SECONDS * fps))
+    derivative = np.gradient(smooth) * fps
+    accent_env = np.maximum(0.0, derivative)
+    accents: List[Dict[str, Any]] = []
+    if accent_env.size == 0 or float(np.max(accent_env)) < EPS:
+        return accent_env, accents
+    peak_height = max(float(np.quantile(accent_env, 0.75)), float(np.max(accent_env) * 0.25))
+    peaks, props = find_peaks(
+        accent_env,
+        height=peak_height,
+        distance=max(1, int(round(0.18 * fps))),
+        prominence=max(float(np.quantile(accent_env, 0.6) * 0.25), EPS),
+    )
+    if peaks.size == 0:
+        peaks = np.array([int(np.argmax(accent_env))], dtype=np.int64)
+        props = {"peak_heights": accent_env[peaks]}
+    heights = np.asarray(props.get("peak_heights", accent_env[peaks]), dtype=np.float64)
+    for idx, peak in enumerate(peaks):
+        accents.append(
+            {
+                "frame": int(peak),
+                "time": float(peak / fps),
+                "strength": float(heights[idx]),
+                "type": "accent",
+            }
+        )
+    return accent_env, accents
+
+
+def generate_synthetic_joints(duration_s: float = 10.0, fps: float = 30.0) -> np.ndarray:
+    n_frames = int(round(duration_s * fps))
+    t = np.arange(n_frames, dtype=np.float64) / float(fps)
+    joints = np.repeat(BASE_SKELETON[None, :, :], n_frames, axis=0)
+
+    joint_phase = np.linspace(0.0, 1.2 * math.pi, 24)
+    base_phase = 2.0 * math.pi * (1.6 * t + 0.05 * t * t)
+    sway = 0.20 * np.sin(2.0 * math.pi * 0.16 * t)
+    depth = 0.12 * np.cos(2.0 * math.pi * 0.12 * t)
+
+    joints[:, :, 0] += sway[:, None]
+    joints[:, :, 1] += depth[:, None]
+    joints[:, :, 2] += 0.02 * np.sin(2.0 * math.pi * 0.4 * t)[:, None]
+
+    joints[:, :, 0] += 0.03 * np.sin(base_phase[:, None] + joint_phase[None, :])
+    joints[:, :, 1] += 0.02 * np.cos(0.5 * base_phase[:, None] + 1.3 * joint_phase[None, :])
+
+    legs = JOINT_GROUPS["legs"]
+    arms = JOINT_GROUPS["arms"] + JOINT_GROUPS["hands"]
+    head = JOINT_GROUPS["head"]
+
+    joints[:, legs, 0] += 0.09 * np.sin(1.25 * base_phase[:, None] + joint_phase[legs][None])
+    joints[:, legs, 1] += 0.05 * np.cos(1.15 * base_phase[:, None] + joint_phase[legs][None])
+    joints[:, arms, 0] += 0.12 * np.sin(0.85 * base_phase[:, None] + joint_phase[arms][None])
+    joints[:, arms, 2] += 0.05 * np.sin(0.55 * base_phase[:, None] + joint_phase[arms][None])
+    joints[:, head, 2] += 0.04 * np.sin(0.35 * base_phase[:, None])
+
+    mid_mask = (t >= duration_s / 3.0) & (t < 2.0 * duration_s / 3.0)
+    joints[mid_mask, :, 2] -= 0.14
+    joints[mid_mask][:, legs, 0] += 0.04 * np.sin(2.2 * base_phase[mid_mask, None])
+
+    burst_times = np.arange(2.0 * duration_s / 3.0, duration_s, 1.0)
+    for burst_time in burst_times:
+        frame = int(round(burst_time * fps))
+        if frame + 3 < n_frames:
+            burst = np.array([0.0, 0.22, 0.0], dtype=np.float64)[:, None]
+            joints[frame : frame + 3, :, 0] += burst
+            joints[frame : frame + 3, :, 1] -= 0.08 * burst
+
+    return joints.astype(np.float64)
+
+
+def extract_features(joints_3d: np.ndarray, fps: float = 30.0) -> Tuple[np.ndarray, Dict[str, Any]]:
+    joints = validate_joints(joints_3d)
+    fps = float(fps)
+
+    velocities = central_derivative(joints, fps)
+    accelerations = central_derivative(velocities, fps)
+    jerks = central_derivative(accelerations, fps)
+
+    speed = np.linalg.norm(velocities, axis=-1)
+    weighted_speed = speed @ JOINT_WEIGHTS
+    jerk_mag = np.linalg.norm(jerks, axis=-1)
+    weighted_jerk = jerk_mag @ JOINT_WEIGHTS
+
+    com = compute_center_of_mass(joints)
+    com_vel = central_derivative(com, fps)
+    com_speed = np.linalg.norm(com_vel, axis=-1)
+
+    bone_ang_vel = compute_bone_angular_velocity(joints, fps)
+    angular_momentum = compute_angular_momentum(joints, velocities, com)
+    angular_momentum_mag = np.linalg.norm(angular_momentum, axis=-1)
+
+    movement_energy = weighted_speed
+    movement_energy_smooth = gaussian_filter1d(movement_energy, sigma=max(1.0, SMOOTH_SIGMA_SECONDS * fps))
+    accent_envelope, motion_accents = detect_motion_accents(movement_energy_smooth, fps)
+
+    weighted_joint_speed = speed * JOINT_WEIGHTS[None, :]
+    speed_probs = weighted_joint_speed / np.maximum(np.sum(weighted_joint_speed, axis=1, keepdims=True), EPS)
+    joint_activity_entropy = -np.sum(
+        speed_probs * np.log2(np.clip(speed_probs, EPS, 1.0)),
+        axis=1,
+    ) / math.log2(24.0)
+
+    dominant_lag = estimate_dominant_lag(movement_energy_smooth, fps)
+    movement_tempo_bpm = 60.0 * fps / max(float(dominant_lag), 1.0)
+
+    segment_window = max(8, int(round(SEGMENT_SECONDS * fps)))
+    segment_hop = max(1, int(round(HOP_SECONDS * fps)))
+    segments = build_segments(joints.shape[0], segment_window, segment_hop)
+
+    track_low_energy = float(np.quantile(movement_energy_smooth, 0.30))
+    track_low_com_speed = float(np.quantile(com_speed, 0.30))
+
+    raw_rows: List[List[float]] = [[] for _ in range(len(FEATURE_NAMES))]
+    segment_records: List[Dict[str, Any]] = []
+    segment_times_s: List[float] = []
+
+    ang_peak_raw: List[float] = []
+    angmom_peak_raw: List[float] = []
+    energy_peak_raw: List[float] = []
+    wobble_raw: List[float] = []
+    sparc_raw: List[float] = []
+    ldlj_raw: List[float] = []
+
+    for start, end in segments:
+        seg = slice(start, end)
+        seg_duration = max((end - start) / fps, EPS)
+
+        mseg = movement_energy_smooth[seg]
+        aseg = accent_envelope[seg]
+        speed_seg = speed[seg]
+        com_seg = com[seg]
+        com_speed_seg = com_speed[seg]
+        weighted_jerk_seg = weighted_jerk[seg]
+        ang_seg = bone_ang_vel[seg]
+        angmom_seg = angular_momentum_mag[seg]
+
+        distal_speed = float(np.mean(weighted_mean_profile(speed_seg, DISTAL_INDICES)))
+        proximal_speed = float(np.mean(weighted_mean_profile(speed_seg, PROXIMAL_INDICES)))
+        torso_speed = float(np.mean(weighted_mean_profile(speed_seg, JOINT_GROUPS["torso"] + [1, 2])))
+        leg_speed = float(np.mean(weighted_mean_profile(speed_seg, JOINT_GROUPS["legs"])))
+        arm_speed = float(np.mean(weighted_mean_profile(speed_seg, JOINT_GROUPS["arms"] + JOINT_GROUPS["hands"])))
+
+        lag_local = min(max(1, dominant_lag), max(1, mseg.size - 1))
+        tempo_stability = 0.5 * (autocorr_at_lag(mseg, lag_local) + 1.0)
+        low_freq_energy = band_power(mseg, fps, 0.0, 2.0)
+        distal_expressivity = stable_div(distal_speed, proximal_speed + EPS, default=1.0)
+        accent_strength = float(np.max(aseg)) if aseg.size else 0.0
+        movement_flux = float(np.mean(np.maximum(0.0, np.diff(mseg)))) if mseg.size > 1 else 0.0
+
+        if aseg.size > 0 and float(np.max(aseg)) > EPS:
+            local_peak_height = max(float(np.quantile(aseg, 0.70)), float(np.max(aseg) * 0.25))
+            local_peaks, _ = find_peaks(
+                aseg,
+                height=local_peak_height,
+                distance=max(1, int(round(0.20 * fps))),
+            )
+        else:
+            local_peaks = np.zeros(0, dtype=np.int64)
+
+        accent_density = float(local_peaks.size / seg_duration)
+        if local_peaks.size >= 3:
+            iois = np.diff(local_peaks) / fps
+            irregularity = float(np.std(iois) / (np.mean(iois) + EPS))
+        else:
+            irregularity = 0.0
+        movement_complexity = accent_density + irregularity
+
+        if mseg.size >= 4:
+            spectrum = np.abs(np.fft.rfft(mseg - np.mean(mseg)))
+            freqs = np.fft.rfftfreq(mseg.size, d=1.0 / fps)
+            band_mask = (freqs >= 0.5) & (freqs <= min(10.0, fps / 2.0))
+            band_spec = spectrum[band_mask]
+            if band_spec.size > 0 and float(np.max(band_spec)) > EPS:
+                peak_count = find_peaks(band_spec, height=float(np.max(band_spec) * 0.30))[0].size
+                peak_count_norm = min(peak_count / 4.0, 1.0)
+                movement_periodicity = 0.5 * peak_count_norm + 0.5 * (1.0 - spectral_flatness(mseg))
+            else:
+                movement_periodicity = 0.0
+        else:
+            movement_periodicity = 0.0
+
+        rms_speed = math.sqrt(float(np.mean(mseg * mseg))) + EPS
+        motion_dynamic_range = float(np.max(np.abs(mseg)) / rms_speed)
+
+        groove_corr_main = autocorr_at_lag(mseg, lag_local)
+        groove_corr_sub = autocorr_at_lag(mseg, max(1, lag_local // 2))
+        movement_groove = 0.5 * (((groove_corr_main + groove_corr_sub) * 0.5) + 1.0)
+
+        raw_rows[0].append(float(tempo_stability))
+        raw_rows[1].append(float(low_freq_energy))
+        raw_rows[2].append(float(distal_expressivity))
+        raw_rows[3].append(float(accent_strength))
+        raw_rows[4].append(float(movement_flux))
+        raw_rows[5].append(float(movement_complexity))
+        raw_rows[6].append(float(movement_periodicity))
+        raw_rows[7].append(float(motion_dynamic_range))
+        raw_rows[8].append(float(movement_groove))
+
+        segment_sparc = sparc(com_speed_seg, fps)
+        segment_ldlj = ldlj(com_speed_seg, fps)
+        hold_mask = (com_speed_seg < max(track_low_com_speed, 0.04)) | (mseg < track_low_energy)
+        if np.any(hold_mask):
+            wobble = float(np.mean(weighted_jerk_seg[hold_mask]))
+        else:
+            wobble = float(np.mean(weighted_jerk_seg))
+
+        ang_peak = float(np.quantile(ang_seg, 0.95)) if ang_seg.size else 0.0
+        angmom_peak = float(np.quantile(angmom_seg, 0.95)) if angmom_seg.size else 0.0
+        energy_peak = float(np.quantile(mseg, 0.95)) if mseg.size else 0.0
+        freeze_score = 0.5 * float(np.mean(com_speed_seg < max(track_low_com_speed, 0.04))) + 0.5 * float(
+            np.mean(mseg < track_low_energy)
+        )
+
+        ang_peak_raw.append(ang_peak)
+        angmom_peak_raw.append(angmom_peak)
+        energy_peak_raw.append(energy_peak)
+        wobble_raw.append(wobble)
+        sparc_raw.append(segment_sparc)
+        ldlj_raw.append(segment_ldlj)
+
+        center_time = ((start + end - 1) * 0.5) / fps
+        segment_times_s.append(float(center_time))
+        segment_records.append(
+            {
+                "start_frame": int(start),
+                "end_frame": int(end),
+                "start_time_s": float(start / fps),
+                "end_time_s": float(end / fps),
+                "height_m": float(np.mean(com_seg[:, 2])),
+                "energy_mean": float(np.mean(mseg)),
+                "energy_peak_raw": energy_peak,
+                "com_speed_mean": float(np.mean(com_speed_seg)),
+                "leg_ratio": stable_div(leg_speed, torso_speed + EPS, default=1.0),
+                "arm_ratio": stable_div(arm_speed, torso_speed + EPS, default=1.0),
+                "freeze_score": freeze_score,
+                "angular_peak_raw": ang_peak,
+                "angular_momentum_peak_raw": angmom_peak,
+                "wobble_raw": wobble,
+                "sparc_raw": segment_sparc,
+                "ldlj_raw": segment_ldlj,
+                "phase": "transition",
+            }
+        )
+
+    raw_feature_matrix = np.vstack([np.asarray(row, dtype=np.float64) for row in raw_rows])
+    raw_feature_matrix = np.nan_to_num(raw_feature_matrix, nan=0.0, posinf=0.0, neginf=0.0)
+    normalized_feature_matrix = np.vstack([minmax_normalize(row, fill=0.5) for row in raw_feature_matrix])
+
+    difficulty = np.clip(
+        0.45 * minmax_normalize(ang_peak_raw, fill=0.5)
+        + 0.35 * minmax_normalize(angmom_peak_raw, fill=0.5)
+        + 0.20 * minmax_normalize(energy_peak_raw, fill=0.5),
+        0.0,
+        1.0,
+    )
+    wobble_inverse = 1.0 - minmax_normalize(wobble_raw, fill=0.5)
+    sparc_norm = minmax_normalize(sparc_raw, fill=0.5)
+    ldlj_norm = minmax_normalize(ldlj_raw, fill=0.5)
+
+    quality = np.clip(0.40 * wobble_inverse + 0.30 * sparc_norm + 0.30 * ldlj_norm, 0.0, 1.0)
+    clean_per_segment = np.clip(0.50 * wobble_inverse + 0.25 * sparc_norm + 0.25 * ldlj_norm, 0.0, 1.0)
+
+    heights = np.array([record["height_m"] for record in segment_records], dtype=np.float64)
+    energies = np.array([record["energy_mean"] for record in segment_records], dtype=np.float64)
+    leg_ratios = np.array([record["leg_ratio"] for record in segment_records], dtype=np.float64)
+    arm_ratios = np.array([record["arm_ratio"] for record in segment_records], dtype=np.float64)
+    freeze_scores = np.array([record["freeze_score"] for record in segment_records], dtype=np.float64)
+    angmom_peaks = np.array([record["angular_momentum_peak_raw"] for record in segment_records], dtype=np.float64)
+    wobble_vals = np.array([record["wobble_raw"] for record in segment_records], dtype=np.float64)
+
+    q_height_low = float(np.quantile(heights, 0.35)) if heights.size else 0.0
+    q_height_high = float(np.quantile(heights, 0.65)) if heights.size else 0.0
+    q_energy_high = float(np.quantile(energies, 0.75)) if energies.size else 0.0
+    q_leg = float(np.quantile(leg_ratios, 0.55)) if leg_ratios.size else 0.0
+    q_arm = float(np.quantile(arm_ratios, 0.55)) if arm_ratios.size else 0.0
+    q_angmom = float(np.quantile(angmom_peaks, 0.80)) if angmom_peaks.size else 0.0
+    q_freeze = float(np.quantile(freeze_scores, 0.70)) if freeze_scores.size else 0.0
+    q_wobble = float(np.quantile(wobble_vals, 0.50)) if wobble_vals.size else 0.0
+
+    phase_labels: List[str] = []
+    for idx, record in enumerate(segment_records):
+        if freeze_scores[idx] >= max(0.50, q_freeze) and wobble_vals[idx] <= q_wobble:
+            phase = "freeze"
+        elif angmom_peaks[idx] >= q_angmom and energies[idx] >= q_energy_high:
+            phase = "power"
+        elif heights[idx] <= q_height_low and leg_ratios[idx] >= q_leg:
+            phase = "footwork"
+        elif heights[idx] >= q_height_high and arm_ratios[idx] >= q_arm:
+            phase = "toprock"
+        else:
+            phase = "transition"
+        phase_labels.append(phase)
+        record["phase"] = phase
+        record["difficulty"] = float(difficulty[idx])
+        record["quality"] = float(quality[idx])
+        record["cleanliness"] = float(clean_per_segment[idx])
+
+    phase_counts = {name: int(sum(label == name for label in phase_labels)) for name in CATEGORY_NAMES}
+    vocab_counts = np.array([phase_counts[name] for name in CATEGORY_NAMES], dtype=np.float64)
+
+    if segment_times_s:
+        segment_centers = np.asarray(segment_times_s, dtype=np.float64)
+        for accent in motion_accents:
+            seg_idx = int(np.argmin(np.abs(segment_centers - float(accent["time"]))))
+            accent["type"] = phase_labels[seg_idx]
+
+    technique = stable_div(np.sum(difficulty * quality), np.sum(difficulty) + EPS, default=float(np.mean(quality)))
+    vocabulary = shannon_entropy_normalized(vocab_counts, len(CATEGORY_NAMES))
+
+    if len(segment_times_s) >= 2:
+        slope = float(np.polyfit(np.asarray(segment_times_s), difficulty, 1)[0])
+        duration_scale = max(segment_times_s[-1] - segment_times_s[0], 1.0)
+        progression = clamp01(logistic(slope * duration_scale * 4.0))
+    else:
+        progression = 0.5
+
+    cleanliness = clamp01(float(np.mean(clean_per_segment)))
+
+    body_score = clamp01(
+        0.40 * technique
+        + 0.20 * vocabulary
+        + 0.15 * progression
+        + 0.25 * cleanliness
+    )
+
+    transition_cost = float(np.mean(np.abs(np.diff(com_speed)))) / (float(np.mean(com_speed)) + EPS)
+    bound_free_ratio = 1.0 / (1.0 + transition_cost)
+    flow = clamp01(0.45 * float(np.mean(sparc_norm)) + 0.35 * float(np.mean(ldlj_norm)) + 0.20 * bound_free_ratio)
+
+    kinetic_energy = 0.5 * ((speed ** 2) @ JOINT_WEIGHTS)
+    thirds = np.array_split(kinetic_energy, 3)
+    e1 = float(np.mean(thirds[0])) if thirds[0].size else 0.0
+    e3 = float(np.mean(thirds[2])) if thirds[2].size else 0.0
+    energy_management = clamp01(1.0 - max(0.0, stable_div(e1 - e3, e1 + EPS, default=0.0)))
+
+    stage_use = spatial_entropy(com[:, :2], grid_size=10)
+    response_quality = 0.5
+
+    mind_score = clamp01(
+        0.30 * flow
+        + 0.20 * energy_management
+        + 0.30 * response_quality
+        + 0.20 * stage_use
+    )
+
+    groove_lock = clamp01(float(np.mean(normalized_feature_matrix[8])))
+    accent_density_track = float(len(motion_accents) / max(joints.shape[0] / fps, EPS))
+
+    spec_freqs, spec_times, spec_power = compute_motion_spectrogram(speed, fps)
+    if spec_power.ndim == 2 and spec_power.size:
+        low_band = np.mean(spec_power[(spec_freqs >= 0.0) & (spec_freqs < 2.0)], axis=0) if np.any(
+            (spec_freqs >= 0.0) & (spec_freqs < 2.0)
+        ) else np.zeros(spec_power.shape[1], dtype=np.float64)
+        mid_band = np.mean(spec_power[(spec_freqs >= 2.0) & (spec_freqs < 6.0)], axis=0) if np.any(
+            (spec_freqs >= 2.0) & (spec_freqs < 6.0)
+        ) else np.zeros(spec_power.shape[1], dtype=np.float64)
+        high_band = np.mean(spec_power[(spec_freqs >= 6.0) & (spec_freqs <= min(15.0, fps / 2.0))], axis=0) if np.any(
+            (spec_freqs >= 6.0) & (spec_freqs <= min(15.0, fps / 2.0))
+        ) else np.zeros(spec_power.shape[1], dtype=np.float64)
+    else:
+        low_band = np.zeros(0, dtype=np.float64)
+        mid_band = np.zeros(0, dtype=np.float64)
+        high_band = np.zeros(0, dtype=np.float64)
+
+    metadata: Dict[str, Any] = {
+        "fps": fps,
+        "n_frames": int(joints.shape[0]),
+        "feature_names": FEATURE_NAMES,
+        "segment_window_frames": segment_window,
+        "segment_hop_frames": segment_hop,
+        "segment_times_s": np.asarray(segment_times_s, dtype=np.float64),
+        "raw_features_9xN": raw_feature_matrix,
+        "normalized_features_9xN": normalized_feature_matrix,
+        "phase_counts": phase_counts,
+        "phase_labels": phase_labels,
+        "motion_accents": motion_accents,
+        "soul_motion_priors": {
+            "groove_lock": groove_lock,
+            "movement_tempo_bpm": float(movement_tempo_bpm),
+            "accent_density": accent_density_track,
+            "accent_strength_mean": float(np.mean(normalized_feature_matrix[3])),
+        },
+        "kinematics": {
+            "velocities": velocities,
+            "accelerations": accelerations,
+            "jerks": jerks,
+            "speed": speed,
+            "movement_energy": movement_energy,
+            "movement_energy_smooth": movement_energy_smooth,
+            "accent_envelope": accent_envelope,
+            "center_of_mass": com,
+            "center_of_mass_speed": com_speed,
+            "angular_velocity": bone_ang_vel,
+            "angular_momentum": angular_momentum,
+            "angular_momentum_magnitude": angular_momentum_mag,
+            "weighted_jerk": weighted_jerk,
+            "joint_activity_entropy": joint_activity_entropy,
+            "kinetic_energy": kinetic_energy,
+        },
+        "spectrogram": {
+            "frequencies_hz": spec_freqs,
+            "times_s": spec_times,
+            "low_band_power": low_band,
+            "mid_band_power": mid_band,
+            "high_band_power": high_band,
+        },
+        "segment_metrics": segment_records,
+        "trivium": {
+            "body": {
+                "score": body_score,
+                "components": {
+                    "technique": technique,
+                    "vocabulary": vocabulary,
+                    "progression": progression,
+                    "cleanliness": cleanliness,
+                },
+            },
+            "mind": {
+                "score": mind_score,
+                "components": {
+                    "flow": flow,
+                    "energy_management": energy_management,
+                    "response_quality": response_quality,
+                    "stage_use": stage_use,
+                },
+            },
+        },
+    }
+
+    return np.clip(normalized_feature_matrix, 0.0, 1.0), metadata
+
+
+def analyze(joints_3d: np.ndarray, fps: float = 30.0) -> Dict[str, Any]:
+    features, metadata = extract_features(joints_3d, fps=fps)
+    return {
+        "feature_names": FEATURE_NAMES,
+        "features_9xN": features,
+        "trivium": metadata["trivium"],
+        "metadata": metadata,
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="TRIVIUM motion feature extraction from SMPL joints.")
+    parser.add_argument("joints", nargs="?", help="Path to .npz/.npy file containing joints or joints_3d.")
+    parser.add_argument("--fps", type=float, default=30.0, help="Frame rate for the joints input.")
+    parser.add_argument("--test", action="store_true", help="Run synthetic test mode.")
+    args = parser.parse_args()
+
+    if args.test or args.joints is None:
+        joints = generate_synthetic_joints(duration_s=10.0, fps=args.fps)
+    else:
+        joints = load_joints_file(args.joints)
+
+    result = analyze(joints, fps=args.fps)
+    print(json.dumps(to_serializable(result), indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
+--- END FILE ---
+--- FILE: match_beats.py ---
+from __future__ import annotations
+
+import argparse
+import json
+import math
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+import numpy as np
+from scipy.io import wavfile
+from scipy.ndimage import gaussian_filter1d
+from scipy.signal import butter, find_peaks, sosfiltfilt
+
+try:
+    import analyze_motion as motion_module
+except Exception:
+    motion_module = None
+
+EPS = 1e-8
+BBOY_WEIGHTS = np.array([0.05, 0.20, 0.03, 0.25, 0.10, 0.20, 0.02, 0.10, 0.05], dtype=np.float64)
+BBOY_WEIGHTS /= BBOY_WEIGHTS.sum()
+
+JOINT_MASSES_KG = {
+    0: 11.17,
+    1: 2.78,
+    2: 2.78,
+    3: 5.0,
+    4: 3.28,
+    5: 3.28,
+    6: 3.0,
+    7: 0.61,
+    8: 0.61,
+    9: 2.5,
+    10: 0.97,
+    11: 0.97,
+    12: 1.5,
+    13: 0.5,
+    14: 0.5,
+    15: 5.0,
+    16: 2.0,
+    17: 2.0,
+    18: 1.14,
+    19: 1.14,
+    20: 0.45,
+    21: 0.45,
+    22: 0.41,
+    23: 0.41,
+}
+JOINT_WEIGHTS = np.array([JOINT_MASSES_KG[j] for j in range(24)], dtype=np.float64)
+JOINT_WEIGHTS /= JOINT_WEIGHTS.sum()
+
+BASE_SKELETON = np.array(
+    [
+        [0.00, 0.00, 0.95],
+        [-0.09, 0.00, 0.90],
+        [0.09, 0.00, 0.90],
+        [0.00, 0.00, 1.05],
+        [-0.10, 0.00, 0.55],
+        [0.10, 0.00, 0.55],
+        [0.00, 0.00, 1.15],
+        [-0.10, 0.00, 0.15],
+        [0.10, 0.00, 0.15],
+        [0.00, 0.00, 1.30],
+        [-0.10, 0.08, 0.05],
+        [0.10, 0.08, 0.05],
+        [0.00, 0.00, 1.45],
+        [-0.08, 0.00, 1.40],
+        [0.08, 0.00, 1.40],
+        [0.00, 0.00, 1.65],
+        [-0.18, 0.00, 1.35],
+        [0.18, 0.00, 1.35],
+        [-0.35, 0.00, 1.20],
+        [0.35, 0.00, 1.20],
+        [-0.50, 0.00, 1.05],
+        [0.50, 0.00, 1.05],
+        [-0.58, 0.00, 1.02],
+        [0.58, 0.00, 1.02],
+    ],
+    dtype=np.float64,
+)
+
+AUDIO_BANDS = {
+    "sub_bass": (20.0, 60.0),
+    "bass": (60.0, 250.0),
+    "mid": (250.0, 2000.0),
+    "high": (2000.0, 8000.0),
+}
+
+
+def clamp01(value: float) -> float:
+    return float(np.clip(value, 0.0, 1.0))
+
+
+def stable_div(numerator: float, denominator: float, default: float = 0.0) -> float:
+    if abs(float(denominator)) < EPS:
+        return float(default)
+    return float(numerator) / float(denominator)
+
+
+def minmax_normalize(values: Sequence[float], fill: float = 0.5) -> np.ndarray:
+    arr = np.asarray(values, dtype=np.float64)
+    if arr.size == 0:
+        return arr
+    lo = float(np.nanmin(arr))
+    hi = float(np.nanmax(arr))
+    if hi - lo < EPS:
+        return np.full(arr.shape, fill, dtype=np.float64)
+    return np.clip((arr - lo) / (hi - lo), 0.0, 1.0)
+
+
+def to_serializable(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {str(key): to_serializable(value) for key, value in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [to_serializable(value) for value in obj]
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (np.floating, np.integer)):
+        value = obj.item()
+        if isinstance(value, float) and not math.isfinite(value):
+            return None
+        return value
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    return obj
+
+
+def load_joints_file(path: str) -> np.ndarray:
+    if motion_module is not None and hasattr(motion_module, "load_joints_file"):
+        return motion_module.load_joints_file(path)
+    file_path = Path(path)
+    if file_path.suffix.lower() == ".npy":
+        joints = np.load(file_path)
+    else:
+        data = np.load(file_path, allow_pickle=True)
+        if hasattr(data, "files"):
+            files = list(data.files)
+            for key in ("joints", "joints_3d", "arr_0"):
+                if key in files:
+                    joints = data[key]
+                    break
+            else:
+                if len(files) == 1:
+                    joints = data[files[0]]
+                else:
+                    raise KeyError("Could not find joints array in file.")
+        else:
+            joints = data
+    joints = np.asarray(joints, dtype=np.float64)
+    if joints.ndim != 3 or joints.shape[1:] != (24, 3):
+        raise ValueError("Expected joints_3d with shape [T, 24, 3].")
+    return joints
+
+
+def resample_series(signal: Sequence[float], src_hz: float, target_hz: float, duration_s: Optional[float] = None) -> np.ndarray:
+    x = np.asarray(signal, dtype=np.float64).ravel()
+    if x.size == 0:
+        return np.zeros(0, dtype=np.float64)
+    src_hz = max(float(src_hz), EPS)
+    target_hz = max(float(target_hz), EPS)
+    if duration_s is None:
+        duration_s = x.size / src_hz
+    duration_s = max(float(duration_s), 1.0 / target_hz)
+    src_t = np.arange(x.size, dtype=np.float64) / src_hz
+    target_len = max(1, int(round(duration_s * target_hz)))
+    target_t = np.arange(target_len, dtype=np.float64) / target_hz
+    return np.interp(target_t, src_t, x, left=float(x[0]), right=float(x[-1]))
+
+
+def lagged_pearson(x: Sequence[float], y: Sequence[float], max_lag: int) -> Tuple[float, int]:
+    a = np.asarray(x, dtype=np.float64).ravel()
+    b = np.asarray(y, dtype=np.float64).ravel()
+    n = min(a.size, b.size)
+    if n < 3:
+        return 0.0, 0
+    a = a[:n]
+    b = b[:n]
+    a = (a - np.mean(a)) / (np.std(a) + EPS)
+    b = (b - np.mean(b)) / (np.std(b) + EPS)
+
+    best_corr = -1.0
+    best_lag = 0
+    for lag in range(-int(max_lag), int(max_lag) + 1):
+        if lag < 0:
+            xs = a[-lag:]
+            ys = b[: n + lag]
+        elif lag > 0:
+            xs = a[: n - lag]
+            ys = b[lag:n]
+        else:
+            xs = a
+            ys = b
+        if xs.size < 3 or ys.size < 3:
+            continue
+        corr = float(np.mean(xs * ys))
+        if corr > best_corr:
+            best_corr = corr
+            best_lag = lag
+    if best_corr < -0.99:
+        return 0.0, 0
+    return best_corr, best_lag
+
+
+def safe_band_filter(signal: np.ndarray, sample_hz: float, low_hz: float, high_hz: float) -> np.ndarray:
+    x = np.asarray(signal, dtype=np.float64).ravel()
+    if x.size < 16:
+        return x - np.mean(x)
+    nyquist = 0.5 * float(sample_hz)
+    if nyquist <= 0.0:
+        return x - np.mean(x)
+    low = max(low_hz / nyquist, 1e-4)
+    high = min(high_hz / nyquist, 0.99)
+    if high <= low:
+        return x - np.mean(x)
+    try:
+        sos = butter(2, [low, high], btype="bandpass", output="sos")
+        return sosfiltfilt(sos, x)
+    except Exception:
+        return x - np.mean(x)
+
+
+def build_modulation_bands(envelope: Sequence[float], sample_hz: float) -> Dict[str, np.ndarray]:
+    x = np.asarray(envelope, dtype=np.float64).ravel()
+    bands = {
+        "low": (0.5, 2.0),
+        "mid": (2.0, 6.0),
+        "high": (6.0, min(15.0, 0.45 * sample_hz)),
+    }
+    out: Dict[str, np.ndarray] = {}
+    for name, (lo, hi) in bands.items():
+        if hi <= lo + 0.1:
+            continue
+        filtered = safe_band_filter(x, sample_hz, lo, hi)
+        out[name] = gaussian_filter1d(filtered, sigma=max(1.0, 0.01 * sample_hz))
+    return out
+
+
+def derive_movement_energy(joints_3d: np.ndarray, fps: float) -> np.ndarray:
+    joints = np.asarray(joints_3d, dtype=np.float64)
+    velocities = np.gradient(joints, axis=0) * float(fps)
+    speed = np.linalg.norm(velocities, axis=-1)
+    movement = speed @ JOINT_WEIGHTS
+    return gaussian_filter1d(movement, sigma=max(1.0, 0.05 * fps))
+
+
+def derive_motion_accents(joints_3d: np.ndarray, fps: float) -> List[Dict[str, Any]]:
+    movement = derive_movement_energy(joints_3d, fps)
+    derivative = np.gradient(movement) * float(fps)
+    accent_env = np.maximum(0.0, derivative)
+    if accent_env.size == 0 or float(np.max(accent_env)) < EPS:
+        return []
+    peaks, props = find_peaks(
+        accent_env,
+        height=max(float(np.quantile(accent_env, 0.75)), float(np.max(accent_env) * 0.25)),
+        distance=max(1, int(round(0.18 * fps))),
+    )
+    if peaks.size == 0:
+        peaks = np.array([int(np.argmax(accent_env))], dtype=np.int64)
+        heights = accent_env[peaks]
+    else:
+        heights = np.asarray(props.get("peak_heights", accent_env[peaks]), dtype=np.float64)
+    accents: List[Dict[str, Any]] = []
+    for idx, peak in enumerate(peaks):
+        accents.append(
+            {
+                "time": float(peak / fps),
+                "frame": int(peak),
+                "strength": float(heights[idx]),
+                "type": "accent",
+            }
+        )
+    return accents
+
+
+def fallback_motion_analysis(joints_3d: np.ndarray, fps: float) -> Dict[str, Any]:
+    movement_energy = derive_movement_energy(joints_3d, fps)
+    motion_accents = derive_motion_accents(joints_3d, fps)
+    trivium = {
+        "body": {
+            "score": 0.5,
+            "components": {
+                "technique": 0.5,
+                "vocabulary": 0.5,
+                "progression": 0.5,
+                "cleanliness": 0.5,
+            },
+        },
+        "mind": {
+            "score": 0.5,
+            "components": {
+                "flow": 0.5,
+                "energy_management": 0.5,
+                "response_quality": 0.5,
+                "stage_use": 0.5,
+            },
+        },
+    }
+    metadata = {
+        "motion_accents": motion_accents,
+        "kinematics": {"movement_energy_smooth": movement_energy},
+        "soul_motion_priors": {"groove_lock": 0.5, "movement_tempo_bpm": 120.0},
+        "trivium": trivium,
+    }
+    return {"features_9xN": np.full((9, 1), 0.5, dtype=np.float64), "metadata": metadata, "trivium": trivium}
+
+
+def analyze_motion_input(joints_3d: np.ndarray, fps: float) -> Dict[str, Any]:
+    if motion_module is not None:
+        if hasattr(motion_module, "analyze"):
+            return motion_module.analyze(joints_3d, fps=fps)
+        if hasattr(motion_module, "extract_features"):
+            features, metadata = motion_module.extract_features(joints_3d, fps=fps)
+            return {"features_9xN": features, "metadata": metadata, "trivium": metadata.get("trivium", {})}
+    return fallback_motion_analysis(joints_3d, fps=fps)
+
+
+def compute_audio_hotness(feature_matrix: np.ndarray) -> np.ndarray:
+    features = np.asarray(feature_matrix, dtype=np.float64)
+    if features.ndim != 2:
+        raise ValueError("Audio feature matrix must be 2D.")
+    if features.shape[0] == 9:
+        matrix = features
+    elif features.shape[1] == 9:
+        matrix = features.T
+    else:
+        raise ValueError("Audio feature matrix must have one dimension of size 9.")
+    return BBOY_WEIGHTS @ matrix
+
+
+def estimate_beat_period_samples(onset_env: Sequence[float], sample_hz: float, min_bpm: float = 60.0, max_bpm: float = 180.0) -> int:
+    onset = np.asarray(onset_env, dtype=np.float64)
+    if onset.size < 4:
+        return max(1, int(round(sample_hz * 0.5)))
+    x = onset - np.mean(onset)
+    autoc = np.correlate(x, x, mode="full")[x.size - 1 :]
+    min_lag = max(1, int(round(sample_hz * 60.0 / max_bpm)))
+    max_lag = min(int(round(sample_hz * 60.0 / min_bpm)), autoc.size - 1)
+    if max_lag <= min_lag:
+        return max(1, int(round(sample_hz * 0.5)))
+    lag = int(np.argmax(autoc[min_lag : max_lag + 1])) + min_lag
+    return max(1, lag)
+
+
+def detect_beats_from_envelope(audio_energy: Sequence[float], sample_hz: float) -> Tuple[np.ndarray, np.ndarray]:
+    env = np.asarray(audio_energy, dtype=np.float64).ravel()
+    if env.size == 0:
+        return np.zeros(0, dtype=np.float64), np.zeros(0, dtype=np.float64)
+    env = gaussian_filter1d(env, sigma=max(1.0, 0.02 * sample_hz))
+    onset = np.maximum(0.0, np.diff(env, prepend=env[0]))
+    beat_period = estimate_beat_period_samples(onset, sample_hz)
+    peaks, props = find_peaks(
+        onset,
+        distance=max(1, int(round(0.8 * beat_period))),
+        height=max(float(np.quantile(onset, 0.75)), float(np.max(onset) * 0.25)),
+        prominence=max(float(np.quantile(onset, 0.6) * 0.2), EPS),
+    )
+    if peaks.size == 0:
+        peaks = np.arange(0, env.size, max(1, beat_period), dtype=np.int64)
+        strengths = np.ones(peaks.size, dtype=np.float64)
+    else:
+        strengths = np.asarray(props.get("peak_heights", onset[peaks]), dtype=np.float64)
+        strengths = minmax_normalize(strengths, fill=1.0)
+    return peaks / float(sample_hz), strengths
+
+
+def load_audio_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
+    payload = dict(mapping)
+
+    audio_energy = payload.get("audio_energy")
+    if audio_energy is None:
+        audio_energy = payload.get("audio_hotness")
+    if audio_energy is None:
+        features = payload.get("features_9xN")
+        if features is None:
+            features = payload.get("features")
+        if features is not None:
+            audio_energy = compute_audio_hotness(np.asarray(features, dtype=np.float64))
+
+    if audio_energy is None:
+        raise ValueError("Could not find audio_energy or 9D audio features in payload.")
+
+    audio_energy_arr = np.asarray(audio_energy, dtype=np.float64).ravel()
+
+    sample_hz = payload.get("sample_hz")
+    if sample_hz is None:
+        segment_times = payload.get("segment_times_s")
+        if segment_times is not None:
+            times = np.asarray(segment_times, dtype=np.float64)
+            if times.size >= 2:
+                sample_hz = 1.0 / max(float(np.median(np.diff(times))), EPS)
+            else:
+                sample_hz = 2.0
+        else:
+            sample_hz = 2.0
+
+    beat_times = payload.get("beat_times")
+    beat_strengths = payload.get("beat_strengths")
+    if beat_times is None:
+        beat_times_arr, beat_strengths_arr = detect_beats_from_envelope(audio_energy_arr, float(sample_hz))
+    else:
+        beat_times_arr = np.asarray(beat_times, dtype=np.float64).ravel()
+        if beat_strengths is None:
+            beat_strengths_arr = np.ones(beat_times_arr.size, dtype=np.float64)
+        else:
+            beat_strengths_arr = np.asarray(beat_strengths, dtype=np.float64).ravel()
+
+    if beat_strengths_arr.size != beat_times_arr.size:
+        beat_strengths_arr = np.resize(beat_strengths_arr, beat_times_arr.size)
+
+    downbeat_times = payload.get("downbeat_times")
+    if downbeat_times is None:
+        downbeat_times_arr = beat_times_arr[::4]
+    else:
+        downbeat_times_arr = np.asarray(downbeat_times, dtype=np.float64).ravel()
+
+    audio_band_envelopes = payload.get("audio_band_envelopes")
+    if isinstance(audio_band_envelopes, np.ndarray) and audio_band_envelopes.dtype == object and audio_band_envelopes.size == 1:
+        audio_band_envelopes = audio_band_envelopes.item()
+    if not isinstance(audio_band_envelopes, Mapping):
+        audio_band_envelopes = None
+
+    duration_s = audio_energy_arr.size / max(float(sample_hz), EPS)
+
+    return {
+        "audio_energy": audio_energy_arr,
+        "beat_times": beat_times_arr,
+        "downbeat_times": downbeat_times_arr,
+        "beat_strengths": beat_strengths_arr,
+        "audio_band_envelopes": audio_band_envelopes,
+        "sample_hz": float(sample_hz),
+        "duration_s": float(duration_s),
+    }
+
+
+def normalize_audio_samples(audio: np.ndarray) -> np.ndarray:
+    audio_arr = np.asarray(audio)
+    if audio_arr.ndim == 2:
+        audio_arr = np.mean(audio_arr, axis=1)
+    if np.issubdtype(audio_arr.dtype, np.integer):
+        info = np.iinfo(audio_arr.dtype)
+        audio_float = audio_arr.astype(np.float64) / max(float(max(abs(info.min), abs(info.max))), 1.0)
+    else:
+        audio_float = audio_arr.astype(np.float64)
+        peak = float(np.max(np.abs(audio_float))) if audio_float.size else 1.0
+        if peak > 1.0:
+            audio_float = audio_float / peak
+    return audio_float
+
+
+def analyze_wav(path: str) -> Dict[str, Any]:
+    sr, audio = wavfile.read(path)
+    audio_float = normalize_audio_samples(audio)
+    sr = float(sr)
+    if audio_float.size == 0:
+        raise ValueError("Empty audio file.")
+
+    duration_s = audio_float.size / sr
+    common_hz = 200.0
+
+    full_env = gaussian_filter1d(np.abs(audio_float), sigma=max(1.0, 0.005 * sr))
+    audio_energy = resample_series(full_env, sr, common_hz, duration_s)
+
+    onset_env = np.maximum(0.0, np.diff(audio_energy, prepend=audio_energy[0]))
+    beat_times, beat_strengths = detect_beats_from_envelope(onset_env, common_hz)
+    downbeat_times = beat_times[::4]
+
+    audio_band_envelopes: Dict[str, np.ndarray] = {}
+    for name, (lo, hi) in AUDIO_BANDS.items():
+        if hi >= 0.45 * sr:
+            continue
+        filtered = safe_band_filter(audio_float, sr, lo, hi)
+        env = gaussian_filter1d(np.abs(filtered), sigma=max(1.0, 0.005 * sr))
+        audio_band_envelopes[name] = resample_series(env, sr, common_hz, duration_s)
+
+    return {
+        "audio_energy": audio_energy,
+        "beat_times": beat_times,
+        "downbeat_times": downbeat_times,
+        "beat_strengths": beat_strengths if beat_strengths.size == beat_times.size else np.ones_like(beat_times),
+        "audio_band_envelopes": audio_band_envelopes,
+        "sample_hz": common_hz,
+        "duration_s": duration_s,
+    }
+
+
+def load_audio_features(path: str) -> Dict[str, Any]:
+    file_path = Path(path)
+    suffix = file_path.suffix.lower()
+    if suffix == ".wav":
+        return analyze_wav(path)
+    if suffix == ".json":
+        with open(file_path, "r", encoding="utf-8") as handle:
+            return load_audio_mapping(json.load(handle))
+    if suffix in (".npz", ".npy"):
+        data = np.load(file_path, allow_pickle=True)
+        if hasattr(data, "files"):
+            payload = {key: data[key] for key in data.files}
+        else:
+            payload = {"audio_energy": data}
+        return load_audio_mapping(payload)
+    raise ValueError("Unsupported audio input. Use .wav, .json, or .npz/.npy.")
+
+
+def match_accents_to_beats(
+    motion_accents: Optional[Sequence[Any]] = None,
+    beat_times: Optional[Sequence[float]] = None,
+    downbeat_times: Optional[Sequence[float]] = None,
+    beat_strengths: Optional[Sequence[float]] = None,
+    delta: float = 0.070,
+    joints_3d: Optional[np.ndarray] = None,
+    fps: float = 30.0,
+) -> Dict[str, Any]:
+    if beat_times is None:
+        raise ValueError("beat_times are required for accent matching.")
+
+    if motion_accents is None:
+        if joints_3d is None:
+            raise ValueError("Provide motion_accents or joints_3d.")
+        motion_analysis = analyze_motion_input(np.asarray(joints_3d, dtype=np.float64), fps=fps)
+        motion_meta = motion_analysis.get("metadata", motion_analysis)
+        motion_accents = motion_meta.get("motion_accents")
+        if motion_accents is None:
+            motion_accents = derive_motion_accents(np.asarray(joints_3d, dtype=np.float64), fps=fps)
+
+    beat_times_arr = np.asarray(beat_times, dtype=np.float64).ravel()
+    if downbeat_times is None:
+        downbeat_times_arr = beat_times_arr[::4]
+    else:
+        downbeat_times_arr = np.asarray(downbeat_times, dtype=np.float64).ravel()
+
+    if beat_strengths is None:
+        beat_strengths_arr = np.ones(beat_times_arr.size, dtype=np.float64)
+    else:
+        beat_strengths_arr = np.asarray(beat_strengths, dtype=np.float64).ravel()
+        if beat_strengths_arr.size != beat_times_arr.size:
+            beat_strengths_arr = np.resize(beat_strengths_arr, beat_times_arr.size)
+
+    accent_times: List[float] = []
+    accent_strength_list: List[float] = []
+    accent_types: List[str] = []
+
+    for item in motion_accents:
+        if isinstance(item, Mapping):
+            accent_times.append(float(item.get("time", 0.0)))
+            accent_strength_list.append(float(item.get("strength", 1.0)))
+            accent_types.append(str(item.get("type", "accent")))
+        else:
+            accent_times.append(float(item))
+            accent_strength_list.append(1.0)
+            accent_types.append("accent")
+
+    accent_times_arr = np.asarray(accent_times, dtype=np.float64)
+    accent_strengths_arr = np.asarray(accent_strength_list, dtype=np.float64)
+
+    best_result: Optional[Dict[str, Any]] = None
+    for lag_s in np.linspace(-0.20, 0.20, 81):
+        per_hits: List[Dict[str, Any]] = []
+        hit_flags: List[float] = []
+        weighted_scores: List[float] = []
+        downbeat_hits: List[float] = []
+        hit_lags_ms: List[float] = []
+
+        for idx, beat_time in enumerate(beat_times_arr):
+            shifted_beat = beat_time + lag_s
+            if accent_times_arr.size:
+                nearest_idx = int(np.argmin(np.abs(accent_times_arr - shifted_beat)))
+                lag_to_accent = float(accent_times_arr[nearest_idx] - shifted_beat)
+                is_hit = abs(lag_to_accent) <= delta
+                strength = float(accent_strengths_arr[nearest_idx])
+                accent_type = accent_types[nearest_idx]
+                matched_time = float(accent_times_arr[nearest_idx])
+            else:
+                lag_to_accent = float("inf")
+                is_hit = False
+                strength = 0.0
+                accent_type = "accent"
+                matched_time = None
+
+            hit_value = 1.0 if is_hit else 0.0
+            weighted = beat_strengths_arr[idx] * max(0.0, 1.0 - abs(lag_to_accent) / max(delta, EPS)) if is_hit else 0.0
+            is_downbeat = bool(downbeat_times_arr.size and np.min(np.abs(downbeat_times_arr - beat_time)) <= delta)
+
+            hit_flags.append(hit_value)
+            weighted_scores.append(weighted)
+            if is_downbeat:
+                downbeat_hits.append(hit_value)
+            if is_hit:
+                hit_lags_ms.append(lag_to_accent * 1000.0)
+
+            per_hits.append(
+                {
+                    "beat_time_s": float(beat_time),
+                    "shifted_beat_time_s": float(shifted_beat),
+                    "matched_accent_time_s": matched_time,
+                    "lag_ms": None if matched_time is None else float(lag_to_accent * 1000.0),
+                    "beat_strength": float(beat_strengths_arr[idx]),
+                    "accent_strength": strength,
+                    "accent_type": accent_type,
+                    "downbeat": is_downbeat,
+                    "hit": bool(is_hit),
+                }
+            )
+
+        accent_hit_rate = float(np.mean(hit_flags)) if hit_flags else 0.0
+        weighted_hit_score = stable_div(np.sum(weighted_scores), np.sum(beat_strengths_arr) + EPS, default=0.0)
+        downbeat_hit_score = float(np.mean(downbeat_hits)) if downbeat_hits else accent_hit_rate
+
+        if hit_lags_ms:
+            groove_lock = clamp01(1.0 - float(np.std(hit_lags_ms)) / (delta * 1000.0 + EPS))
+        else:
+            groove_lock = accent_hit_rate
+
+        result = {
+            "accent_hit_rate": clamp01(accent_hit_rate),
+            "weighted_hit_score": clamp01(weighted_hit_score),
+            "downbeat_hit_score": clamp01(downbeat_hit_score),
+            "optimal_lag_ms": float(lag_s * 1000.0),
+            "n_beats": int(beat_times_arr.size),
+            "n_motion_accents": int(accent_times_arr.size),
+            "n_hits": int(np.sum(hit_flags)),
+            "groove_lock": groove_lock,
+            "per_beat_hits": per_hits,
+            "score": clamp01(weighted_hit_score),
+        }
+
+        if best_result is None or result["weighted_hit_score"] > best_result["weighted_hit_score"]:
+            best_result = result
+
+    if best_result is None:
+        best_result = {
+            "accent_hit_rate": 0.0,
+            "weighted_hit_score": 0.0,
+            "downbeat_hit_score": 0.0,
+            "optimal_lag_ms": 0.0,
+            "n_beats": int(beat_times_arr.size),
+            "n_motion_accents": int(accent_times_arr.size),
+            "n_hits": 0,
+            "groove_lock": 0.0,
+            "per_beat_hits": [],
+            "score": 0.0,
+        }
+    return best_result
+
+
+def spectral_cross_correlation(
+    M_t: Sequence[float],
+    audio_energy: Sequence[float],
+    audio_band_envelopes: Optional[Mapping[str, Sequence[float]]] = None,
+    fps: float = 30.0,
+    sr: float = 22050.0,
+    tau_max: float = 0.200,
+    common_hz: float = 100.0,
+    gamma: float = 0.5,
+    sigma_tau: float = 0.050,
+) -> Dict[str, Any]:
+    motion = np.asarray(M_t, dtype=np.float64).ravel()
+    audio = np.asarray(audio_energy, dtype=np.float64).ravel()
+    if motion.size < 3 or audio.size < 3:
+        return {
+            "musicality_global": 0.5,
+            "raw_correlation": 0.5,
+            "correlation": 0.5,
+            "optimal_lag_ms": 0.0,
+            "anticipation_factor": 1.0,
+            "multi_band_correlation": 0.5,
+            "band_correlations": {},
+        }
+
+    duration_s = max(motion.size / max(float(fps), EPS), EPS)
+    audio_hz = max(audio.size / duration_s, 1.0)
+
+    motion_rs = resample_series(motion, fps, common_hz, duration_s)
+    audio_rs = resample_series(audio, audio_hz, common_hz, duration_s)
+
+    smooth_sigma = max(1.0, 0.03 * common_hz)
+    motion_rs = gaussian_filter1d(motion_rs, sigma=smooth_sigma)
+    audio_rs = gaussian_filter1d(audio_rs, sigma=smooth_sigma)
+
+    max_lag = int(round(tau_max * common_hz))
+    corr_raw, lag_samples = lagged_pearson(motion_rs, audio_rs, max_lag)
+    raw_correlation = clamp01(0.5 * (corr_raw + 1.0))
+    lag_s = lag_samples / float(common_hz)
+    anticipation_factor = 1.0 + (gamma / 2.0) * math.erf(-lag_s / max(float(sigma_tau), EPS))
+    musicality_global = clamp01(raw_correlation * anticipation_factor)
+
+    motion_bands = build_modulation_bands(motion_rs, common_hz)
+    if audio_band_envelopes:
+        audio_bands: Dict[str, np.ndarray] = {}
+        for name, band_signal in audio_band_envelopes.items():
+            band_arr = np.asarray(band_signal, dtype=np.float64).ravel()
+            band_hz = max(band_arr.size / duration_s, 1.0)
+            audio_bands[str(name)] = gaussian_filter1d(
+                resample_series(band_arr, band_hz, common_hz, duration_s),
+                sigma=max(1.0, 0.01 * common_hz),
+            )
+    else:
+        audio_bands = build_modulation_bands(audio_rs, common_hz)
+
+    band_correlations: Dict[str, Dict[str, float]] = {}
+    band_scores: List[float] = []
+    for name, audio_band in audio_bands.items():
+        motion_band = motion_bands.get(name, motion_rs)
+        band_corr_raw, band_lag = lagged_pearson(motion_band, audio_band, max_lag)
+        band_corr = clamp01(0.5 * (band_corr_raw + 1.0))
+        band_scores.append(band_corr)
+        band_correlations[name] = {
+            "correlation": band_corr,
+            "lag_ms": float(band_lag * 1000.0 / common_hz),
+        }
+
+    if band_scores:
+        multi_band_correlation = clamp01(float(np.mean(band_scores)))
+    else:
+        multi_band_correlation = raw_correlation
+
+    return {
+        "musicality_global": musicality_global,
+        "raw_correlation": raw_correlation,
+        "correlation": raw_correlation,
+        "optimal_lag_ms": float(lag_s * 1000.0),
+        "anticipation_factor": float(anticipation_factor),
+        "multi_band_correlation": multi_band_correlation,
+        "band_correlations": band_correlations,
+        "resampled_hz": float(common_hz),
+    }
+
+
+def compute_trivium_score(motion_analysis: Mapping[str, Any], level1: Mapping[str, Any], level2: Mapping[str, Any]) -> Dict[str, Any]:
+    motion_meta = motion_analysis.get("metadata", motion_analysis)
+    motion_trivium = motion_analysis.get("trivium", motion_meta.get("trivium", {}))
+
+    body_info = motion_trivium.get("body", {})
+    mind_info = motion_trivium.get("mind", {})
+    body_score = clamp01(float(body_info.get("score", 0.5)))
+    mind_score = clamp01(float(mind_info.get("score", 0.5)))
+
+    body_components = dict(body_info.get("components", {}))
+    mind_components = dict(mind_info.get("components", {}))
+
+    motion_priors = motion_meta.get("soul_motion_priors", {})
+    groove = clamp01(
+        0.5 * float(level1.get("groove_lock", 0.5))
+        + 0.5 * float(motion_priors.get("groove_lock", 0.5))
+    )
+
+    mu_ant = clamp01(float(level2.get("musicality_global", 0.5)))
+    mu_multi = clamp01(float(level2.get("multi_band_correlation", level2.get("raw_correlation", 0.5))))
+    mu_hit = clamp01(float(level1.get("weighted_hit_score", 0.5)))
+
+    musicality = clamp01(0.25 * mu_ant + 0.30 * mu_multi + 0.25 * mu_hit + 0.20 * groove)
+    phrasing = 0.5
+    creativity = 0.5
+    soul_score = clamp01(0.45 * musicality + 0.25 * phrasing + 0.30 * creativity)
+
+    final_normalized = clamp01(0.40 * body_score + 0.35 * soul_score + 0.25 * mind_score)
+    final_score_100 = 100.0 * final_normalized
+
+    return {
+        "score_100": float(final_score_100),
+        "score_normalized": float(final_normalized),
+        "weights": {"body": 0.40, "soul": 0.35, "mind": 0.25},
+        "body": {"score": body_score, "components": body_components},
+        "soul": {
+            "score": soul_score,
+            "components": {
+                "musicality": musicality,
+                "phrasing": phrasing,
+                "creativity": creativity,
+            },
+            "musicality_components": {
+                "mu_ant": mu_ant,
+                "mu_multi": mu_multi,
+                "mu_hit": mu_hit,
+                "groove": groove,
+            },
+        },
+        "mind": {"score": mind_score, "components": mind_components},
+    }
+
+
+def run_pipeline(joints_3d: np.ndarray, audio_payload: Mapping[str, Any], fps: float) -> Dict[str, Any]:
+    motion_analysis = analyze_motion_input(joints_3d, fps=fps)
+    motion_meta = motion_analysis.get("metadata", motion_analysis)
+    movement_energy = motion_meta.get("kinematics", {}).get("movement_energy_smooth")
+    if movement_energy is None:
+        movement_energy = derive_movement_energy(joints_3d, fps)
+
+    level1 = match_accents_to_beats(
+        joints_3d=joints_3d,
+        fps=fps,
+        beat_times=audio_payload["beat_times"],
+        downbeat_times=audio_payload.get("downbeat_times"),
+        beat_strengths=audio_payload.get("beat_strengths"),
+    )
+
+    level2 = spectral_cross_correlation(
+        M_t=movement_energy,
+        audio_energy=audio_payload["audio_energy"],
+        audio_band_envelopes=audio_payload.get("audio_band_envelopes"),
+        fps=fps,
+        common_hz=100.0,
+    )
+
+    trivium = compute_trivium_score(motion_analysis, level1, level2)
+
+    motion_priors = motion_meta.get("soul_motion_priors", {})
+    result = {
+        "level1": level1,
+        "level2": level2,
+        "trivium": trivium,
+        "motion_summary": {
+            "tempo_bpm": float(motion_priors.get("movement_tempo_bpm", 0.0)),
+            "n_motion_accents": int(len(motion_meta.get("motion_accents", []))),
+        },
+        "audio_summary": {
+            "n_beats": int(np.asarray(audio_payload["beat_times"]).size),
+            "duration_s": float(audio_payload.get("duration_s", 0.0)),
+        },
+    }
+    return result
+
+
+def make_synthetic_test_case(duration_s: float = 10.0, fps: float = 30.0, common_hz: float = 100.0) -> Dict[str, Any]:
+    n_frames = int(round(duration_s * fps))
+    joints = np.repeat(BASE_SKELETON[None, :, :], n_frames, axis=0)
+    beat_times = np.arange(0.0, duration_s, 0.5, dtype=np.float64)
+
+    burst_x = np.array([0.0, 0.25, 0.0], dtype=np.float64)[:, None]
+    burst_y = np.array([0.0, -0.08, 0.0], dtype=np.float64)[:, None]
+    for beat_time in beat_times:
+        frame = int(round(beat_time * fps))
+        if frame + 3 < n_frames:
+            joints[frame : frame + 3, :, 0] += burst_x
+            joints[frame : frame + 3, :, 1] += burst_y
+
+    audio_energy = np.zeros(int(round(duration_s * common_hz)), dtype=np.float64)
+    for beat_time in beat_times:
+        idx = int(round(beat_time * common_hz))
+        if idx < audio_energy.size:
+            audio_energy[idx] = 1.0
+    audio_energy = gaussian_filter1d(audio_energy, sigma=2.0)
+
+    audio_band_envelopes = {
+        "low": gaussian_filter1d(audio_energy, sigma=2.0),
+        "mid": gaussian_filter1d(audio_energy, sigma=1.5),
+        "high": gaussian_filter1d(audio_energy, sigma=1.0),
+    }
+
+    beat_strengths = np.ones(beat_times.size, dtype=np.float64)
+    beat_strengths[::4] = 1.25
+
+    return {
+        "joints_3d": joints.astype(np.float64),
+        "audio": {
+            "audio_energy": audio_energy,
+            "beat_times": beat_times,
+            "downbeat_times": beat_times[::4],
+            "beat_strengths": beat_strengths,
+            "audio_band_envelopes": audio_band_envelopes,
+            "sample_hz": common_hz,
+            "duration_s": duration_s,
+        },
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="TRIVIUM beat-motion matching and scoring.")
+    parser.add_argument("--motion", help="Path to motion joints (.npz/.npy).")
+    parser.add_argument("--audio", help="Path to audio analysis (.json/.npz) or waveform (.wav).")
+    parser.add_argument("--fps", type=float, default=30.0, help="Motion frame rate.")
+    parser.add_argument("--test", action="store_true", help="Run synthetic sync test.")
+    args = parser.parse_args()
+
+    if args.test or (args.motion is None and args.audio is None):
+        synthetic = make_synthetic_test_case(duration_s=10.0, fps=args.fps, common_hz=100.0)
+        result = run_pipeline(synthetic["joints_3d"], synthetic["audio"], fps=args.fps)
+        result["test_pass"] = bool(float(result["level2"]["raw_correlation"]) > 0.7)
+    else:
+        if args.motion is None or args.audio is None:
+            raise ValueError("Provide both --motion and --audio, or use --test.")
+        joints_3d = load_joints_file(args.motion)
+        audio_payload = load_audio_features(args.audio)
+        result = run_pipeline(joints_3d, audio_payload, fps=args.fps)
+
+    print(json.dumps(to_serializable(result), indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
+--- END FILE ---

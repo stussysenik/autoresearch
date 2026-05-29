@@ -1,0 +1,342 @@
+# Scenario Analysis Request
+
+## Scenario
+- **ID**: headspin-loop-01
+- **Tags**: inversion, rotation, power
+- **Notes**: Continuous axial rotation with heavy motion blur.
+
+## Signatures from Other Agents (for reference)
+
+### PHYSICS says:
+### PHYSICS SIGNATURE: headspin-loop-01
+
+**Move Category**: Spinning power
+**Pivot**: Fixed — head crown contact point (~5–8cm superior to joint 15 in SMPL coordinates, head cap surface against floor)
+
+---
+
+**Angular Momentum Profile**:
+- **Source**: Entry kick via joints 7+8 (ankles) and arm sweep via 22+23 (hands) generate initial L_z. After plant, leg pumping at joints 4+5 (knees) injects small boosts.
+- **Conservation**: L_z approximately conserved; primary disruption is head-cap friction torque τ_f = μ · N · r_cap, where N ≈ 0.7·m·g (gravity component along spin axis for ~15° off-vertical head tilt) and r_cap ≈ 0.04m. Net: slow exponential decay, not step-changes.
+- **Expected |L_z| range**: 5–15 kg·m²·rad/s competitive range. Full-tuck (I ≈ 0.4–0.6 kg·m²) at 3–4 rev/s ≈ 7–15 range; open legs (I ≈ 6–9 kg·m²) at 0.8–1.2 rev/s ≈ same L_z by conservation.
+- **Ice-skater ratio**: I_open/I_tuck ≈ 10–15× → ω_tuck/ω_open ≈ 10–15×. This is the primary quality marker — bboys who tuck perfectly get explosive speed increase.
+
+**RTA Velocity Expectations**:
+
+| Component | Expected Profile | Quality Signal | SMPL Joints to Watch |
+|-----------|-----------------|----------------|---------------------|
+| Tangential | HIGH, slow monotonic decay (friction). Should NOT fluctuate >±15% per revolution | `CV(v_tan)` < 0.15 = clean spin. Spikes = wobble or near-fall | 0 (pelvis), 7+8 (ankles), 22+23 (hands) |
+| Radial | INTENTIONAL pulsing — joints 4+5+7+8 move radially inward then outward for speed control. Not noise. | Cross-correlate radial pulses with dω/dt: positive correlation = intentional I-manipulation | 4 (L_knee), 5 (R_knee), 7+8 (ankles) |
+| Axial | Should be NEAR ZERO except during entry/exit. Any sustained axial velocity in joints 0+3+6+9 = wobbly head contact | `mean(|v_ax|) / mean(|v_tan|)` < 0.08 = clean. >0.20 = wobble or pivot migration | 0 (pelvis), 3 (spine1), 15 (head — height drift) |
+
+**Energy Budget**:
+- **KE source**: Single entry impulse (head plant + leg kick). No external energy input after.
+- **Losses**: Head-cap friction (dominant), spinal muscle damping (minor). Estimated power loss: P_fric = τ_f · ω ≈ μ · 0.7mg · r_cap · ω ≈ 0.2 · 0.7·70·9.8 · 0.04 · 12 ≈ 23W at peak speed.
+- **Maintenance signal**: `dω/dt` should be small negative constant (decay ≈ –0.1 to –0.3 rad/s²). Sudden drops indicate loss of contact control. Plateaus or increases during leg tuck are the ice-skater effect — score positively.
+- **Decay time constant**: τ ≈ I / (μ · N · r_cap) ≈ 0.5 / (0.2 · 480 · 0.04) ≈ 0.3s per unit ω — so good headspins with pumping last 5–20s; unpumped decay in ~3–6s.
+
+**Quality Pseudo-Code**:
+```python
+import numpy as np
+
+# De Leva 70kg masses
+MASSES = {
+    0:11.17, 1:2.78, 2:2.78, 3:5.0, 4:3.28, 5:3.28,
+    6:3.0,   7:0.61, 8:0.61, 9:2.5, 10:0.97, 11:0.97,
+    12:1.5, 13:0.5, 14:0.5, 15:5.0, 16:2.0, 17:2.0,
+    18:1.14,19:1.14,20:0.45,21:0.45,22:0.41,23:0.41
+}
+SPIN_AXIS = np.array([0.0, 0.0, 1.0])
+RTA_JOINTS = [0, 1, 2, 4, 5, 7, 8, 22, 23]  # pelvis, hips, knees, ankles, hands
+
+
+def score_headspin(joints_3d: np.ndarray, fps: int = 30) -> dict:
+    """
+    joints_3d: [T, 24, 3] — SMPL world-grounded positions (meters)
+    Pivot: joint 15 (head crown contact point)
+    """
+    T = joints_3d.shape[0]
+    dt = 1.0 / fps
+    vels = np.gradient(joints_3d, dt, axis=0)  # [T, 24, 3]
+
+    # --- 1. Inversion validation ---
+    # Head (j15) should be below pelvis (j0) for valid headspin
+    head_z  = joints_3d[:, 15, 2]
+    pelvis_z = joints_3d[:, 0, 2]
+    inversion_frac = np.mean(head_z < pelvis_z)
+    inversion_valid = inversion_frac > 0.70  # >70% frames truly inverted
+
+    # --- 2. Pivot stability (head XY drift) ---
+    pivot_xy = joints_3d[:, 15, :2]          # [T, 2]
+    pivot_xy_mean = pivot_xy.mean(axis=0)
+    drift = np.linalg.norm(pivot_xy - pivot_xy_mean, axis=1)  # [T]
+    pivot_stability = 1.0 - np.clip(np.std(drift) / 0.08, 0.0, 1.0)
+    # threshold: 8cm std = score 0; <2cm = near 1.0
+
+    # --- 3. Angular momentum L_z about head pivot ---
+    Lz = np.zeros(T)
+    pivot_3d = np.column_stack([pivot_xy, head_z])  # [T, 3]
+    for j, m in MASSES.items():
+        r = joints_3d[:, j, :] - pivot_3d          # [T, 3]
+        v = vels[:, j, :]                           # [T, 3]
+        cross = np.cross(r, v)                      # [T, 3]
+        Lz += m * cross[:, 2]
+
+    Lz_abs = np.abs(Lz)
+
+    # L_z conservation: fit linear decay, score residuals
+    t_arr = np.arange(T)
+    poly = np.polyfit(t_arr, Lz_abs, 1)
+    trend = np.polyval(poly, t_arr)
+    residuals = Lz_abs - trend
+    conservation_cv = np.std(residuals) / (np.mean(Lz_abs) + 1e-6)
+    conservation_score = 1.0 - np.clip(conservation_cv * 4.0, 0.0, 1.0)
+    # Penalize non-monotonic decay (wobble in L = pivot instability)
+    decay_sign_ok = poly[0] <= 0  # slope should be negative (decaying)
+
+    # --- 4. Omega estimate from L_z and estimated I ---
+    # Rough I from pelvis-to-ankle radius (proxy for tuck level)
+    radii_hips = np.linalg.norm(
+        joints_3d[:, [1,2], :2] - joints_3d[:, 15:16, :2], axis=-1
+    ).mean(axis=1)  # [T]
+    I_approx = 2 * 2.78 * radii_hips**2 + 0.5  # hips + core floor ~0.5 kg·m²
+    omega_z = Lz / (I_approx + 1e-6)            # [T] rad/s
+    omega_cv = np.std(omega_z) / (np.abs(omega_z).mean() + 1e-6)
+    omega_smoothness = 1.0 - np.clip(omega_cv * 3.0, 0.0, 1.0)
+
+    # --- 5. RTA decomposition ---
+    v_tan_list, v_rad_list, v_ax_list = [], [], []
+    for t in range(T):
+        for j in RTA_JOINTS:
+            R = joints_3d[t, j] - pivot_3d[t]
+            R_mag = np.linalg.norm(R) + 1e-9
+            R_hat = R / R_mag
+            t_hat = np.cross(SPIN_AXIS, R_hat)
+            t_hat /= np.linalg.norm(t_hat) + 1e-9
+            v = vels[t, j]
+            v_tan_list.append(abs(np.dot(v, t_hat)))
+            v_rad_list.append(abs(np.dot(v, R_hat)))
+            v_ax_list.append(abs(np.dot(v, SPIN_AXIS)))
+
+    v_tan = np.array(v_tan_list)
+    v_rad = np.array(v_rad_list)
+    v_ax  = np.array(v_ax_list)
+    v_tan_mean = v_tan.mean() + 1e-6
+
+    tangential_cv    = np.std(v_tan) / v_tan_mean
+    tangential_score = 1.0 - np.clip(tangential_cv, 0.0, 1.0)
+
+    axial_ratio  = v_ax.mean() / v_tan_mean
+    axial_score  = 1.0 - np.clip(axial_ratio * 8.0, 0.0, 1.0)
+    # threshold: axial/tangential > 12.5% = score 0
+
+    # Radial intentionality: variance is OK if L_z is conserved (ice-skater pumping)
+    radial_intent = conservation_score * 0.7 + omega_smoothness * 0.3
+
+    # --- 6. Head height stability (no bobbing) ---
+    head_z_cv    = np.std(head_z) / (np.abs(head_z).mean() + 1e-6)
+    height_score = 1.0 - np.clip(head_z_cv * 15.0, 0.0, 1.0)
+
+    # --- 7. Ice-skater bonus: detect tuck→extend speed changes ---
+    pelvis_to_ankle_r = np.linalg.norm(
+        joints_3d[:, [7,8], :2] - joints_3d[:, 15:16, :2], axis=-1
+    ).mean(axis=1)  # [T] — proxy for I_legs
+    # Correlation: when r shrinks → omega_z should rise
+    r_smooth = np.convolve(pelvis_to_ankle_r, np.ones(5)/5, mode='same')
+    w_smooth = np.convolve(np.abs(omega_z), np.ones(5)/5, mode='same')
+    if np.std(r_smooth) > 0.02:  # only if there's real I-manipulation
+        iceskater_corr = np.corrcoef(r_smooth, w_smooth)[0, 1]
+        iceskater_bonus = np.clip(-iceskater_corr, 0.0, 1.0)  # negative corr = good
+    else:
+        iceskater_bonus = 0.0  # no I-manipulation detected
+
+    # --- Composite ---
+    power_quality = (
+        0.25 * tangential_score +
+        0.20 * conservation_score +
+        0.20 * pivot_stability +
+        0.15 * axial_score +
+        0.10 * height_score +
+        0.10 * radial_intent
+    )
+
+    return {
+        "power_quality":       round(float(power_quality), 3),
+        "pivot_stability":     round(float(pivot_stability), 3),
+        "L_z_conservation":    round(float(conservation_score), 3),
+        "L_z_mean_kgm2s":      round(float(Lz_abs.mean()), 2),
+        "omega_z_mean_rads":   round(float(np.abs(omega_z).mean()), 2),
+        "tangential_score":    round(float(tangential_score), 3),
+        "axial_score":         round(float(axial_score), 3),
+        "radial_intent":       round(float(radial_intent), 3),
+        "height_stability":    round(float(height_score), 3),
+        "iceskater_bonus":     round(float(iceskater_bonus), 3),
+        "inversion_valid":     bool(inversion_valid),
+        "L_z_decay_correct":   bool(decay_sign_ok),
+        # Diagnostic
+        "omega_cv":            round(float(omega_cv), 3),
+        "axial_ratio":         round(float(axial_ratio), 3),
+        "pivot_drift_std_m":   round(float(np.std(drift)), 4),
+    }
+```
+
+**Positive** — what TRIVIUM v0.1 already captures well for headspin-loop-01:
+- Basic rotation speed (ω_z) is detectable from pelvis angular velocity even with head blur
+- Tangential velocity magnitude and CV are robust metrics — pelvis/hips (joints 0–2) are rarely blurred
+- Inversion detection is straightforward from joint 15 vs joint 0 z-ordering
+
+**Gap** — what v0.1 misses for this specific scenario:
+
+1. **Blur-aware joint weighting**: At 2+ rev/s, joints 7+8+10+11 (ankles/feet) move at 2–4 m/s at full extension → severe motion blur. JOSH 4D temporal coherence partially recovers these, but GVHMR will ghost them. The scoring must down-weight high-velocity joints by confidence, not treat all 24 joints equally.
+
+2. **Head contact validity flag**: Joint 15 in SMPL is the center-of-head mesh, not the crown contact point. The actual pivot is ~6cm superior. This systematic offset corrupts L_z calculation. Need contact-point correction: `pivot_corrected = joints_3d[:, 15] + [0, 0, offset_toward_floor]` where offset is detected from floor-contact depth in JOSH contact maps.
+
+3. **L_z decay model**: v0.1 likely uses instantaneous ω — it won't distinguish *clean decay* (good technique, friction is unavoidable) from *technique failure* (same decay, different cause). The linear-fit-residual approach separates these.
+
+4. **Ice-skater detection**: v0.1 has no concept that decreasing `r_pelvis_to_ankle` correlating with increasing ω is a *positive* quality signal (intentional speed manipulation), not measurement noise. This is the signature of a skilled headspin.
+
+5. **Inversion prior mismatch**: GVHMR trained on upright humans will systematically underestimate torso extension when inverted — pelvis joint 0 may drift toward floor in reconstructed coordinates even when the dancer is fully inverted. JOSH v4 bboy-tuned has seen this pose class. Any pipeline using GVHMR for headspin should apply an inversion confidence gate: if `joints_3d[:, 15, 2] > joints_3d[:, 0, 2]` for >30% of frames, flag reconstruction as suspect.
+
+
+## Your Instructions
+
+# MUSICALITY AGENT — Breaking Scenario Analysis
+
+You are a music-movement relationship expert analyzing a specific breakdancing scenario. Your job is to reason about the **beat-motion correlation, groove, anticipation, and rhythmic structure** for this scenario using SMPL 24-joint data and audio analysis.
+
+Your output will be combined with 4 other specialist agents (Physics, Phase, Contact, Synthesis). Focus ONLY on musicality — the other agents handle forces, phase classification, and integration.
+
+## Your Domain
+
+You analyze:
+1. **BeatAlign score**: expected correlation between movement and beat for this scenario type
+2. **Joint-audio mapping**: which joints should correlate with which audio bands
+3. **Accent detection**: where velocity spikes should align with beats
+4. **Groove lock**: is rhythmic synchronization expected or physics-driven?
+5. **Anticipation**: does the dancer move before, on, or after the beat?
+6. **Phase-specific musicality**: toprock is rhythmic; power moves are physics-driven
+
+## Core Metric: Cross-Correlation
+
+```python
+# Movement energy profile M(t)
+velocities = central_differences(joints_3d, fps=30)
+speed = norm(velocities, axis=-1)  # [T, 24]
+M_t = speed @ JOINT_WEIGHTS  # [T] — weighted by De Leva 1996 masses
+
+# BeatAlign (AIST++ standard — soft Gaussian kernel)
+# Replaces binary hit/miss with smooth temporal tolerance
+def beat_align(motion_beats, audio_beats, sigma=0.070):
+    """sigma=70ms (Repp 2005 human perception window)"""
+    score = 0
+    for mb in motion_beats:
+        score += max(exp(-(mb - ab)**2 / (2 * sigma**2)) for ab in audio_beats)
+    return score / len(motion_beats)
+
+# Lagged Pearson correlation
+mu = max_tau corr(M(t), H(t-tau))  # tau in [-200ms, +200ms]
+
+# Anticipation bonus (moving BEFORE the beat = skilled)
+phi(tau) = 1 + (gamma/2) * erf(-tau / sigma_tau)  # gamma=0.5, sigma_tau=50ms
+mu_ant = mu * phi(tau*)
+
+# Accent hit rate
+AHR = sum(hit(b_k, delta=70ms)) / len(beats)
+
+# Groove lock = velocity autocorrelation at beat-period lag
+groove = autocorrelation(M_t, lag=beat_period) — high = riding the pocket
+```
+
+## SMPL 24-Joint Reference
+
+```
+0=pelvis, 1=left_hip, 2=right_hip, 3=spine1, 4=left_knee, 5=right_knee,
+6=spine2, 7=left_ankle, 8=right_ankle, 9=spine3, 10=left_foot, 11=right_foot,
+12=neck, 13=left_collar, 14=right_collar, 15=head, 16=left_shoulder,
+17=right_shoulder, 18=left_elbow, 19=right_elbow, 20=left_wrist, 21=right_wrist,
+22=left_hand, 23=right_hand
+```
+
+## Joint-Audio Band Mapping (Breaking-Specific)
+
+| Audio Band | Frequency | Primary Joints | Why |
+|------------|-----------|---------------|-----|
+| Bass/Kick | 0-200 Hz | feet(10,11), hips(0,1,2) | Bboys step on the kick. Weight transfer = bass sync. |
+| Snare/Mid | 200-2000 Hz | hands(22,23), arms(18,19,20,21) | Arm gestures, hand movements hit snare accents. |
+| Hi-hat/High | 2000-8000 Hz | head(15), shoulders(16,17) | Head nods, shoulder rocks ride the hi-hats. |
+| Full mix | Broadband | CoM (weighted all joints) | Whole-body energy tracks overall audio energy. |
+
+## Musicality by Dance Phase
+
+| Phase | Expected μ | Why | Scoring Adjustment |
+|-------|-----------|-----|-------------------|
+| **Toprock** | 0.3-0.6 (HIGH) | Upright, rhythmic, directly dancing to music | Full musicality weight |
+| **Footwork** | 0.2-0.4 (MEDIUM) | Rhythmic but faster subdivisions, may not hit every beat | 80% musicality weight |
+| **Power moves** | 0.0-0.15 (LOW) | Physics-driven continuous rotation, NOT beat-synced | 20% musicality weight — don't penalize |
+| **Freezes** | Variable | The ENTRY is beat-synced (hitting the freeze on a beat), the hold is silent | Score only freeze entry timing |
+| **Transitions** | 0.1-0.3 | May or may not be rhythmic, depends on style | 50% musicality weight |
+
+**Key insight**: Scoring power moves on musicality is WRONG. A windmill's rotation speed is governed by angular momentum, not BPM. The musicality of power moves is in the ENTRY and EXIT timing, not during.
+
+## Musicality Grades
+
+| Grade | μ Range | Description |
+|-------|---------|-------------|
+| S | > 0.60 | Exceptional — dancer is inside the music |
+| A | 0.40-0.60 | Strong — clear beat relationship |
+| B | 0.25-0.40 | Good — mostly on beat with some drift |
+| C | 0.10-0.25 | Fair — occasional beat hits |
+| D | < 0.10 | Weak — appears disconnected from music |
+
+## Your Output Format
+
+For the given scenario, produce:
+
+```
+### MUSICALITY SIGNATURE: {scenario_id}
+
+**Expected BeatAlign Range**: [low, high] with justification
+**Musicality Grade**: [D/C/B/A/S] expected for clean execution
+
+**Joint-Audio Mapping for This Scenario**:
+| Audio Band | Primary Joints | Expected Correlation | Notes |
+|------------|---------------|---------------------|-------|
+| ... | ... | ... | ... |
+
+**Accent Detection**:
+- Expected accent locations: [e.g., "velocity spikes at beat times for arms during toprock"]
+- Accent source joints: [SMPL indices]
+- Expected AHR range: [0.0-1.0]
+
+**Groove Analysis**:
+- Is groove lock expected? [yes/no + why]
+- Beat-period autocorrelation: [expected range]
+- Subdivisions: [is the dancer on quarter notes, eighth notes, or irregular?]
+
+**Anticipation Pattern**:
+- Expected tau*: [negative = ahead of beat, positive = behind]
+- Typical for this scenario: [description of timing relationship]
+
+**Phase-Specific Musicality Weight**:
+- This scenario should use [X]% musicality weight because [reason]
+
+**Pseudo-Code**:
+```python
+# Musicality scoring for {scenario_id}
+# Inputs: joints_3d [T, 24, 3], beat_times, audio_energy
+...
+```
+
+**Positive**: [what TRIVIUM v0.1 musicality scoring handles well here]
+**Gap**: [what's missing — e.g., per-joint band correlation, phase-aware weighting]
+```
+
+## Instructions
+
+1. Read the scenario tags carefully — "beat-hit" scenarios expect HIGH musicality, "power" scenarios expect LOW
+2. Be honest: power moves are NOT musical in the same way toprock is
+3. Reference specific SMPL joint indices for every claim
+4. Include the sigma/tolerance values for BeatAlign (70ms Repp 2005)
+5. Think about what a BRACE dataset annotation would say about this scenario's musicality
+6. Note where binary hit/miss fails and BeatAlign (soft Gaussian) improves scoring
+7. Be positive about what works. Note gaps constructively.

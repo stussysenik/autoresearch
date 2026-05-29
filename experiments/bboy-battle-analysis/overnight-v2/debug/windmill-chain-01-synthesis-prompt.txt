@@ -1,0 +1,1523 @@
+# Scenario Analysis Request
+
+## Scenario
+- **ID**: windmill-chain-01
+- **Tags**: inversion, floor-contact, power
+- **Notes**: Should stress left-right consistency and floor contact.
+
+## Context from Previous Scenarios
+The following patterns have been identified in earlier scenarios. Build on them where relevant, note differences where this scenario diverges.
+
+### headspin-loop-01 (inversion, rotation, power)
+# SCENARIO BLUEPRINT: headspin-loop-01
+## Tags: inversion, rotation, power
+## Notes: Continuous axial rotation with heavy motion blur.
+
+---
+
+## STATES
+
+### State Machine: Combined Physics + Phase + Contact + Musicality
+
+```
+STATE: ENTRY_APPROACH
+  Phase: transition (pre-power setup)
+  Contact: feet j10,j11 weight-bearing; head/hands free
+  Physics: L_z ≈ 0; CoM descending, preparing angular impulse
+  Musicality: entry sweep should arrive -80ms to -30ms before beat; arm sweep j22,j23 readable
+
+  Entry: clip start OR pelvis j0.z > 0.70m AND foot alternation at j10,j11 visible
+  Active measurements:
+    - pelvis_height: j0.z → expected [0.70, 1.10] m
+    - arm_speed: ||vel(j22)||, ||vel(j23)|| → expected < 2.0 m/s (building)
+    - L_z_pre: Σ mᵢ(rᵢ × vᵢ)_z about corrected j15 → expected [0, 1.0] kg·m²·rad/s
+    - foot_contact: j10.z, j11.z near floor_z → expected < 0.05m
+  Exit: pelvis j0.z descends Δz/Δt > 0.8 m/s downward AND arm sweep speed at j22,j23 > 2.0 m/s
+  Duration: variable; if clip starts mid-spin, skip entirely — NOT penalized
+
+  NOTE: May be ABSENT from clip. Phase detector must handle clip-starts-in-spin gracefully.
+  If j15.z < j0.z AND |L_z| > 3.0 from frame 0, enter HEADSPIN_LOOP directly.
+
+→ TRANSITION to HEAD_PLANT_TRANSITION
+
+## Agent Signatures to Integrate
+
+### PHYSICS AGENT OUTPUT:
+
+### PHYSICS SIGNATURE: windmill-chain-01
+
+**Move Category**: Ground Power (windmill — repeating chain)
+**Pivot**: Migrating — posterior shoulder capsule → upper dorsal thorax → contralateral shoulder capsule → anterior chest/sternum → repeat
+
+Contact chain in SMPL: `j17 (right_shoulder) → j14/j13 (right/left_collar region) → j16 (left_shoulder) → j6/j3 (spine2/spine1) → j17 ...`
+
+Note: SMPL joint centers sit ~0.08–0.12m anterior of the actual shoulder contact patch. When `j17.z < 0.12m` above world floor, the posterior shoulder capsule is contacting. This offset is larger than in headspins and must be accounted for in any contact detector calibrated from j16/j17 directly.
+
+---
+
+## STATES
+
+### State Machine: Physics Layer — Windmill Chain
+
+```
+STATE: ENTRY_SETUP
+  Phase: pre-power / approach
+  Contact: feet j10,j11 weight-bearing; body upright or crouched
+  Physics: arm sweep and hip rotation building pre-rotation; L_barrel ≈ 0, KE_rotational ≈ 0
+  
+  Entry: clip start OR (j0.z > 0.80m AND j10.z, j11.z near floor_z < 0.05m)
+  Active measurements:
+    - pelvis_height: j0.z → expected [0.80, 1.10] m
+    - arm_sweep: ||vel(j22)||, ||vel(j23)|| → building to > 2.0 m/s
+    - foot_stance: |j10.x - j11.x| → expected > 0.20m (shoulder-width or wider)
+    - L_barrel_pre: angular momentum about horizontal axis → expected near 0
+  Exit: j0.z drops Δz/Δt > 0.6 m/s downward AND (j16.z < 0.30m OR j17.z < 0.30m)
+  Duration: 0.3–0.8s; if clip starts with j0.z < 0.50m AND L_barrel > 5 kg·m²·rad/s
+             from frame 0, skip directly to BARREL_PHASE_RIGHT or _LEFT
+
+  NOTE: May be ABSENT. Phase detector must handle clip-starts-mid-windmill gracefully.
+
+→ TRANSITION to FIRST_SHOULDER_CONTACT
+
+---
+
+STATE: FIRST_SHOULDER_CONTACT
+  Phase: entry impulse
+  Contact: one shoulder (j16 or j17) primary; feet clearing floor
+  Physics: Hip kick (j1/j2) generates initial angular impulse; L_barrel building 0 → 10–20 kg·m²·rad/s
+  
+  Entry: (j17.z < 0.12m OR j16.z < 0.12m) AND j0.z < 0.60m
+  Active measurements:
+    - shoulder_contact_z: j16.z or j17.z → expected [0.05, 0.12] m
+    - hip_angular_impulse: d/dt(L_barrel) → expected large positive spike 20–60 N·m
+    - pelvis_z: j0.z → expected [0.20, 0.50] m (body tilting toward floor)
+    - foot_clearance: max(j10.z, j11.z) → should rise > 0.30m within 5 frames
+  Exit: (j10.z > 0.30m AND j11.z > 0.30m) AND L_barrel > 8 kg·m²·rad/s
+  Duration: 3–8 frames (~0.10–0.27s)
+
+→ TRANSITION to BARREL_PHASE
+
+---
+
+STATE: BARREL_PHASE_RIGHT  (right shoulder leading — j17 contact)
+  Phase: active rotation, leg sweep right→overhead
+  Contact: j17 primary; j14 (right_collar region) secondary/migrating
+  Physics: Barrel roll around approximately world-x axis; L_barrel ≈ conserved;
+           legs sweeping from floor level through lateral arc to overhead
+           v_tangential at j10, j11 should be 2.5–5.0 m/s
+  
+  Active measurements:
+    - L_barrel: angular momentum about spine axis → expected [15, 40] kg·m²·rad/s
+    - right_shoulder_z: j17.z → expected [0.05, 0.12] m (contact maintained)
+    - left_shoulder_z: j16.z → expected > 0.30m (off floor)
+    - leg_sweep_velocity: ||vel(j10)||, ||vel(j11)|| → expected [2.5, 5.0] m/s
+    - pelvis_rise: j0.z → rising from ~0.25m toward 0.55m
+    - axial_drift: v_axial at j0 → expected < 0.30 m/s (in-place windmill)
+  Exit: j17.z > 0.12m (right shoulder lifting) AND j14.z < 0.10m (back rolling in)
+  Duration: 8–18 frames (~0.27–0.60s per half-revolution)
+
+→ TRANSITION to BACK_ROLL_TRANSITION
+
+---
+
+STATE: BACK_ROLL_TRANSITION
+  Phase: pivot migration — shoulder-to-shoulder via dorsal thorax
+  Contact: j14 (right_collar) AND/OR j13 (left_collar) — bilateral upper back contact
+           or migrating contact with no single dominant point
+  Physics: Brief L_barrel partial disruption due to bilateral friction; CoM at intermediate height
+           This is the most mechanically complex phase — L can drop 5–15% here
+  
+  Active measurements:
+    - back_contact: (j14.z + j13.z) / 2 → expected < 0.12m
+    - L_barrel: angular momentum → watch for dip; > 10% drop = energy loss event
+    - collar_z_diff: |j14.z - j13.z| → expected < 0.05m (symmetric back roll)
+                     asymmetry > 0.08m = lateral tilt / pivot error
+    - pelvis_z: j0.z → expected [0.45, 0.70] m (approaching inversion)
+    - head_z: j15.z → expected > 0.15m (head clear of floor — NOT headmill)
+  Exit: j16.z < 0.12m (left shoulder beginning contact) AND j17.z > 0.12m
+  Duration: 3–8 frames (~0.10–0.27s)
+
+→ TRANSITION to BARREL_PHASE_LEFT
+
+---
+
+STATE: BARREL_PHASE_LEFT  (left shoulder leading — j16 contact)
+  Phase: active rotation, leg sweep overhead→lateral-left
+  Contact: j16 primary; j13 (left_collar) secondary/migrating
+  Physics: Mirror of BARREL_PHASE_RIGHT; should produce symmetric measurements
+           L_barrel should match BARREL_PHASE_RIGHT value within 15% for good symmetry
+  
+  Active measurements: (symmetric to BARREL_PHASE_RIGHT, swap j16↔j17, j13↔j14)
+    - L_barrel: → expected same range as BARREL_PHASE_RIGHT [15, 40] kg·m²·rad/s
+    - left_shoulder_z: j16.z → expected [0.05, 0.12] m
+    - right_shoulder_z: j17.z → expected > 0.30m
+    - leg_sweep_velocity: ||vel(j10)||, ||vel(j11)|| → expected same as BARREL_PHASE_RIGHT
+    
+  LEFT-RIGHT ASYMMETRY CHECK:
+    L_right = mean |L_barrel| during BARREL_PHASE_RIGHT
+    L_left  = mean |L_barrel| during BARREL_PHASE_LEFT
+    asymmetry_ratio = |L_right - L_left| / max(L_right, L_left)
+    target: asymmetry_ratio < 0.15; > 0.30 = significant technique gap
+    
+  Exit: j16.z > 0.12m AND j3.z < 0.15m (chest/lower-back transitioning toward floor)
+  Duration: 8–18 frames (should match BARREL_PHASE_RIGHT duration within ±3 frames)
+
+→ TRANSITION to INVERSION_PEAK or CHEST_RECOVERY
+
+---
+
+STATE: INVERSION_PEAK
+  Phase: maximum inversion
+  Contact: upper back (j13/j14/j6) or momentarily airborne
+  Physics: KE_barrel → PE exchange; L_barrel partially stored as PE;
+           Maximum CoM height in revolution cycle; pelvis above head confirmed
+  
+  Entry: j0.z > j15.z (pelvis above head z-coordinate)
+  Active measurements:
+    - inversion_depth: j0.z - j15.z → expected [0.30, 0.80] m for deep windmill
+    - pelvis_peak_z: j0.z → expected [0.60, 0.90] m
+    - head_clearance: j15.z → expected > 0.15m (NOT headmill; if < 0.10m flag as headmill variant)
+    - L_barrel_at_peak: angular momentum → can drop 10–20% vs sweep phases (normal, PE conversion)
+    - leg_extension: ||j10 - j0|| + ||j11 - j0|| → expected > 1.20m (legs extended, maximizing I)
+  Exit: j0.z - j15.z < 0.10m (inversion resolving) AND j0.z decreasing
+  Duration: 4–10 frames (~0.13–0.33s)
+
+→ TRANSITION to HIP_KICK_RECOVERY (for chain continuation)
+
+---
+
+STATE: HIP_KICK_RECOVERY
+  Phase: energy re-injection (per-revolution maintenance)
+  Contact: back/lower-back region (j6, j3 spine joints near floor)
+  Physics: Hip kick (j1/j2) and leg whip re-engage to compensate friction losses;
+           angular impulse restores L_barrel to target level
+  
+  Active measurements:
+    - hip_kick_impulse: d/dt(L_barrel) → expected positive 5–20 N·m impulse
+    - spine_contact_z: j3.z or j6.z → expected [0.05, 0.15] m
+    - L_barrel_recovery: L_barrel after kick vs before → expected < 10% net decay per revolution
+    - leg_whip_speed: ||vel(j10)||, ||vel(j11)|| → should peak here as new sweep begins
+  Exit: j17.z < 0.12m (right shoulder re-contacting, starting next revolution)
+         OR L_barrel_recovery < 5 kg·m²·rad/s (windmill dying — EXIT_UNCONTROLLED)
+  Duration: 5–10 frames (~0.17–0.33s)
+
+  CHAIN CONTINUATION: → loop back to BARREL_PHASE_RIGHT
+  CHAIN EXIT (controlled): leg whip stops, body rises → EXIT_CONTROLLED
+  CHAIN EXIT (crash): L_barrel < 5 kg·m²·rad/s → EXIT_UNCONTROLLED
+
+---
+
+STATE: EXIT_CONTROLLED
+  Phase: post-power transition
+  Contact: feet returning to floor OR transition to freeze contact
+  Physics: Controlled energy dissipation; CoM rising; L_barrel decaying intentionally
+  
+  Active measurements:
+    - pelvis_rise: j0.z rising toward > 0.60m
+    - L_decay_rate: smooth exponential decay (good) vs abrupt stop (crash landing)
+    - foot_landing: j10.z, j11.z → should reach floor_z within 3 frames of exit
+  Duration: 0.3–0.8s
+```
+
+---
+
+## ANGULAR MOMENTUM PROFILE
+
+**Primary axis**: Barrel roll — approximately horizontal (world-x or world-y depending on orientation); NOT the vertical z-axis (that's headspins)
+
+| Component | Expected Range | Notes |
+|-----------|---------------|-------|
+| L_x or L_y (barrel) | 15–40 kg·m²·rad/s | Dominant; direction depends on dancer orientation |
+| L_z (orbital) | < 3 kg·m²·rad/s | In-place windmill; > 3 = floor drift |
+| \|L\| peak (fast windmill) | 30–40 kg·m²·rad/s | Fast bboys at 1.5 rev/s |
+| \|L\| peak (standard) | 15–25 kg·m²·rad/s | Standard timing at ~1 rev/s |
+
+**Why legs dominate**: I_legs_about_barrel_axis ≈ 2 × (7.64 kg × 0.5²m²) = 3.8 kg·m²; at ω ≈ 6 rad/s → L_legs ≈ 23 kg·m²·rad/s (~70% of total L). Arms and trunk add ~30%.
+
+---
+
+## RTA VELOCITY EXPECTATIONS
+
+Pivot = migrating contact point on shoulder/back; rotation axis = spine's long axis (horizontal barrel roll)
+
+| Component | Expected Profile | Quality Signal | SMPL Joints |
+|-----------|-----------------|----------------|-------------|
+| Tangential | HIGH 2.5–5.0 m/s at foot tips during sweep; consistent across revolutions | `CV(v_tan_j10, v_tan_j11) < 0.20` = clean chain; > 0.35 = dying or inconsistent | j10, j11 (feet), j7, j8 (ankles), j4, j5 (knees) |
+| Radial | LOW (< 0.5 m/s) during steady sweep; MODERATE spike (0.5–1.5 m/s) at inversion transition for I adjustment | Sustained v_rad > 1.0 m/s = shape instability or crash in progress | j0 (pelvis), j10, j11; key during INVERSION_PEAK |
+| Axial | NEAR ZERO (< 0.3 m/s) during steady rotation; brief SPIKE (0.3–0.8 m/s) at shoulder transitions | `\|v_axial\| / \|v_tangential\| < 0.15` = clean; > 0.30 = pivot axis shifting or floor drift | j15 (head), j0 (pelvis), j16, j17 (shoulders) |
+
+---
+
+## ENERGY BUDGET
+
+```
+Source:         Hip kick (j1, j2) — 40–80 N·m initial impulse at FIRST_SHOULDER_CONTACT
+                Leg whip continuation — 5–20 N·m restoring impulse per HIP_KICK_RECOVERY
+
+Conversion:     KE_barrel ↔ PE as CoM oscillates ±0.20–0.35m through each revolution
+                At inversion peak: ~20–40J PE stored; at shoulder contact: released back to KE
+
+Losses:         Shoulder friction: ~15–25% KE loss per shoulder contact
+                Back/collar friction: ~5–10% additional at BACK_ROLL_TRANSITION
+                Internal damping: ~5% per revolution
+
+Total KE (barrel): ½ × I_total × ω²  ≈ ½ × 5.5 × (5²) ≈ 69 J at moderate windmill
+Chain sustainability: If KE_loss_per_rev < KE_injected_per_rev → sustained chain
+                      If KE_loss > KE_inject → windmill dying; detectable via |L| slope
+
+Maintenance signal:  Compute |L_barrel| per revolution (mean over sweep phase)
+                     Decay > 20% per revolution = poor technique / fatigue
+                     Decay < 10% per revolution = strong kick-maintenance
+                     RISING |L| = dancer accelerating chain (rare, high skill)
+```
+
+---
+
+## QUALITY PSEUDO-CODE
+
+```python
+# Physics-based quality scoring for windmill-chain-01
+# Input: joints_3d [T, 24, 3] — meters, world-grounded, 30fps
+
+import numpy as np
+
+MASSES = {
+    0:11.17, 1:2.78,  2:2.78,  3:5.00,  4:3.28,  5:3.28,
+    6:3.00,  7:0.61,  8:0.61,  9:2.50, 10:0.97, 11:0.97,
+   12:1.50, 13:0.50, 14:0.50, 15:5.00, 16:2.00, 17:2.00,
+   18:1.14, 19:1.14, 20:0.45, 21:0.45, 22:0.41, 23:0.41
+}
+TOTAL_MASS = sum(MASSES.values())  # ~70 kg
+
+def smooth_velocity(joints_3d, fps=30):
+    """Central-difference velocity, smoothed with 3-frame window."""
+    vel = np.gradient(joints_3d, axis=0) * fps
+    kernel = np.array([0.25, 0.50, 0.25])
+    for j in range(24):
+        for ax in range(3):
+            vel[:, j, ax] = np.convolve(vel[:, j, ax], kernel, mode='same')
+    return vel
+
+def compute_barrel_L(joints_3d, vel):
+    """
+    Compute angular momentum about the barrel roll axis.
+    Uses CoM as pivot; returns L vector [T, 3] and |L_barrel| [T].
+    """
+    T = joints_3d.shape[0]
+    # Center of mass
+    com = sum(MASSES[j] * joints_3d[:, j, :] for j in range(24)) / TOTAL_MASS
+    
+    L = np.zeros((T, 3))
+    for j, m in MASSES.items():
+        r = joints_3d[:, j, :] - com   # [T, 3]
+        v = vel[:, j, :]               # [T, 3]
+        L += m * np.cross(r, v)        # [T, 3]
+    
+    # The barrel roll axis is approximately perpendicular to z and to spine direction.
+    # Estimate spine direction from j0→j9 at mid-clip.
+    mid = T // 2
+    spine_vec = joints_3d[mid, 9, :] - joints_3d[mid, 0, :]
+    spine_hat = spine_vec / (np.linalg.norm(spine_vec) + 1e-6)
+    
+    # Barrel component = L projected onto spine axis
+    L_barrel = np.einsum('ti,i->t', L, spine_hat)  # [T] scalar
+    
+    return L, np.abs(L_barrel)
+
+def detect_shoulder_contacts(joints_3d, floor_z=0.0, threshold=0.12):
+    """
+    Detect left/right shoulder contact phases from j16, j17 z-height.
+    Returns boolean masks [T].
+    """
+    left  = joints_3d[:, 16, 2] < (floor_z + threshold)   # j16 left_shoulder
+    right = joints_3d[:, 17, 2] < (floor_z + threshold)   # j17 right_shoulder
+    back  = (joints_3d[:, 13, 2] + joints_3d[:, 14, 2]) / 2 < (floor_z + 0.10)
+    return left, right, back
+
+def detect_inversions(joints_3d):
+    """Frames where pelvis (j0) is above head (j15)."""
+    return joints_3d[:, 0, 2] > joints_3d[:, 15, 2]
+
+def segment_revolutions(right_contact_mask, min_gap=5):
+    """
+    Count windmill revolutions from right-shoulder contact events.
+    Returns list of (start_frame, end_frame) per revolution.
+    """
+    signal = right_contact_mask.astype(float)
+    # Find rising edges (contact start)
+    edges = np.diff(signal, prepend=0)
+    starts = np.where(edges > 0)[0]
+    
+    # Merge starts closer than min_gap frames
+    merged = []
+    for s in starts:
+        if not merged or s - merged[-1] > min_gap:
+            merged.append(s)
+    
+    revolutions = []
+    for i in range(len(merged) - 1):
+        revolutions.append((merged[i], merged[i+1]))
+    return revolutions
+
+def windmill_chain_physics_score(joints_3d, fps=30):
+    """
+    Full physics quality score for windmill-chain-01.
+    Returns dict of per-metric scores in [0, 1] + composite.
+    """
+    T = joints_3d.shape[0]
+    vel = smooth_velocity(joints_3d, fps)
+    
+    L_full, L_barrel = compute_barrel_L(joints_3d, vel)
+    left_contact, right_contact, back_contact = detect_shoulder_contacts(joints_3d)
+    inversion_mask = detect_inversions(joints_3d)
+    revolutions = segment_revolutions(right_contact)
+    n_revs = len(revolutions)
+
+    # ── 1. ANGULAR MOMENTUM CONSISTENCY (chain quality) ──────────────────
+    sweep_mask = ~left_contact & ~right_contact & ~back_contact
+    L_sweep = L_barrel[sweep_mask] if np.any(sweep_mask) else L_barrel
+    
+    L_cv = np.std(L_sweep) / (np.mean(L_sweep) + 1e-6)
+    L_consistency_score = float(np.clip(1.0 - L_cv * 2, 0, 1))
+
+    # ── 2. ENERGY MAINTENANCE (L decay across revolutions) ───────────────
+    if n_revs >= 2:
+        rev_L_means = []
+        for s, e in revolutions:
+            sweep_rev = sweep_mask[s:e]
+            L_rev = L_barrel[s:e]
+            rev_L_means.append(np.mean(L_rev[sweep_rev]) if np.any(sweep_rev) else np.mean(L_rev))
+        
+        decay_rates = [(rev_L_means[i] - rev_L_means[i+1]) / (rev_L_means[i] + 1e-6)
+                       for i in range(len(rev_L_means) - 1)]
+        mean_decay = np.mean(decay_rates)  # 0.0 = no decay, 0.20 = 20% per rev
+        energy_maintenance_score = float(np.clip(1.0 - mean_decay / 0.20, 0, 1))
+    else:
+        energy_maintenance_score = 0.5  # single revolution: neutral score
+
+    # ── 3. LEFT-RIGHT SYMMETRY ────────────────────────────────────────────
+    n_left  = int(np.sum(left_contact))
+    n_right = int(np.sum(right_contact))
+    total_shoulder = n_left + n_right
+
+    if total_shoulder > 0:
+        lr_asymmetry = abs(n_left - n_right) / total_shoulder
+        symmetry_score = float(1.0 - lr_asymmetry * 2)  # 50/50 split = 1.0
+        symmetry_score = max(0.0, symmetry_score)
+    else:
+        symmetry_score = 0.0  # detector failure or no contact found
+
+    # Per-revolution L comparison: left shoulder phase vs right shoulder phase
+    if n_revs >= 1:
+        L_right_phases, L_left_phases = [], []
+        for s, e in revolutions:
+            rc = right_contact[s:e]
+            lc = left_contact[s:e]
+            if np.any(rc): L_right_phases.append(np.mean(L_barrel[s:e][rc]))
+            if np.any(lc): L_left_phases.append(np.mean(L_barrel[s:e][lc]))
+        
+        if L_right_phases and L_left_phases:
+            mean_r = np.mean(L_right_phases)
+            mean_l = np.mean(L_left_phases)
+            L_lr_ratio = abs(mean_r - mean_l) / (max(mean_r, mean_l) + 1e-6)
+            L_symmetry_score = float(np.clip(1.0 - L_lr_ratio / 0.30, 0, 1))
+        else:
+            L_symmetry_score = 0.5
+    else:
+        L_symmetry_score = 0.5
+
+    # ── 4. INVERSION QUALITY ──────────────────────────────────────────────
+    inversion_ratio = float(np.mean(inversion_mask))
+    # Target: ~0.25–0.50 of frames should be inverted for a proper windmill
+    # Centre of target window = 0.35; penalize deviation
+    inv_target = 0.35
+    inv_tolerance = 0.20
+    inversion_score = float(np.clip(1.0 - abs(inversion_ratio - inv_target) / inv_tolerance, 0, 1))
+
+    # Depth check: at inversion peak, how high does pelvis go?
+    if np.any(inversion_mask):
+        peak_pelvis_z = float(np.max(joints_3d[inversion_mask, 0, 2]))
+        # Good windmill: pelvis > 0.60m; excellent: > 0.80m
+        inversion_depth_score = float(np.clip((peak_pelvis_z - 0.40) / 0.50, 0, 1))
+    else:
+        inversion_depth_score = 0.0
+
+    # ── 5. TANGENTIAL VELOCITY CONSISTENCY (leg speed at feet) ───────────
+    v_j10 = np.linalg.norm(vel[:, 10, :], axis=1)  # left_foot speed
+    v_j11 = np.linalg.norm(vel[:, 11, :], axis=1)  # right_foot speed
+
+    # During sweep phases only (neither shoulder nor back contacting)
+    if np.any(sweep_mask):
+        v_feet = (v_j10 + v_j11)[sweep_mask] / 2
+        feet_cv = np.std(v_feet) / (np.mean(v_feet) + 1e-6)
+        tangential_score = float(np.clip(1.0 - feet_cv * 1.5, 0, 1))
+        power_score = float(np.clip(np.mean(v_feet > 1.5), 0, 1))  # fraction > 1.5 m/s
+    else:
+        tangential_score = 0.5
+        power_score = 0.0
+
+    # ── 6. AXIAL DRIFT (floor drift check for in-place windmill) ─────────
+    # Track CoM displacement in horizontal plane (x,y) over time
+    com = sum(MASSES[j] * joints_3d[:, j, :] for j in range(24)) / TOTAL_MASS
+    com_xy = com[:, :2]  # [T, 2]
+    total_drift = float(np.linalg.norm(com_xy[-1] - com_xy[0]))  # meters drifted
+    # Good windmill: stays within 0.30m; > 0.60m = significant traveling
+    drift_score = float(np.clip(1.0 - total_drift / 0.60, 0, 1))
+
+    # ── COMPOSITE SCORE ───────────────────────────────────────────────────
+    composite = (
+        0.20 * L_consistency_score +
+        0.20 * energy_maintenance_score +
+        0.15 * symmetry_score +
+        0.10 * L_symmetry_score +
+        0.10 * inversion_score +
+        0.10 * inversion_depth_score +
+        0.10 * tangential_score +
+        0.05 * power_score +
+        0.00 * drift_score  # informational only — traveling windmills valid in battle
+    )
+
+    return {
+        "L_consistency":        round(L_consistency_score, 3),
+        "energy_maintenance":   round(energy_maintenance_score, 3),
+        "lr_contact_symmetry":  round(symmetry_score, 3),
+        "lr_L_symmetry":        round(L_symmetry_score, 3),   # L equal on both sides
+        "inversion_ratio_score":round(inversion_score, 3),
+        "inversion_depth":      round(inversion_depth_score, 3),
+        "leg_speed_consistency":round(tangential_score, 3),
+        "power_level":          round(power_score, 3),
+        "floor_drift_m":        round(total_drift, 3),         # informational
+        "n_revolutions":        n_revs,                        # chain length, not scored
+        "composite":            round(composite, 3),
+    }
+```
+
+---
+
+## CRITICAL: LEFT-RIGHT CONSISTENCY (scenario-specific)
+
+The `notes` flag this as primary. Two distinct asymmetries to separate:
+
+**Type A — Contact Duration Asymmetry**: dancer favors one shoulder (spends more time on it)
+- Detected by: `|n_left_frames - n_right_frames| / (n_left + n_right)` — target < 0.10
+- Physical cause: stronger hip kick on dominant side, or weak contralateral shoulder stability
+
+**Type B — Angular Momentum Asymmetry**: L_barrel is systematically different during left vs right shoulder phases
+- Detected by: per-revolution L comparison above (`L_lr_ratio`)
+- Physical cause: unequal leg whip power or unequal CoM path on each side
+- More subtle than Type A — dancer may *look* symmetric but have hidden asymmetric driving
+
+Both should be reported independently.
+
+---
+
+## JOSH v4 vs GVHMR — EXPECTED ACCURACY DIFFERENCES
+
+| Phase | JOSH v4 (bboy-tuned) | GVHMR (general) |
+|-------|---------------------|-----------------|
+| BARREL_PHASE (body ~45°, shoulder near floor) | Good — floor-contact training helps | Moderate — monocular depth ambiguous when body nearly horizontal |
+| BACK_ROLL_TRANSITION | Moderate — brief bilateral contact hard to isolate | Poor — contact area not modeled, likely predicts "floating" torso |
+| INVERSION_PEAK (pelvis overhead) | Good — inversion poses in bboy data | Moderate — non-upright poses uncommon in general HMR training |
+| HEAD during near-floor approach | Moderate — head clearance uncertain ± 0.06m | Poor — may report j15.z ≈ 0.0 when head is actually 0.15m above floor |
+| Shoulder contact z-values (j16, j17) | ± 0.06–0.10m error (SMPL joint offset from capsule contact) | ± 0.08–0.15m error |
+
+**Key known limitation for ALL HMR models in windmill**: when the body is nearly parallel to the floor (body_tilt > 70° from vertical), monocular z-estimation uncertainty doubles. Treat j16/j17 z-values during contact phases as high-noise. Contact detection confidence should be downweighted here; defer to the Contact agent for ground-truth contact.
+
+---
+
+**Positive**: TRIVIUM v0.1's pelvis height tracking (`j0.z`) directly captures the CoM oscillation pattern — this maps well to the INVERSION_PEAK detection. The existing velocity framework at j10/j11 is the right place to measure leg whip power; only the axis decomposition needs to be extended from vertical (headspin) to barrel-roll.
+
+**Gap**: v0.1 almost certainly assumes a fixed vertical rotation axis (headspin geometry). Windmill needs a **migrating** pivot and a **horizontal** barrel roll axis — the current `L_z` metric is nearly meaningless for windmills. The left-right symmetry check (Type A + Type B above) is entirely absent. The per-revolution energy decay loop requires revolution segmentation that v0.1 does not currently have.
+
+
+### MUSICALITY AGENT OUTPUT:
+
+### MUSICALITY SIGNATURE: windmill-chain-01
+
+**Expected BeatAlign Range**: `[0.10, 0.28]` overall, with best-case phase-gated entry/exit windows reaching `~0.35`  
+Justification: this is a **power-chain** scenario, so steady-state windmill rotation is momentum-governed, not beat-governed. The musical read comes from the **entry sweep**, **first shoulder hit**, optional **per-revolution re-accent**, and **exit phrase**. Compared with `headspin-loop-01`, windmill has a clearer alternating-contact visual pulse via left/right shoulder-back transfer, but that is mostly **internal periodicity**, not true beat lock.
+
+**Musicality Grade**: `C` expected for clean execution  
+This is not a low grade because the dancer is unmusical; it reflects that a clean windmill chain should not be judged like toprock. A BRACE-style annotation would likely read as: **clear phrase hit on entry, weak continuous beat coupling during sustained power**.
+
+**Joint-Audio Mapping for This Scenario**:
+
+| Audio Band | Primary Joints | Expected Correlation | Notes |
+|------------|---------------|---------------------|-------|
+| Bass / Kick `0-200 Hz` | `j0,j1,j2,j10,j11` | `Medium` on entry/exit, `Low` in steady loop | Kick sync is strongest in the setup step, drop, and hip re-drive. Once both feet clear, foot-to-kick coupling should not be required. |
+| Snare / Mid `200-2000 Hz` | `j18,j19,j20,j21,j22,j23` | `Medium` on entry, `Low` after takeoff | Arm throw and hand sweep can snap to a clap/snare before first shoulder contact. Repeated windmill revolutions should not be scored off arm accents. |
+| Hi-hat / High `2000-8000 Hz` | `j13,j14,j15,j16,j17` | `Low-Medium` as visual pulse, `Low` as true beat sync | Alternating shoulder/collar contact creates readable left-right pulses. This is useful for internal timing regularity, not strong beat matching. |
+| Full Mix / Broadband | mass-weighted all joints, especially `j0,j3,j6,j9` | `Low` overall, `Medium` at entry/exit | Whole-body energy spikes at the drop-in and controlled rise-out. Continuous rotation flattens broadband beat correlation. |
+
+**Accent Detection**:
+- Expected accent locations: entry arm sweep into drop; first shoulder-floor hit; shoulder-to-shoulder transfer if phrased; hip-kick re-injection; controlled exit or freeze catch.
+- Accent source joints: entry `j22,j23,j0,j1,j2`; floor-contact accents `j16,j17,j13,j14`; reinjection `j1,j2,j10,j11`; exit `j0,j10,j11`.
+- Expected AHR range: `0.20-0.45` overall. If scored only on entry/exit windows, `~0.55-0.80` is reasonable.
+
+**Groove Analysis**:
+- Is groove lock expected? `No`, not in the normal toprock sense. What is expected is **internal cycle regularity**: clean alternation of left/right floor contact and stable revolution timing.
+- Beat-period autocorrelation: expected `0.05-0.20` at the audio beat lag.
+- Subdivisions: usually **irregular relative to the beat**. If the dancer phrases it well, the first shoulder hit or every other half-cycle may read like a `2-beat` accent, but quarter-note lock is not required.
+
+**Anticipation Pattern**:
+- Expected `tau*`: `-60 ms to -20 ms` on entry/exit accents; steady-state loop has no stable global `tau*`.
+- Typical for this scenario: skilled execution starts the sweep slightly **ahead of the beat** so the visible drop and first contact land on or just before the beat. During the chain, the body rides its own angular cycle.
+
+**Phase-Specific Musicality Weight**:
+- This scenario should use `20%` musicality weight because the windmill chain is a **power move**. Most evaluation should come from physics, contact, and phase control, with musicality limited to **entry, phrase punctuation, and exit**.
+
+**Pseudo-Code**:
+```python
+# Musicality scoring for windmill-chain-01
+# Inputs:
+#   joints_3d [T, 24, 3]
+#   beat_times [B] in seconds
+#   audio_bands = {"kick":..., "snare":..., "hat":..., "mix":...}
+#   contact = {"left_shoulder": bool[T], "right_shoulder": bool[T], "back": bool[T]}
+#   phases = optional phase labels from phase/contact agents
+
+import numpy as np
+
+MASS_WEIGHTS = np.array([
+    11.17, 2.78, 2.78, 5.00, 3.28, 3.28, 3.00, 0.61, 0.61, 2.50, 0.97, 0.97,
+    1.50, 0.50, 0.50, 5.00, 2.00, 2.00, 1.14, 1.14, 0.45, 0.45, 0.41, 0.41
+])
+
+def smooth_velocity(joints_3d, fps=30):
+    vel = np.gradient(joints_3d, axis=0) * fps
+    k = np.array([0.25, 0.50, 0.25])
+    for j in range(joints_3d.shape[1]):
+        for a in range(3):
+            vel[:, j, a] = np.convolve(vel[:, j, a], k, mode="same")
+    return vel
+
+def peak_pick(x, threshold, min_gap):
+    peaks = []
+    last = -10**9
+    for i in range(1, len(x) - 1):
+        if x[i] > threshold and x[i] >= x[i-1] and x[i] >= x[i+1] and (i - last) >= min_gap:
+            peaks.append(i)
+            last = i
+    return np.array(peaks, dtype=int)
+
+def beat_align(motion_beats, audio_beats, sigma=0.070):
+    if len(motion_beats) == 0 or len(audio_beats) == 0:
+        return 0.0
+    out = 0.0
+    for mb in motion_beats:
+        out += max(np.exp(-((mb - ab) ** 2) / (2 * sigma ** 2)) for ab in audio_beats)
+    return out / len(motion_beats)
+
+def lagged_corr(x, y, fps=30, max_lag_ms=200):
+    max_lag = int(round(max_lag_ms * fps / 1000))
+    x = (x - x.mean()) / (x.std() + 1e-6)
+    y = (y - y.mean()) / (y.std() + 1e-6)
+    best_mu, best_lag = -1.0, 0
+    for lag in range(-max_lag, max_lag + 1):
+        if lag < 0:
+            mu = np.corrcoef(x[-lag:], y[:lag])[0, 1]
+        elif lag > 0:
+            mu = np.corrcoef(x[:-lag], y[lag:])[0, 1]
+        else:
+            mu = np.corrcoef(x, y)[0, 1]
+        if np.isfinite(mu) and mu > best_mu:
+            best_mu, best_lag = mu, lag
+    return best_mu, best_lag / fps
+
+def windmill_chain_musicality_score(joints_3d, beat_times, audio_bands, contact, phases=None, fps=30):
+    T = joints_3d.shape[0]
+    t = np.arange(T) / fps
+    vel = smooth_velocity(joints_3d, fps)
+    speed = np.linalg.norm(vel, axis=-1)  # [T,24]
+
+    # Phase-aware motion channels
+    kick_motion  = speed[:, [0,1,2,10,11]] @ MASS_WEIGHTS[[0,1,2,10,11]]
+    snare_motion = speed[:, [18,19,20,21,22,23]].mean(axis=1)
+    hat_motion   = speed[:, [13,14,15,16,17]].mean(axis=1)
+    full_motion  = speed @ MASS_WEIGHTS
+
+    # Accent candidates: entry drop + arm throw + shoulder-contact onsets + hip kick
+    pelvis_drop = np.maximum(0.0, -np.gradient(joints_3d[:, 0, 2]) * fps)
+    arm_throw = np.linalg.norm(vel[:, 22, :], axis=1) + np.linalg.norm(vel[:, 23, :], axis=1)
+    shoulder_onsets = (
+        np.diff(contact["left_shoulder"].astype(int), prepend=0) > 0
+    ) | (
+        np.diff(contact["right_shoulder"].astype(int), prepend=0) > 0
+    )
+    hip_kick = np.linalg.norm(vel[:, 1, :], axis=1) + np.linalg.norm(vel[:, 2, :], axis=1)
+
+    accent_signal = (
+        0.30 * pelvis_drop +
+        0.25 * arm_throw +
+        0.20 * shoulder_onsets.astype(float) +
+        0.25 * hip_kick
+    )
+    z = (accent_signal - accent_signal.mean()) / (accent_signal.std() + 1e-6)
+    accent_frames = peak_pick(z, threshold=0.8, min_gap=4)
+
+    # Phase gating: full weight on entry/exit, low weight in sustained power loop
+    phase_weight = np.full(T, 0.20)  # default for power
+    if phases is not None:
+        phase_weight[np.isin(phases, ["ENTRY_SETUP", "FIRST_SHOULDER_CONTACT", "EXIT_CONTROLLED"])] = 1.00
+        phase_weight[np.isin(phases, ["BARREL_PHASE_RIGHT", "BARREL_PHASE_LEFT",
+                                      "BACK_ROLL_TRANSITION", "INVERSION_PEAK",
+                                      "HIP_KICK_RECOVERY"])] = 0.20
+
+    motion_beats = [t[f] for f in accent_frames if phase_weight[f] > 0.0]
+    ba = beat_align(motion_beats, beat_times, sigma=0.070)
+
+    # Band-specific lagged correlation
+    mu_mix, tau_mix = lagged_corr(full_motion * phase_weight, audio_bands["mix"], fps=fps)
+    mu_kick, tau_kick = lagged_corr(kick_motion, audio_bands["kick"], fps=fps)
+    mu_snare, _ = lagged_corr(snare_motion, audio_bands["snare"], fps=fps)
+    mu_hat, _ = lagged_corr(hat_motion, audio_bands["hat"], fps=fps)
+
+    # Accent hit rate with 70 ms tolerance
+    ahr_hits = 0
+    for mb in motion_beats:
+        if any(abs(mb - ab) <= 0.070 for ab in beat_times):
+            ahr_hits += 1
+    ahr = ahr_hits / max(len(motion_beats), 1)
+
+    # Internal left-right pulse regularity: important here, but distinct from beat sync
+    shoulder_times = np.sort(np.where(shoulder_onsets)[0]) / fps
+    if len(shoulder_times) >= 3:
+        ioi = np.diff(shoulder_times)
+        alternation_cv = np.std(ioi) / (np.mean(ioi) + 1e-6)
+        internal_pulse_score = float(np.clip(1.0 - alternation_cv / 0.35, 0, 1))
+    else:
+        internal_pulse_score = 0.5
+
+    # Anticipation bonus: reward slight early timing on intentional accents
+    tau_star = tau_kick if abs(tau_kick) < 0.200 else tau_mix
+    anticipation_bonus = 1.0 + 0.25 * np.tanh((-tau_star) / 0.050)
+
+    # Composite: low global weight because this is a power scenario
+    joint_band_score = np.mean([
+        np.clip(mu_kick, 0, 1),
+        np.clip(mu_snare, 0, 1),
+        np.clip(mu_hat, 0, 1),
+    ])
+
+    composite = (
+        0.35 * ba +
+        0.20 * np.clip(mu_mix, 0, 1) * anticipation_bonus +
+        0.20 * ahr +
+        0.15 * joint_band_score +
+        0.10 * internal_pulse_score
+    )
+
+    return {
+        "BeatAlign": round(float(ba), 3),
+        "AHR": round(float(ahr), 3),
+        "mu_mix": round(float(mu_mix), 3),
+        "tau_star_s": round(float(tau_star), 3),
+        "internal_pulse": round(float(internal_pulse_score), 3),
+        "musicality_composite": round(float(np.clip(composite, 0, 1)), 3),
+    }
+```
+
+**Positive**: TRIVIUM v0.1’s mass-weighted whole-body energy and lagged correlation are still useful for the **entry drop**, **first shoulder impact**, and **exit**. The soft Gaussian BeatAlign with `sigma=70 ms` is especially appropriate here because binary hit/miss would over-penalize power accents that are only `1-2` frames off at `30 fps`.
+
+**Gap**: TRIVIUM v0.1 needs **phase-aware weighting** for power moves, **band-specific joint grouping**, and **accent extraction from contact-transition events** rather than raw continuous velocity peaks. For this scenario it should also separate:
+- **external beat sync** from
+- **internal left-right pulse regularity** driven by `j16/j17/j13/j14` floor-contact alternation.
+
+Without that split, a clean windmill chain can be scored unfairly low or for the wrong reasons.
+
+### PHASE AGENT OUTPUT:
+
+### PHASE SIGNATURE: windmill-chain-01
+
+**Primary Phase**: power
+**Phase Sequence**: `ENTRY_SETUP` → `POWER_DROP` → `[BARREL_PHASE_RIGHT → BACK_ROLL_TRANSITION → BARREL_PHASE_LEFT → INVERSION_PEAK → HIP_KICK_RECOVERY] × N` → `EXIT_CONTROLLED | EXIT_CRASH`
+
+---
+
+## State Machine
+
+```
+STATE: ENTRY_SETUP
+  Phase classification: toprock OR footwork (clip-start detection required)
+  
+  Entry: clip start with j0.z > 0.70m (toprock) OR j22/j23.z < 0.15m (footwork)
+  Active properties:
+    - pelvis_height: j0.z → expected > 0.70m (toprock) or 0.20–0.50m (footwork)
+    - foot_stance: |j10.x - j11.x| → expected > 0.20m (weight distribution pre-drop)
+    - arm_coil: ||vel(j22)||, ||vel(j23)|| → expected < 1.5 m/s (pre-sweep)
+    - L_barrel: near 0 kg·m²·rad/s (no rotation yet)
+  Exit: j0.z drops Δz/Δt > 0.6 m/s downward AND arm sweep at j22/j23 > 2.0 m/s
+  Duration: 6–24 frames (variable; may be entirely absent)
+  
+  NOTE: If from frame 0, j0.z < 0.50m AND |L_barrel| > 5 kg·m²·rad/s → skip to
+        BARREL_PHASE_RIGHT or _LEFT directly. NOT a quality penalty.
+
+→ TRANSITION to POWER_DROP
+  Transition quality signal:
+    - Jerk at pelvis (j0) during drop: EXPECTED HIGH (this is an intentional impulse, not an error)
+    - Jerk at j22/j23 (arm sweep initiation): EXPECTED MODERATE
+    - Momentum continuity: L_barrel 0 → initial value; discontinuity here is normal and expected
+    - Quality is in the TIMING of the drop (see Musicality agent tau*), not jerk magnitude
+
+---
+
+STATE: POWER_DROP
+  Phase classification: transition (entry impulse)
+  
+  Entry: j0.z descending at > 0.6 m/s AND (j16.z < 0.30m OR j17.z < 0.30m) imminently
+  Active properties:
+    - pelvis_descent_rate: Δj0.z/Δt → expected 0.6–1.5 m/s downward
+    - arm_sweep_peak: ||vel(j22)||, ||vel(j23)|| → expected 2.0–4.5 m/s (maximum at contact)
+    - first_contact_joint: j16.z or j17.z → approaching floor_z + 0.12m threshold
+    - hip_angular_impulse: d/dt(L_barrel) → initial impulse spike 20–60 N·m
+  Exit: (j16.z < 0.12m OR j17.z < 0.12m) AND L_barrel > 8 kg·m²·rad/s
+  Duration: 3–8 frames (~0.10–0.27s)
+
+→ TRANSITION to BARREL_PHASE_RIGHT (if j17 contacts first) or BARREL_PHASE_LEFT (if j16)
+  Transition quality signal:
+    - Jerk magnitude at j17/j16 at floor contact: HIGH expected (impact); use as contact event marker
+    - Momentum continuity: L_barrel rising steeply; NOT a continuity penalty
+    - Quality signal here: smoothness of arm-to-shoulder handoff (vel(j22/j23) → vel(j10/j11))
+
+---
+
+STATE: BARREL_PHASE_RIGHT
+  Phase classification: power
+  
+  Entry: j17.z < 0.12m AND j10.z, j11.z rising > 0.15m (feet clearing floor)
+  Active properties:
+    - contact_primary: j17 (right_shoulder) z → expected [0.05, 0.12] m sustained
+    - contact_secondary: j14 (right_collar) z → expected < 0.15m (near-floor)
+    - leg_sweep_velocity: ||vel(j10)||, ||vel(j11)|| → expected 2.5–5.0 m/s
+    - L_barrel: [15, 40] kg·m²·rad/s, should be stable (< 15% variation during phase)
+    - pelvis_trajectory: j0.z rising from ~0.25m → ~0.55m through half-revolution
+    - foot_path_symmetry: ||j10 - j17|| vs ||j11 - j17|| → should be roughly equal
+  Exit: j17.z > 0.12m (right shoulder lifting) AND j14.z < 0.10m (back rolling in)
+  Duration: 8–18 frames (~0.27–0.60s)
+
+→ TRANSITION to BACK_ROLL_TRANSITION
+  Transition quality signal:
+    - Axial velocity at j0 during shoulder lift: expected < 0.30 m/s (no floor drift)
+    - L_barrel continuity: < 10% dip at shoulder-to-back handoff = clean
+    - Jerk at j17 (lift-off): moderate; smooth lift = good pivot mechanics
+
+---
+
+STATE: BACK_ROLL_TRANSITION
+  Phase classification: power (sub-phase — pivot migration)
+  
+  Entry: j14.z < 0.10m AND j13.z < 0.12m (bilateral collar/upper-back contact)
+  Active properties:
+    - collar_bilateral_z: (j14.z + j13.z) / 2 → expected < 0.12m
+    - collar_symmetry: |j14.z - j13.z| → expected < 0.05m; > 0.08m = lateral tilt (quality flag)
+    - pelvis_z: j0.z → expected [0.45, 0.70m] (approaching inversion)
+    - head_clearance: j15.z → MUST be > 0.10m; if < 0.10m, flag as headmill variant
+    - L_barrel_dip: watch for transient 5–15% drop during bilateral contact (normal friction)
+  Exit: j16.z < 0.12m (left shoulder initiating contact) AND j17.z > 0.12m
+  Duration: 3–8 frames (~0.10–0.27s)
+
+→ TRANSITION to BARREL_PHASE_LEFT
+  Transition quality signal:
+    - Jerk at j16 (left shoulder contact onset): compare magnitude to j17 contact at POWER_DROP
+      LR_jerk_ratio = jerk(j16_contact) / jerk(j17_contact); target: 0.85–1.15 (symmetric impact)
+    - L_barrel at entry of BARREL_PHASE_LEFT vs BARREL_PHASE_RIGHT: target < 15% difference
+    - collar_symmetry score from this phase feeds directly into left-right quality assessment
+
+---
+
+STATE: BARREL_PHASE_LEFT
+  Phase classification: power
+  
+  Entry: j16.z < 0.12m AND j10.z, j11.z still elevated > 0.15m
+  Active properties: (mirror of BARREL_PHASE_RIGHT — swap j16↔j17, j13↔j14)
+    - contact_primary: j16 (left_shoulder) z → expected [0.05, 0.12] m sustained
+    - contact_secondary: j13 (left_collar) z → expected < 0.15m
+    - leg_sweep_velocity: ||vel(j10)||, ||vel(j11)|| → expected same range as BARREL_PHASE_RIGHT
+    - L_barrel: should match BARREL_PHASE_RIGHT within 15%; > 30% difference = significant asymmetry
+    - phase_duration: should match BARREL_PHASE_RIGHT ± 3 frames; longer = asymmetric dwelling
+    
+    LEFT-RIGHT PHASE CONSISTENCY CHECK:
+      dur_R = duration(BARREL_PHASE_RIGHT) in frames
+      dur_L = duration(BARREL_PHASE_LEFT) in frames
+      dur_asymmetry = |dur_R - dur_L| / max(dur_R, dur_L)
+      target: dur_asymmetry < 0.15; > 0.25 = technique gap (favoring one shoulder)
+      
+  Exit: j16.z > 0.12m AND (j3.z < 0.15m OR j6.z < 0.15m) (lower-back transitioning toward floor)
+  Duration: 8–18 frames (MUST match BARREL_PHASE_RIGHT duration within ±3 frames for high score)
+
+→ TRANSITION to INVERSION_PEAK
+  Transition quality signal:
+    - Radial velocity at j0 during left-shoulder lift: expected moderate spike (0.5–1.5 m/s)
+    - L_barrel should be near maximum here (approaching peak CoM height)
+    - Jerk at j16 lift-off: mirror metric of j17 lift-off; compare for symmetry
+
+---
+
+STATE: INVERSION_PEAK
+  Phase classification: power (inversion sub-phase)
+  
+  Entry: j0.z > j15.z (pelvis overtakes head in z — confirmed inversion)
+  Active properties:
+    - inversion_depth: j0.z - j15.z → expected [0.30, 0.80] m for full windmill
+    - pelvis_peak_z: j0.z → expected [0.60, 0.90] m
+    - head_clearance: j15.z → must stay > 0.15m (headmill threshold at < 0.10m)
+    - leg_extension: ||j10 - j0|| + ||j11 - j0|| → expected > 1.20m (legs fully extended)
+    - L_barrel_at_peak: 10–20% below BARREL_PHASE values (normal — PE conversion)
+    - pelvis_symmetry: compare peak_z achieved in right-leading vs left-leading revolutions
+      per_rev_peak = [max(j0.z) for each revolution]
+      peak_cv = std(per_rev_peak) / mean(per_rev_peak)
+      target: peak_cv < 0.10; > 0.20 = inconsistent inversion depth (quality flag)
+  Exit: j0.z - j15.z < 0.10m (inversion resolving) AND j0.z decreasing
+  Duration: 4–10 frames (~0.13–0.33s)
+
+→ TRANSITION to HIP_KICK_RECOVERY
+  Transition quality signal:
+    - Radial velocity at j0 (CoM falling): expected moderate (0.3–0.8 m/s) — controlled descent
+    - L_barrel recovery rate: should begin rising immediately after peak; flat or declining = dying chain
+    - Momentum continuity: partial disruption expected and normal here
+
+---
+
+STATE: HIP_KICK_RECOVERY
+  Phase classification: power (energy re-injection)
+  
+  Entry: j0.z decreasing post-inversion AND spine contacts (j3.z or j6.z < 0.15m)
+  Active properties:
+    - hip_kick_impulse: d/dt(L_barrel) → expected positive 5–20 N·m
+    - spine_contact_z: j3.z or j6.z → expected [0.05, 0.15m]
+    - L_barrel_before_kick vs after_kick: < 10% net decay per revolution = strong technique
+    - leg_whip_onset: ||vel(j10)||, ||vel(j11)|| → should peak here as new sweep initiates
+    - kick_symmetry: compare hip_kick_impulse magnitude between revolution N and N+1
+      impulse_cv = std([kick_impulse_per_rev]) / mean([kick_impulse_per_rev])
+      target: impulse_cv < 0.20; > 0.35 = fading chain or inconsistent drive
+  Exit: j17.z < 0.12m (right shoulder re-contacting, next revolution)
+         OR L_barrel < 5 kg·m²·rad/s (chain dying)
+  Duration: 5–10 frames (~0.17–0.33s)
+
+  CHAIN LOOP: → BARREL_PHASE_RIGHT (next revolution)
+  EXIT (controlled): leg whip stops intentionally, body rises, j0.z increasing → EXIT_CONTROLLED
+  EXIT (crash): L_barrel < 5 kg·m²·rad/s abruptly → EXIT_UNCONTROLLED
+
+---
+
+STATE: EXIT_CONTROLLED
+  Phase classification: transition
+  
+  Entry: intentional leg-whip stop AND j0.z rising toward > 0.60m
+  Active properties:
+    - L_barrel_decay: should be smooth exponential (controlled) not step-function (crash)
+    - pelvis_rise_rate: j0.z Δ/Δt > 0.3 m/s upward
+    - foot_return_z: j10.z, j11.z → should reach floor_z within 3 frames
+    - exit_quality: 1.0 - clamp01(jerk_at_j0 / JERK_REF_EXIT)
+  Duration: 0.3–0.8s
+
+STATE: EXIT_CRASH
+  Phase classification: transition (uncontrolled)
+  
+  Entry: L_barrel drops > 40% in < 5 frames (abrupt stall)
+  Active properties: same joints; jerk will be HIGH (quality penalty)
+  Duration: variable; often ends in unplanned freeze or stumble
+```
+
+---
+
+## Joint Weight Table
+
+| Phase in This Scenario | Joint Group | Joints | Weight | Rationale |
+|------------------------|-------------|--------|--------|-----------|
+| ENTRY_SETUP (toprock) | Feet/ankles | j7,j8,j10,j11 | 1.5x | Footwork foundation — stepping is the move |
+| ENTRY_SETUP (toprock) | Hips/pelvis | j0,j1,j2 | 1.2x | Engine — drives toprock rhythm |
+| ENTRY_SETUP (toprock) | Arms | j16–j21 | 1.0x | Expression/styling |
+| POWER_DROP | Hips/pelvis | j0,j1,j2 | 2.5x | Angular impulse source — critical timing event |
+| POWER_DROP | Arms/hands | j22,j23 | 2.0x | Sweep is the entry gesture; judges read this |
+| BARREL_PHASE_RIGHT | Hips/core | j0,j1,j2,j3,j6 | 2.0x | Engine + transmission for barrel roll |
+| BARREL_PHASE_RIGHT | Right shoulder/collar | j17,j14 | 2.0x | Active contact point — pivot correctness |
+| BARREL_PHASE_RIGHT | Feet | j10,j11 | 1.5x | Leg whip velocity — power signal |
+| BARREL_PHASE_RIGHT | Left shoulder | j16 | 0.5x | Off-floor; informational only |
+| BARREL_PHASE_RIGHT | Hands | j22,j23 | 0.4x | Not weight-bearing in windmill |
+| BACK_ROLL_TRANSITION | Upper back/collar | j13,j14 | 2.5x | Bilateral pivot contact — asymmetry detected here |
+| BACK_ROLL_TRANSITION | Core/spine | j3,j6,j9 | 1.8x | Transmission through back contact |
+| BACK_ROLL_TRANSITION | Head | j15 | 2.0x | Clearance check — headmill detection |
+| BARREL_PHASE_LEFT | Hips/core | j0,j1,j2,j3,j6 | 2.0x | Mirror of BARREL_PHASE_RIGHT |
+| BARREL_PHASE_LEFT | Left shoulder/collar | j16,j13 | 2.0x | Active contact — mirror pivot |
+| BARREL_PHASE_LEFT | Feet | j10,j11 | 1.5x | Leg whip — compare CV to RIGHT phase |
+| INVERSION_PEAK | Pelvis | j0 | 2.5x | Inversion depth measurement anchor |
+| INVERSION_PEAK | Head | j15 | 2.0x | j0.z > j15.z is the inversion gate |
+| INVERSION_PEAK | Legs | j4,j5,j7,j8,j10,j11 | 1.5x | Extension = moment of inertia = quality |
+| HIP_KICK_RECOVERY | Hips | j1,j2 | 2.5x | Re-injection source — chain maintenance |
+| HIP_KICK_RECOVERY | Spine contact | j3,j6 | 1.8x | Pivot/support during kick |
+| HIP_KICK_RECOVERY | Feet | j10,j11 | 1.5x | Whip onset — should peak here |
+| EXIT_CONTROLLED | Pelvis | j0 | 1.5x | Rise rate = controlled vs crash indicator |
+| EXIT_CONTROLLED | Feet | j10,j11 | 1.5x | Return-to-floor timing |
+
+---
+
+## Transition Quality Expectations
+
+**Number of transitions**: N_revolutions × 4 (per-revolution: BARREL_R → BACK → BARREL_L → KICK) + 2 (entry, exit). A 3-revolution windmill has ~14 internal transition events.
+
+| Transition | Expected Jerk | Momentum Continuity | Quality Signal |
+|-----------|--------------|--------------------|-|
+| ENTRY_SETUP → POWER_DROP | HIGH | N/A (L=0 → L>0) | Timing relative to beat; jerk is not a penalty here |
+| POWER_DROP → first BARREL_PHASE | HIGH at shoulder contact (impact) | Rising | LR_jerk_ratio vs other shoulder contact |
+| BARREL_PHASE → BACK_ROLL_TRANSITION | MODERATE | < 10% L dip = clean | collar_symmetry |j14.z - j13.z| < 0.05m |
+| BACK_ROLL_TRANSITION → BARREL_PHASE | MODERATE | < 10% L dip = clean | Jerk at j16 contact mirrors j17 entry jerk |
+| BARREL_PHASE → INVERSION_PEAK | LOW | 10–20% L dip normal | Smooth radial velocity at j0 |
+| INVERSION_PEAK → HIP_KICK_RECOVERY | MODERATE | L recovering = good | d/dt(L_barrel) positive immediately |
+| HIP_KICK_RECOVERY → BARREL_PHASE (loop) | MODERATE | < 10% net decay = good | Chain sustainability |
+| Any phase → EXIT_CRASH | VERY HIGH | Abrupt L drop | Binary quality failure |
+| BARREL_PHASE → EXIT_CONTROLLED | LOW | Smooth exponential decay | Decay curve shape (exponential=good, step=crash) |
+
+---
+
+## Left-Right Consistency: Phase-Level Metrics
+
+The `notes` explicitly call this out. The phase agent contributes three distinct measurements:
+
+**Metric 1 — Phase Duration Parity**
+```python
+dur_R = [len(frames) for frames in BARREL_PHASE_RIGHT_segments]
+dur_L = [len(frames) for frames in BARREL_PHASE_LEFT_segments]
+# Per-revolution: pair each R with subsequent L
+for r, l in zip(dur_R, dur_L):
+    parity = abs(r - l) / max(r, l)
+    # target < 0.15; > 0.25 = dwelling on one shoulder
+```
+
+**Metric 2 — Transition Jerk Symmetry**
+```python
+# Compare impact jerk at j17 (right shoulder contact) vs j16 (left shoulder contact)
+jerk_R = [jerk_at_contact(frame, j17) for each right-shoulder contact event]
+jerk_L = [jerk_at_contact(frame, j16) for each left-shoulder contact event]
+LR_jerk_ratio = mean(jerk_L) / mean(jerk_R)
+# target: 0.85–1.15; outside = unequal landing force = asymmetric entry mechanics
+```
+
+**Metric 3 — Inversion Peak Symmetry**
+```python
+# Compare peak j0.z for revolutions where right shoulder led vs left shoulder led
+peaks_after_R = [max(j0.z[rev]) for rev in right_led_revolutions]
+peaks_after_L = [max(j0.z[rev]) for rev in left_led_revolutions]
+peak_symmetry = abs(mean(peaks_after_R) - mean(peaks_after_L)) / mean(peaks_after_R + peaks_after_L)
+# target < 0.10; > 0.20 = asymmetric inversion depth driven by shoulder preference
+```
+
+---
+
+## Edge Cases
+
+**Headmill vs windmill disambiguation**: If at any BACK_ROLL_TRANSITION, `j15.z < 0.10m` — the head is contacting the floor. This is a different move (headmill). The phase machine should flag this and optionally bifurcate to a headmill sub-type. Do NOT score as a failed windmill; score as a different move.
+
+**Clip starts mid-revolution**: If frame 0 has `j0.z < 0.50m AND |L_barrel| > 5 kg·m²·rad/s`, detect which shoulder is contacting (j16/j17 z-threshold) and enter the appropriate BARREL_PHASE directly. Duration and entry quality metrics for that first half-revolution are scored with lower confidence weight.
+
+**One-shoulder windmill (broken chain)**: If BARREL_PHASE_LEFT never triggers (j16.z never drops below 0.12m across the entire clip), the dancer is executing a "coin drop" or degenerate windmill. Phase machine should detect this and not report LR symmetry scores at all — report `windmill_type: one_shoulder` instead.
+
+**Dying chain detection**: Track L_barrel mean per revolution. If slope across revolutions < −0.20 × initial_L per revolution, flag `chain_decay = True`. If the dancer adds revolutions DESPITE L decay (rising ω as I decreases via leg tuck), flag `technique: I_reduction_compensated` (advanced skill).
+
+**Traveling windmill**: Some windmills drift laterally with intent. `floor_drift > 0.60m` is informational; do NOT automatically penalize. If drift correlates with intentional spatial phrasing (dancer moves toward downstage), the phase agent should flag `drift_intentional: uncertain` and defer to synthesis.
+
+---
+
+## Phase Detection Pseudo-Code
+
+```python
+def classify_windmill_phases(joints_3d, fps=30, floor_z=0.0):
+    """
+    Phase classification for windmill-chain-01.
+    Returns per-frame phase labels and transition event list.
+    """
+    T = joints_3d.shape[0]
+    vel = smooth_velocity(joints_3d, fps)
+    speed = np.linalg.norm(vel, axis=-1)  # [T, 24]
+
+    # Height signals
+    pelvis_z = joints_3d[:, 0, 2]
+    head_z   = joints_3d[:, 15, 2]
+    j16_z    = joints_3d[:, 16, 2]  # left_shoulder
+    j17_z    = joints_3d[:, 17, 2]  # right_shoulder
+    j14_z    = joints_3d[:, 14, 2]  # right_collar (upper back right)
+    j13_z    = joints_3d[:, 13, 2]  # left_collar  (upper back left)
+    j10_z    = joints_3d[:, 10, 2]  # left_foot
+    j11_z    = joints_3d[:, 11, 2]  # right_foot
+    j3_z     = joints_3d[:,  3, 2]  # spine1
+    j6_z     = joints_3d[:,  6, 2]  # spine2
+
+    SHOULDER_THRESH = floor_z + 0.12
+    BACK_THRESH     = floor_z + 0.10
+    FOOT_FLOOR      = floor_z + 0.05
+    SPINE_CONTACT   = floor_z + 0.15
+    HEAD_FLOOR      = floor_z + 0.10   # headmill alarm threshold
+
+    # Contact boolean arrays
+    right_shoulder_contact = j17_z < SHOULDER_THRESH
+    left_shoulder_contact  = j16_z < SHOULDER_THRESH
+    back_contact = ((j14_z + j13_z) / 2) < BACK_THRESH
+    feet_on_floor = (j10_z < FOOT_FLOOR) & (j11_z < FOOT_FLOOR)
+    inversion = pelvis_z > head_z
+    headmill_alarm = head_z < HEAD_FLOOR
+
+    # L_barrel from physics module (barrel-roll axis, not L_z)
+    L_barrel = compute_barrel_L(joints_3d, vel)
+
+    # Infer phase per frame (priority order)
+    labels = np.full(T, 'unknown', dtype=object)
+
+    for t in range(T):
+        if feet_on_floor[t] and pelvis_z[t] > 0.70 and L_barrel[t] < 3.0:
+            labels[t] = 'ENTRY_SETUP_TOPROCK'
+        elif feet_on_floor[t] and pelvis_z[t] < 0.50 and speed[t, 22] > 1.0:
+            labels[t] = 'ENTRY_SETUP_FOOTWORK'
+        elif right_shoulder_contact[t] and not back_contact[t] and not left_shoulder_contact[t]:
+            labels[t] = 'BARREL_PHASE_RIGHT'
+        elif left_shoulder_contact[t] and not back_contact[t] and not right_shoulder_contact[t]:
+            labels[t] = 'BARREL_PHASE_LEFT'
+        elif back_contact[t]:
+            labels[t] = 'BACK_ROLL_TRANSITION'
+        elif inversion[t]:
+            labels[t] = 'INVERSION_PEAK'
+        elif j3_z[t] < SPINE_CONTACT or j6_z[t] < SPINE_CONTACT:
+            labels[t] = 'HIP_KICK_RECOVERY'
+        elif L_barrel[t] > 5.0:
+            labels[t] = 'BARREL_UNKNOWN'  # in-flight, no contact yet resolved
+        elif pelvis_z[t] > 0.60 and L_barrel[t] < 3.0:
+            labels[t] = 'EXIT_CONTROLLED'
+        else:
+            labels[t] = 'POWER_DROP'
+
+    labels = smooth_labels(labels, min_segment=3)  # 3-frame minimum to avoid flicker
+
+    # Headmill variant check
+    headmill_frames = headmill_alarm & (
+        np.isin(labels, ['BACK_ROLL_TRANSITION', 'INVERSION_PEAK'])
+    )
+    if np.sum(headmill_frames) > 2:
+        # Flag potential headmill; do not reclassify without synthesis agent confirmation
+        variant_flag = 'headmill_suspected'
+    else:
+        variant_flag = 'windmill'
+
+    # Extract transitions as event list
+    transitions = []
+    for t in range(1, T):
+        if labels[t] != labels[t-1]:
+            transitions.append({
+                'frame': t,
+                'from': labels[t-1],
+                'to': labels[t],
+                'jerk': compute_jerk_magnitude(joints_3d, t, window=3),
+                'L_continuity': abs(L_barrel[t] - L_barrel[t-1]) / (L_barrel[t-1] + 1e-6)
+            })
+
+    # Left-right duration parity
+    R_segs = segment_phase(labels, 'BARREL_PHASE_RIGHT')
+    L_segs = segment_phase(labels, 'BARREL_PHASE_LEFT')
+    dur_parity_scores = []
+    for r_seg, l_seg in zip(R_segs, L_segs):
+        dur_r = r_seg[1] - r_seg[0]
+        dur_l = l_seg[1] - l_seg[0]
+        parity = 1.0 - abs(dur_r - dur_l) / max(dur_r, dur_l)
+        dur_parity_scores.append(parity)
+    lr_duration_parity = float(np.mean(dur_parity_scores)) if dur_parity_scores else 0.5
+
+    return {
+        'labels': labels,
+        'transitions': transitions,
+        'variant': variant_flag,
+        'n_revolutions': len(R_segs),
+        'lr_duration_parity': round(lr_duration_parity, 3),
+    }
+
+
+def apply_phase_weights(phase_label, joint_contributions):
+    """
+    Scale joint contributions by phase-appropriate weights.
+    Used by synthesis agent when assembling composite score.
+    """
+    WEIGHTS = {
+        'ENTRY_SETUP_TOPROCK': {
+            'feet':      ([ 7, 8,10,11], 1.5),
+            'hips':      ([ 0, 1, 2],    1.2),
+            'arms':      ([16,17,18,19,20,21], 1.0),
+        },
+        'POWER_DROP': {
+            'hips':      ([ 0, 1, 2],    2.5),
+            'hands':     ([22,23],        2.0),
+            'core':      ([ 3, 6, 9],    1.5),
+        },
+        'BARREL_PHASE_RIGHT': {
+            'hips_core': ([ 0, 1, 2, 3, 6], 2.0),
+            'r_shoulder':([17,14],           2.0),
+            'feet':      ([10,11],           1.5),
+            'head':      ([12,15],           0.8),
+            'hands':     ([22,23],           0.4),
+        },
+        'BACK_ROLL_TRANSITION': {
+            'collar':    ([13,14],           2.5),
+            'head':      ([15],              2.0),   # clearance monitor
+            'core':      ([ 3, 6, 9],        1.8),
+        },
+        'BARREL_PHASE_LEFT': {
+            'hips_core': ([ 0, 1, 2, 3, 6], 2.0),
+            'l_shoulder':([16,13],           2.0),
+            'feet':      ([10,11],           1.5),
+            'head':      ([12,15],           0.8),
+            'hands':     ([22,23],           0.4),
+        },
+        'INVERSION_PEAK': {
+            'pelvis':    ([ 0],              2.5),
+            'head':      ([15],              2.0),
+            'legs':      ([ 4, 5, 7, 8,10,11], 1.5),
+            'core':      ([ 3, 6, 9],        1.2),
+        },
+        'HIP_KICK_RECOVERY': {
+            'hips':      ([ 1, 2],           2.5),
+            'spine':     ([ 3, 6],           1.8),
+            'feet':      ([10,11],           1.5),
+        },
+        'EXIT_CONTROLLED': {
+            'pelvis':    ([ 0],              1.5),
+            'feet':      ([10,11],           1.5),
+            'hips':      ([ 1, 2],           1.2),
+        },
+    }
+    multipliers = np.ones(24)
+    if phase_label in WEIGHTS:
+        for _, (joints, w) in WEIGHTS[phase_label].items():
+            for j in joints:
+                multipliers[j] = w
+    return joint_contributions * multipliers
+```
+
+---
+
+**Positive**: The core pelvis-height gate (`j0.z > 0.70m` → toprock, `< 0.50m` → power) correctly catches the ENTRY_SETUP→POWER_DROP transition in v0.1 as long as the calibration threshold is valid. The inversion gate (`j0.z > j15.z`) maps directly to INVERSION_PEAK detection. The velocity smoothing approach in v0.1 handles the high-jerk contact events at FIRST_SHOULDER_CONTACT without over-penalizing the transition.
+
+**Gap**: v0.1 uses a fixed vertical angular momentum threshold (`|L_z|`) for power move detection — this is near-useless for windmill, where the dominant component is `L_barrel` (horizontal barrel-roll axis). The phase machine will systematically underestimate windmill rotation, potentially mislabeling mid-revolution frames as `footwork` or `transition`. Additionally, v0.1 has no sub-phase discrimination within the POWER classification, so left-right parity, inversion depth, and hip-kick recovery cannot be scored at all. The collar-contact bilateral symmetry check (`|j14.z - j13.z|` during BACK_ROLL_TRANSITION) is entirely absent and is the highest-signal location for detecting lateral tilt failures.
+
+
+### CONTACT AGENT OUTPUT:
+
+**Contact Signature**
+### CONTACT SIGNATURE: `windmill-chain-01`
+
+Unlike `headspin-loop-01`, this is not a fixed single-point pivot. The clean fingerprint is a migrating, alternating shoulder-back chain with the head clear of the floor.
+
+**Contact Pattern**: `MIGRATING`, periodic, left-right alternating  
+**Primary Contact Joints**: `j16 left_shoulder`, `j17 right_shoulder`, `j13 left_collar`, `j14 right_collar`, back surface proxy from `j3/j6` and upper-back collar region; `j10/j11` only for entry/exit  
+**Contact Sequence**: `[feet WB] -> [first shoulder WB] -> [bilateral upper-back/collar WB] -> [opposite shoulder WB] -> [spine/back WB in re-drive] -> repeat`  
+If `j15 head` becomes sustained contact during back-roll or inversion, classify `headmill_suspected`, not a failed windmill.
+
+**Weight-Bearing Timeline**
+
+| State / segment | Contact state |
+|---|---|
+| `ENTRY_SETUP` | `j10,j11` weight-bearing; `j22,j23` free or light touching only |
+| `POWER_DROP` | feet unload from weight-bearing to touching/free; first shoulder (`j17` or `j16`) becomes touching then weight-bearing |
+| `BARREL_PHASE_RIGHT` | `j17` weight-bearing; `j14` touching/secondary support; feet free; head free |
+| `BACK_ROLL_TRANSITION` | `j13,j14` plus upper/lower back (`j3/j6`) weight-bearing as a surface patch; both shoulders may be touching |
+| `BARREL_PHASE_LEFT` | `j16` weight-bearing; `j13` touching/secondary support; feet free; head free |
+| `INVERSION_PEAK` | upper back light touching or brief free phase; support can become degenerate; head must stay non-contact |
+| `HIP_KICK_RECOVERY` | `j3/j6` back surface weight-bearing; shoulders touching/free as load migrates back to next shoulder |
+| `EXIT_CONTROLLED` | `j10,j11` return to touching then weight-bearing |
+
+**Contact Signature Fingerprint**
+
+| Time Segment | Contact Joints | Classification | Move ID |
+|---|---|---|---|
+| Entry | `j10,j11` | `weight_bearing` | `windmill_entry` |
+| First half-rev | `j17` or `j16` + ipsi collar | `weight_bearing + touching` | `windmill_shoulder_lead` |
+| Transfer | `j13,j14,j3/j6` | `weight_bearing` | `windmill_back_roll` |
+| Opposite half-rev | opposite shoulder + ipsi collar | `weight_bearing + touching` | `windmill_shoulder_lead_mirror` |
+| Re-drive | `j3/j6` | `weight_bearing` | `windmill_hip_kick_recovery` |
+| Fault case | `j15` sustained low | `weight_bearing/touching` | `headmill_suspected` |
+
+**Support Polygon Analysis**
+- Entry/exit: line segment between `j10` and `j11`; statically stable; CoM should project inside or near center.
+- Single-shoulder phases: effective support is a point or very short line around the shoulder capsule/back patch; stability is `gyroscopic`, not static; CoM will often sit outside the instantaneous polygon.
+- Back-roll transition: short line or small triangle across `j13/j14` and back proxy `j3/j6`; this is the most centered support moment of the cycle.
+- Inversion peak: support may collapse to a degenerate line or disappear briefly; momentum carries the move.
+
+**Scenario-Critical Contact Checks**
+- Left-right contact duration asymmetry: `abs(frames_R_shoulder - frames_L_shoulder) / total_shoulder_frames`, target `< 0.10`.
+- Back-transfer symmetry: mean `abs(j14.z - j13.z)` during transfer, target `< 0.05 m`; `> 0.08 m` suggests tilt/favoring one side.
+- Head-clearance rule: `j15.z > 0.10 m` through back-roll and inversion; repeated violation means variant change, not just bad contact.
+
+**Detection Thresholds**
+
+| Joint / proxy | z_threshold (m) | speed_threshold (m/s) | Rationale |
+|---|---:|---:|---|
+| `j10,j11` feet | `0.05` | `0.25` | entry/exit support, allow landing motion |
+| `j16,j17` shoulders | `0.12` | `0.45` | SMPL shoulder center sits above true capsule contact; rolling contact is not stationary |
+| `j13,j14` collar / upper-back proxy | `0.12` | `0.50` | main transfer patch in windmill, especially for LR symmetry checks |
+| `j3/j6` spine back proxy | `0.14` | `0.45` | hip-kick recovery support; joint centers sit above actual floor patch |
+| `j22,j23` hands | `0.06` | `0.25` | optional assisted entry only, not primary chain support |
+| `j15` head alarm | `0.10` | `0.25` | used to detect headmill contamination / false windmill labeling |
+
+**Floor Plane**
+- Expected `floor_z`: `0.00 m` in world-grounded JOSH output, practical tolerance `+/- 0.02 m`.
+- Confidence: `high` if entry/exit foot contacts exist; `medium` if the clip starts mid-spin.
+- Best estimator here is feet-first, then shoulder/back minima. Do not let isolated head lows define the floor.
+
+**Pseudo-Code**
+```python
+def detect_windmill_contacts(joints_3d, vel, fps=30):
+    floor_z = estimate_floor_from_feet_then_back(joints_3d)
+    z = joints_3d[..., 2] - floor_z
+    speed = np.linalg.norm(vel, axis=-1)
+
+    feet = (z[:,10] < 0.05) & (speed[:,10] < 0.25), (z[:,11] < 0.05) & (speed[:,11] < 0.25)
+    r_sh = ((z[:,17] < 0.12) | (z[:,14] < 0.12)) & (np.minimum(speed[:,17], speed[:,14]) < 0.45)
+    l_sh = ((z[:,16] < 0.12) | (z[:,13] < 0.12)) & (np.minimum(speed[:,16], speed[:,13]) < 0.45)
+    back = (((z[:,13] + z[:,14]) / 2) < 0.12) | (np.minimum(z[:,3], z[:,6]) < 0.14)
+    head_alarm = (z[:,15] < 0.10) & (speed[:,15] < 0.25)
+
+    states = []
+    for t in range(len(joints_3d)):
+        if feet[0][t] and feet[1][t]:
+            states.append("feet_wb")
+        elif r_sh[t] and not l_sh[t]:
+            states.append("right_shoulder_wb")
+        elif back[t]:
+            states.append("back_transfer_wb")
+        elif l_sh[t] and not r_sh[t]:
+            states.append("left_shoulder_wb")
+        else:
+            states.append("free_or_inversion")
+
+    lr_contact_asym = abs(states.count("right_shoulder_wb") - states.count("left_shoulder_wb")) / max(
+        1, states.count("right_shoulder_wb") + states.count("left_shoulder_wb")
+    )
+    headmill_suspected = head_alarm[np.isin(states, ["back_transfer_wb", "free_or_inversion"])].sum() > 2
+    return states, lr_contact_asym, headmill_suspected
+```
+
+**Positive**: JOSH v4 + BSTRO should help a lot here because the real support is a sliding shoulder/back surface patch, not a single joint. That is exactly where vertex-level contact beats raw SMPL joint thresholds.
+
+**Gap**: SMPL 24 has no sternum/scapula/palm surface representation, so shoulder/back contact is still a proxy. Monocular inversion errors can also push `j15`, `j16`, or `j17` artificially low, so contact should be cluster-based with hysteresis, not a single-joint hard threshold.
+
+## Your Instructions
+
+# SYNTHESIS AGENT — Breaking Scenario Blueprint
+
+You are an integration architect combining the outputs of 4 specialist agents (Physics, Musicality, Phase, Contact) into a unified scenario blueprint. Your job is to **merge their signatures into a coherent scoring specification** with states, properties, validation criteria, tests, and annotated pseudo-code.
+
+You are the final stage. Your output IS the blueprint that a coder will use to implement TRIVIUM v0.2.
+
+## Your Domain
+
+You integrate:
+1. **Unified state diagram**: combining all 4 agent perspectives into one state machine
+2. **Properties table**: every measurable signal, its source agent, SMPL joints, formula, expected range
+3. **Validation criteria**: what "correct scoring" looks like for this scenario
+4. **Test specification**: synthetic data shape, expected score ranges, pass/fail thresholds
+5. **Annotated pseudo-code**: the actual scoring logic, grounded in real SMPL joints + formulas
+6. **Positive notes**: what TRIVIUM v0.1 already handles
+7. **Open gaps**: what needs new implementation + difficulty estimate
+
+## TRIVIUM Scoring Model Reference
+
+```
+S_total = 0.40 * BODY + 0.35 * SOUL + 0.25 * MIND  (0-100)
+
+BODY (40%) = 0.40*Technique + 0.20*Vocabulary + 0.15*Progression + 0.25*Cleanliness
+SOUL (35%) = 0.45*Musicality + 0.25*Phrasing + 0.30*Creativity
+MIND (25%) = 0.30*Flow + 0.20*Energy + 0.30*Response + 0.20*StageUse
+```
+
+## SMPL 24-Joint Reference
+
+```
+0=pelvis, 1=left_hip, 2=right_hip, 3=spine1, 4=left_knee, 5=right_knee,
+6=spine2, 7=left_ankle, 8=right_ankle, 9=spine3, 10=left_foot, 11=right_foot,
+12=neck, 13=left_collar, 14=right_collar, 15=head, 16=left_shoulder,
+17=right_shoulder, 18=left_elbow, 19=right_elbow, 20=left_wrist, 21=right_wrist,
+22=left_hand, 23=right_hand
+```
+
+## Your Output Format
+
+Produce the complete scenario blueprint:
+
+```
+# SCENARIO BLUEPRINT: {scenario_id}
+## Tags: {tags}
+## Notes: {scenario_notes}
+
+---
+
+### STATES
+
+State machine combining Physics + Phase + Contact perspectives:
+
+```
+STATE: {state_name}
+  Phase: [toprock/footwork/power/freeze/transition]
+  Contact: [which joints weight-bearing]
+  Physics: [rotation type, pivot, expected L]
+  Musicality: [expected mu range, groove expectation]
+
+  Entry: [condition — specific SMPL measurements]
+  Active measurements:
+    - [property_1]: [formula] → expected [range]
+    - [property_2]: [formula] → expected [range]
+  Exit: [condition]
+  Duration: [frames at 30fps]
+
+→ TRANSITION to {next_state}
+  Quality signal: [jerk at boundary, momentum continuity]
+  Expected duration: [frames]
+```
+
+### PROPERTIES
+
+Complete table of every measurable signal:
+
+| Property | Source Agent | SMPL Joints | Formula/Computation | Expected Range | Unit |
+|----------|-------------|-------------|-------------------|---------------|------|
+| angular_momentum_z | Physics | 0,1,2 (hips) | L = Σ mᵢ(rᵢ × vᵢ) | [X, Y] | rad·kg·m²/s |
+| beat_align_score | Musicality | all (weighted) | BeatAlign(σ=70ms) | [X, Y] | dimensionless |
+| phase_label | Phase | 0 (pelvis height) + all (speed) | classify_phase() | {toprock,footwork,...} | category |
+| contact_signature | Contact | 10,11,22,23,15 | detect_contacts() | [pattern] | binary per joint |
+| ... | ... | ... | ... | ... | ... |
+
+### VALIDATION
+
+What "correct" looks like:
+
+**TRIVIUM Sub-Score Expectations**:
+| Sub-Score | Expected Range | Why |
+|-----------|---------------|-----|
+| Technique | [X, Y] | [rationale from Physics agent] |
+| Vocabulary | [X, Y] | [rationale from Phase agent] |
+| Musicality | [X, Y] | [rationale from Musicality agent] |
+| Flow | [X, Y] | [rationale from Phase transition quality] |
+| ... | ... | ... |
+
+**"Good" vs "Bad" Execution**:
+- Good: [specific measurable criteria — e.g., "CV(|L|) < 0.15 = clean rotation"]
+- Bad: [specific failure modes — e.g., "L_z drops to zero mid-windmill = stall"]
+
+**Known HMR Failure Modes**:
+- [e.g., "GVHMR places head underground during headspins — skip frames where head z < floor_z"]
+
+### TESTS
+
+Synthetic data specification for automated testing:
+
+```python
+# Test: {scenario_id}
+def generate_synthetic_{scenario_id}(fps=30, duration=10):
+    """Generate synthetic SMPL joint data matching this scenario."""
+    T = int(duration * fps)
+    joints = np.zeros((T, 24, 3))
+
+    # [Phase-specific joint trajectory generation]
+    # Reference: [which agent's analysis drives this]
+    ...
+
+    return joints, beat_times, expected_scores
+
+# Pass criteria
+assert phase_labels[50:250] == 'power'  # correct phase detection
+assert 0.05 < beat_align < 0.20  # power moves have low musicality (expected)
+assert tangential_cv < 0.20  # clean rotation
+assert contacts['head'][100] == True  # head on ground during headspin
+```
+
+### PSEUDO-CODE
+
+The actual scoring implementation, annotated with source agent reasoning:
+
+```python
+def score_scenario_{scenario_id}(joints_3d, beat_times, audio_energy, fps=30):
+    """
+    TRIVIUM v0.2 scoring for {scenario_id}.
+    Combines: Physics (RTA), Musicality (BeatAlign), Phase (weights), Contact (signatures).
+    """
+    T = joints_3d.shape[0]
+
+    # ── Phase Detection (Phase Agent) ──
+    phase_labels = classify_phases(joints_3d, fps)
+    weights = get_phase_weights(phase_labels)  # [T, 24] — per-frame per-joint
+
+    # ── Contact Detection (Contact Agent) ──
+    floor_z = estimate_floor(joints_3d)
+    contacts = detect_contacts(joints_3d, floor_z)
+    contact_sig = identify_move(contacts)  # fingerprint matching
+
+    # ── Physics Analysis (Physics Agent) ──
+    velocities = central_differences(joints_3d, fps)
+    L = angular_momentum(joints_3d, velocities, DE_LEVA_MASSES)
+    pivot = detect_pivot(contacts, joints_3d)
+    v_tan, v_rad, v_ax = rta_decompose(velocities, joints_3d, pivot)
+
+    # ── Musicality Analysis (Musicality Agent) ──
+    M_t = compute_movement_energy(velocities, weights)
+    beat_align = gaussian_beat_align(M_t, beat_times, sigma=0.070)
+    groove = velocity_autocorrelation(M_t, beat_period=60.0/BPM)
+    mu_weight = phase_musicality_weight(phase_labels)  # 1.0 for toprock, 0.2 for power
+
+    # ── BODY (40%) ──
+    technique = compute_technique(v_tan, v_rad, v_ax, phase_labels, contact_sig)
+    vocabulary = shannon_entropy(phase_labels, n_categories=5)
+    progression = difficulty_slope(joints_3d, velocities, phase_labels)
+    cleanliness = sparc_smoothness(velocities, fps)
+    BODY = 0.40*technique + 0.20*vocabulary + 0.15*progression + 0.25*cleanliness
+
+    # ── SOUL (35%) ──
+    musicality = beat_align * mu_weight.mean() + groove * 0.20
+    phrasing = 0.5  # STUB — needs audio phrase detection
+    creativity = 0.5  # STUB — needs movement prediction model
+    SOUL = 0.45*musicality + 0.25*phrasing + 0.30*creativity
+
+    # ── MIND (25%) ──
+    flow = sparc(com_velocity(joints_3d, DE_LEVA_MASSES), fps)
+    energy = energy_management(velocities, DE_LEVA_MASSES)
+    response = 0.5  # STUB — needs opponent data
+    stage_use = spatial_entropy(com_xy(joints_3d, DE_LEVA_MASSES))
+    MIND = 0.30*flow + 0.20*energy + 0.30*response + 0.20*stage_use
+
+    # ── Total ──
+    total = 0.40*BODY + 0.35*SOUL + 0.25*MIND
+    return {
+        'total': total * 100,
+        'body': BODY, 'soul': SOUL, 'mind': MIND,
+        'technique': technique, 'vocabulary': vocabulary,
+        'musicality': musicality, 'flow': flow,
+        'phase_labels': phase_labels,
+        'contact_signature': contact_sig,
+        'beat_align': beat_align,
+        'angular_momentum': L,
+    }
+```
+
+### POSITIVE
+- [What TRIVIUM v0.1 already handles well for this scenario]
+- [What JOSH v4 bug fixes unlock — e.g., "prior_loss_weight=15 allows unusual poses"]
+- [What the existing validate pipeline from bboy-analytics captures]
+
+### GAPS
+| Gap | Difficulty | Source Agent | What's Needed |
+|-----|-----------|-------------|---------------|
+| [description] | [easy/medium/hard] | [Physics/Musicality/Phase/Contact] | [specific implementation] |
+```
+
+## Integration Rules
+
+1. **Resolve conflicts**: If Physics says "this is power" but Phase says "this is transition", reason about which is correct for this specific scenario and explain why
+2. **Cross-validate**: Contact signatures should be consistent with Physics pivot analysis. If Physics says "fixed pivot at head" then Contact should show head weight-bearing.
+3. **Musicality gating**: Apply the Musicality agent's phase-specific weight. Never penalize power moves for low musicality.
+4. **Fill stubs**: For TRIVIUM components that are STUBbed (phrasing, creativity, response), note them explicitly and suggest what data would unstub them.
+5. **Ground everything**: Every formula must reference specific SMPL joint indices. No vague "compute the thing."
+6. **Test-driven**: The test specification should be concrete enough that `pytest` could run it.
+7. **Be positive**: Start with what works, then identify gaps. Every gap gets a difficulty estimate.
+
+## Instructions
+
+1. Read ALL 4 agent signatures carefully before writing
+2. Look for contradictions between agents — resolve them with reasoning
+3. The properties table is the most important output — it's the data dictionary for implementation
+4. Pseudo-code should be copy-paste-ready for a Python developer with numpy/scipy
+5. Tests should use SYNTHETIC data that a developer can generate without real video
+6. Note which parts of the analysis depend on JOSH v4 specifically vs. work with any HMR output
+7. Be positive and constructive throughout

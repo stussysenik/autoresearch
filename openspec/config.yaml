@@ -1,0 +1,12 @@
+schema: spec-driven
+
+rules:
+  proposal:
+    - Keep proposals crisp and product-defining
+    - State the wedge before the long-term vision
+  design:
+    - Separate v1 decisions from deferred system work
+    - Call out safety, migration, and verification boundaries explicitly
+  tasks:
+    - Prefer phases that can be validated independently
+    - Keep the runtime substrate boring until the semantic kernel proves out
